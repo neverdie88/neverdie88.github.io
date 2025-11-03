@@ -1,0 +1,13 @@
+---
+title: "Thien's Blog"
+email: ""
+description: "A simple Jekyll blog"
+baseurl: "" # root for username.github.io
+url: "https://neverdie88.github.io"
+author:
+  name: "thien"
+theme: minima
+paginate: 5
+plugins:
+  - jekyll-feed
+---
