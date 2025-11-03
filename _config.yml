@@ -1,13 +1,9 @@
----
-title: "Thien's Blog"
-email: ""
-description: "A simple Jekyll blog"
-baseurl: "" # root for username.github.io
-url: "https://neverdie88.github.io"
+title: "neverdie88's Blog"
+description: "A personal blog powered by GitHub Pages and Jekyll."
 author:
-  name: "thien"
-theme: minima
-paginate: 5
-plugins:
-  - jekyll-feed
----
+  name: "neverdie88"
+baseurl: "" # the subpath, e.g. /blog
+url: "https://neverdie88.github.io"
+markdown: kramdown
+plugins: []
+theme: null
