@@ -52,3 +52,275 @@ Now produce the JSON only.
 - Responsible AI guidelines for evaluation and testing
 
 If you have questions or suggestions for future posts, reach me on GitHub: https://github.com/neverdie88
+
+## Interactive: GPT‑5 Ecosystem Map
+
+<div id="gpt5-ecosystem" class="gpt5-ecosystem" aria-label="Interactive GPT-5 ecosystem diagram"></div>
+<div id="gpt5-tooltip" class="gpt5-tooltip" role="tooltip" aria-hidden="true"></div>
+
+<style>
+  .gpt5-ecosystem {
+    position: relative;
+    height: 520px;
+    background: var(--accent, #f7f7f8);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 12px;
+    margin: 1rem 0 0.5rem;
+    overflow: hidden;
+  }
+  .gpt5-tooltip {
+    position: absolute;
+    display: none;
+    max-width: 320px;
+    background: #111827;
+    color: #f9fafb;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    pointer-events: none;
+    z-index: 20;
+  }
+  .gpt5-tooltip[aria-hidden="false"] { display: block; }
+  .gpt5-ecosystem svg { width: 100%; height: 100%; display: block; }
+  .gpt5-ecosystem .link {
+    stroke: #cbd5e1;
+    stroke-width: 2;
+    stroke-linecap: round;
+    transition: opacity .15s ease, stroke .15s ease;
+  }
+  .gpt5-ecosystem .node circle { transition: r .15s ease, fill .15s ease, stroke .15s ease, opacity .15s ease; }
+  .gpt5-ecosystem .label {
+    font-size: 12px;
+    fill: var(--text, #1f2937);
+    user-select: none;
+    pointer-events: none;
+  }
+  .gpt5-ecosystem .dim { opacity: 0.25; }
+  .gpt5-ecosystem .active { opacity: 1; }
+  /* Color scheme per group */
+  .gpt5-ecosystem .core circle { fill: #1e3a8a; stroke: #0b255f; stroke-width: 2; }
+  .gpt5-ecosystem .pillar circle { fill: #2563eb; stroke: #1749b3; stroke-width: 1.5; }
+  .gpt5-ecosystem .feature circle { fill: #059669; stroke: #047857; stroke-width: 1.5; }
+  .gpt5-ecosystem .method circle { fill: #7c3aed; stroke: #5b21b6; stroke-width: 1.5; }
+  .gpt5-ecosystem .benchmark circle { fill: #ea580c; stroke: #c2410c; stroke-width: 1.5; }
+</style>
+
+<script>
+(function() {
+  const container = document.getElementById('gpt5-ecosystem');
+  if (!container) return;
+  const tooltip = document.getElementById('gpt5-tooltip');
+
+  // Data model — extend by adding nodes and links
+  const data = {
+    nodes: [
+      { id: 'gpt5',      label: 'GPT‑5', group: 'core', desc: 'Core model: improved reasoning, tool-use, long context, and safer defaults.' },
+
+      { id: 'tech',      label: 'Technologies', group: 'pillar', desc: 'Key capabilities and underlying tech advancing GPT‑5.' },
+      { id: 'training',  label: 'Training',     group: 'pillar', desc: 'Data curation, objectives, and optimization methods.' },
+      { id: 'bench',     label: 'Benchmarks',   group: 'pillar', desc: 'Public and internal evaluations used to measure performance.' },
+
+      // Technologies subtree
+      { id: 'tools',     label: 'Tool Use',     group: 'feature', parent: 'tech', desc: 'Reliable external tool calls: search, code exec, retrieval, structured I/O.' },
+      { id: 'longctx',   label: 'Long Context', group: 'feature', parent: 'tech', desc: 'Larger context windows, chunk linking, and coherence over long sessions.' },
+      { id: 'planning',  label: 'Planning',     group: 'feature', parent: 'tech', desc: 'Multi-step decomposition, self-checking, and orchestration.' },
+
+      // Training subtree
+      { id: 'sft',       label: 'SFT',          group: 'method',  parent: 'training', desc: 'Supervised fine-tuning on curated high-quality instruction data.' },
+      { id: 'rl',        label: 'RL Alignment', group: 'method',  parent: 'training', desc: 'Reinforcement learning and preference optimization for safer responses.' },
+      { id: 'data',      label: 'Data Mix',     group: 'method',  parent: 'training', desc: 'Balanced sources: code, web, academic, synthetic, and curated datasets.' },
+
+      // Benchmarks subtree
+      { id: 'evals',     label: 'Evals',        group: 'benchmark', parent: 'bench', desc: 'Scenario-driven evals: reasoning, tool-use reliability, and safety.' },
+      { id: 'leader',    label: 'Leaderboards', group: 'benchmark', parent: 'bench', desc: 'Public metrics (e.g., reasoning suites, coding, knowledge tests).' }
+    ],
+    links: [
+      { from: 'gpt5', to: 'tech' }, { from: 'gpt5', to: 'training' }, { from: 'gpt5', to: 'bench' },
+      { from: 'tech', to: 'tools' }, { from: 'tech', to: 'longctx' }, { from: 'tech', to: 'planning' },
+      { from: 'training', to: 'sft' }, { from: 'training', to: 'rl' }, { from: 'training', to: 'data' },
+      { from: 'bench', to: 'evals' }, { from: 'bench', to: 'leader' }
+    ]
+  };
+
+  // Responsive SVG
+  const W = container.clientWidth || 860;
+  const H = 520;
+  const cx = W / 2;
+  const cy = H / 2;
+  const R1 = Math.min(W, H) * 0.28; // primary ring radius
+  const R2 = Math.min(W, H) * 0.18; // secondary ring radius
+
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('role', 'img');
+  container.appendChild(svg);
+
+  // Build indices
+  const nodeById = Object.fromEntries(data.nodes.map(n => [n.id, n]));
+  const linksFrom = {};
+  data.links.forEach(l => {
+    (linksFrom[l.from] ||= []).push(l.to);
+  });
+
+  // Infer parent=gpt5 for first ring where linked directly from gpt5
+  data.nodes.forEach(n => {
+    if (!n.parent && n.id !== 'gpt5' && (linksFrom['gpt5'] || []).includes(n.id)) {
+      n.parent = 'gpt5';
+    }
+  });
+
+  const childrenOf = {};
+  data.nodes.forEach(n => {
+    if (!n.parent) return;
+    (childrenOf[n.parent] ||= []).push(n);
+  });
+
+  // Layout
+  const pos = {};
+  const angleMap = {}; // store angles for first-ring parents
+  pos['gpt5'] = { x: cx, y: cy };
+
+  const firstRing = (childrenOf['gpt5'] || []);
+  firstRing.forEach((n, i) => {
+    const a = (2 * Math.PI * i / Math.max(1, firstRing.length)) - Math.PI / 2; // start top
+    const x = cx + R1 * Math.cos(a);
+    const y = cy + R1 * Math.sin(a);
+    pos[n.id] = { x, y };
+    angleMap[n.id] = a;
+  });
+
+  Object.keys(childrenOf).forEach(parentId => {
+    if (parentId === 'gpt5') return;
+    const kids = childrenOf[parentId];
+    const pa = angleMap[parentId] ?? 0; // reference angle (toward center)
+    kids.forEach((n, j) => {
+      const a = (2 * Math.PI * j / Math.max(1, kids.length)); // full ring around parent
+      const x = pos[parentId].x + R2 * Math.cos(a);
+      const y = pos[parentId].y + R2 * Math.sin(a);
+      pos[n.id] = { x, y };
+    });
+  });
+
+  const radius = (n) => n.id === 'gpt5' ? 32 : (n.parent === 'gpt5' ? 18 : 12);
+
+  // Draw links
+  const gLinks = document.createElementNS(svgNS, 'g');
+  svg.appendChild(gLinks);
+  const linkEls = data.links.map(l => {
+    const line = document.createElementNS(svgNS, 'line');
+    const p1 = pos[l.from], p2 = pos[l.to];
+    line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+    line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
+    line.setAttribute('class', 'link');
+    line.dataset.from = l.from;
+    line.dataset.to = l.to;
+    gLinks.appendChild(line);
+    return line;
+  });
+
+  // Draw nodes
+  const gNodes = document.createElementNS(svgNS, 'g');
+  svg.appendChild(gNodes);
+  const nodeEls = data.nodes.map(n => {
+    const g = document.createElementNS(svgNS, 'g');
+    g.setAttribute('class', `node ${n.group || ''}`);
+    g.setAttribute('tabindex', '0'); // keyboard focusable
+    g.dataset.id = n.id;
+
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', pos[n.id].x);
+    c.setAttribute('cy', pos[n.id].y);
+    c.setAttribute('r', radius(n));
+    g.appendChild(c);
+
+    const t = document.createElementNS(svgNS, 'text');
+    t.setAttribute('class', 'label');
+    const offset = radius(n) + 6;
+    t.setAttribute('x', pos[n.id].x + offset);
+    t.setAttribute('y', pos[n.id].y + 4);
+    t.textContent = n.label;
+    g.appendChild(t);
+
+    gNodes.appendChild(g);
+    return g;
+  });
+
+  // Interactions
+  function neighborsOf(id) {
+    const set = new Set([id]);
+    data.links.forEach(l => {
+      if (l.from === id) set.add(l.to);
+      if (l.to === id) set.add(l.from);
+    });
+    return set;
+  }
+
+  function setHighlight(id) {
+    const neigh = neighborsOf(id);
+    nodeEls.forEach(g => {
+      const isActive = neigh.has(g.dataset.id);
+      g.classList.remove('active', 'dim');
+      g.classList.add(isActive ? 'active' : 'dim');
+    });
+    linkEls.forEach(line => {
+      const isActive = (line.dataset.from === id) || (line.dataset.to === id) ||
+                       (neigh.has(line.dataset.from) && neigh.has(line.dataset.to));
+      line.classList.remove('active', 'dim');
+      line.classList.add(isActive ? 'active' : 'dim');
+    });
+  }
+
+  function clearHighlight() {
+    nodeEls.forEach(g => g.classList.remove('active', 'dim'));
+    linkEls.forEach(l => l.classList.remove('active', 'dim'));
+  }
+
+  function showTooltip(evt, text) {
+    if (!tooltip) return;
+    tooltip.textContent = text;
+    tooltip.setAttribute('aria-hidden', 'false');
+    const rect = container.getBoundingClientRect();
+    const x = evt.clientX - rect.left + 12;
+    const y = evt.clientY - rect.top + 12;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top  = y + 'px';
+  }
+
+  function hideTooltip() {
+    if (!tooltip) return;
+    tooltip.setAttribute('aria-hidden', 'true');
+  }
+
+  nodeEls.forEach(g => {
+    const id = g.dataset.id;
+    const desc = (nodeById[id] && nodeById[id].desc) || '';
+    g.addEventListener('mouseenter', (e) => { setHighlight(id); showTooltip(e, desc); });
+    g.addEventListener('mousemove', (e) => showTooltip(e, desc));
+    g.addEventListener('mouseleave', () => { clearHighlight(); hideTooltip(); });
+
+    // Keyboard accessibility
+    g.addEventListener('focus', (e) => { setHighlight(id); showTooltip(e, desc); });
+    g.addEventListener('blur', () => { clearHighlight(); hideTooltip(); });
+    g.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { clearHighlight(); hideTooltip(); g.blur(); }
+    });
+  });
+
+  // Resize handling (optional lightweight)
+  window.addEventListener('resize', () => {
+    // For simplicity, re-render on first interaction-heavy sites.
+    // You can enhance by recalculating positions without full rebuild.
+  });
+
+  /* Extending the map:
+     - Add a node:
+       data.nodes.push({ id: 'new_id', label: 'New Item', group: 'feature', parent: 'tech', desc: 'Description...' });
+     - Connect it:
+       data.links.push({ from: 'tech', to: 'new_id' });
+     Reload page to see it.
+  */
+})();
+</script>
