@@ -1,0 +1,28 @@
+---
+layout: default
+title: Home
+---
+
+<div class="hero">
+  <h2>Thien</h2>
+  <p>Welcome to my blog. Learn more on the <a href="{{ '/about/' | relative_url }}">About</a> page.</p>
+</div>
+
+<section>
+  <h3>Latest posts</h3>
+  <ul class="post-list">
+    {% assign posts_sorted = site.posts | sort: "date" | reverse %}
+    {% for post in posts_sorted %}
+      <li>
+        <span class="post-date">{{ post.date | date: "%Y-%m-%d" }}</span>
+        <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+        {% if post.excerpt %}
+          <div class="muted">{{ post.excerpt | strip_html | truncate: 140 }}</div>
+        {% endif %}
+      </li>
+    {% endfor %}
+    {% if posts_sorted == empty %}
+      <li class="muted">No posts yet. Stay tuned!</li>
+    {% endif %}
+  </ul>
+</section>
