@@ -51,4 +51,4 @@ Now produce the JSON only.
 - Research posts on chain-of-thought, tool-use, and self-reflection
 - Responsible AI guidelines for evaluation and testing
 
-If you have questions or suggestions for future posts, check the About page.
+If you have questions or suggestions for future posts, reach me on GitHub: https://github.com/neverdie88
