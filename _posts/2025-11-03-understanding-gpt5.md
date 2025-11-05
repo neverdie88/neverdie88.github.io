@@ -2,6 +2,7 @@
 layout: default
 title: "Understanding GPT5"
 date: 2025-11-03
+published: false
 ---
 
 GPT-5 represents a new generation of large language models focused on stronger reasoning, better tool use, and safer, more reliable behavior. This post outlines what it is good at, where it can struggle, and how to get strong results with practical prompting tips.

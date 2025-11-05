@@ -11,19 +11,17 @@ title: Home
 <section>
   <h3>Latest posts</h3>
   <ul class="post-list">
-    {% assign posts_sorted = site.posts | sort: "date" | reverse %}
-    {% assign pages_marked = site.pages | where: "list_in_index", true %}
-    {% assign combined = posts_sorted | concat: pages_marked | sort: "date" | reverse %}
-    {% for item in combined %}
+    {% assign posts_sorted = site.posts %}
+    {% for post in posts_sorted %}
       <li>
-        <span class="post-date">{{ item.date | date: "%Y-%m-%d" }}</span>
-        <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
-        {% if item.excerpt %}
-          <div class="muted">{{ item.excerpt | strip_html | truncate: 140 }}</div>
+        <span class="post-date">{{ post.date | date: "%Y-%m-%d" }}</span>
+        <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+        {% if post.excerpt %}
+          <div class="muted">{{ post.excerpt | strip_html | truncate: 140 }}</div>
         {% endif %}
       </li>
     {% endfor %}
-    {% if combined == empty %}
+    {% if posts_sorted == empty %}
       <li class="muted">No posts yet. Stay tuned!</li>
     {% endif %}
   </ul>

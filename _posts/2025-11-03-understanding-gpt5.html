@@ -1,0 +1,389 @@
+---
+layout: default
+title: "Understanding GPT5"
+date: 2025-11-03
+---
+
+<p>GPT-5 represents a new generation of large language models focused on stronger reasoning, better tool use, and safer, more reliable behavior. This page outlines what it is good at, where it can struggle, and how to get strong results with practical prompting tips.</p>
+
+<h2>What makes GPT-5 different</h2>
+<ul>
+  <li><strong>Improved multi-step reasoning:</strong> Better at carrying state across steps, decomposing tasks, and checking its own work.</li>
+  <li><strong>Tool-use and orchestration:</strong> More reliable at calling external tools (search, code execution, data retrieval) when available.</li>
+  <li><strong>Longer context handling:</strong> Works with larger inputs and maintains coherence across longer sessions.</li>
+  <li><strong>Safer defaults:</strong> Calibrated responses, tighter refusal behavior for risky queries, and better adherence to instructions.</li>
+</ul>
+
+<h2>Strengths</h2>
+<ul>
+  <li>Complex planning and structured output (JSON, tables, code stubs)</li>
+  <li>Code reasoning and refactoring across multiple files</li>
+  <li>Summarization and synthesis over long documents</li>
+  <li>Querying heterogeneous data and producing concise, accurate answers</li>
+</ul>
+
+<h2>Limitations to keep in mind</h2>
+<ul>
+  <li>Hallucinations remain possible (especially on niche facts)</li>
+  <li>Can over-generalize without concrete constraints/examples</li>
+  <li>Performance depends on clear instructions and representative examples</li>
+  <li>Latency and cost can be higher for long-context or multi-step tasks</li>
+</ul>
+
+<h2>Prompting tips</h2>
+<ul>
+  <li>State objectives and constraints explicitly</li>
+  <li>Provide examples (few-shot) for the desired output format</li>
+  <li>Ask for step-by-step plans, then the final answer</li>
+  <li>Use structured output (fields/keys) when you plan to parse results</li>
+  <li>Encourage verification: “validate assumptions,” “list uncertainties”</li>
+</ul>
+
+<h2>Example prompt</h2>
+<pre><code>You are assisting with a code review.
+- Goal: Identify risky changes and missing tests
+- Constraints: Only comment on files under src/
+- Output: JSON array with {file, risk_level, comments[]}
+
+Steps:
+1) Scan diffs in src/
+2) Flag high-risk changes (security, data handling)
+3) Propose at least one test per risk
+
+Now produce the JSON only.
+</code></pre>
+
+<h2>References and further reading</h2>
+<ul>
+  <li>OpenAI system cards and safety notes</li>
+  <li>Research posts on chain-of-thought, tool-use, and self-reflection</li>
+  <li>Responsible AI guidelines for evaluation and testing</li>
+</ul>
+
+<p>If you have questions or suggestions for future posts, reach me on GitHub: <a href="https://github.com/neverdie88">https://github.com/neverdie88</a></p>
+
+<h2>Interactive: GPT‑5 Ecosystem Graph</h2>
+
+<div class="gpt5-graph-wrap">
+  <div id="gpt5-graph" class="gpt5-graph" aria-label="Interactive GPT-5 graph"></div>
+
+  <aside id="gpt5-panel" class="gpt5-panel" aria-hidden="true" role="dialog" aria-modal="false">
+    <button class="close" aria-label="Close info panel">&times;</button>
+    <div class="content">
+      <h3 id="panel-title">Node</h3>
+      <p id="panel-desc" class="muted"></p>
+      <div class="actions">
+        <button id="panel-expand" class="expand">Expand</button>
+      </div>
+      <ul id="panel-items" class="items"></ul>
+    </div>
+  </aside>
+</div>
+
+<style>
+  /* Graph container */
+  .gpt5-graph-wrap { position: relative; }
+  .gpt5-graph {
+    height: 560px;
+    background: var(--accent, #f7f7f8);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 12px;
+    margin: 1rem 0 0.5rem;
+    overflow: hidden;
+  }
+  .gpt5-graph svg { width: 100%; height: 100%; display: block; cursor: grab; }
+  .gpt5-graph svg:active { cursor: grabbing; }
+
+  /* Links and nodes */
+  .gpt5-graph .link {
+    stroke: #cbd5e1;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+  .gpt5-graph .node circle {
+    stroke: rgba(0,0,0,0.25);
+    stroke-width: 1.25;
+  }
+  .gpt5-graph .label {
+    font-size: 12px;
+    fill: var(--text, #1f2937);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* Color per group */
+  .node.core circle { fill: #1e3a8a; stroke: #0b255f; stroke-width: 2; }
+  .node.pillar circle { fill: #2563eb; stroke: #1749b3; }
+  .node.feature circle { fill: #059669; stroke: #047857; }
+  .node.method circle { fill: #7c3aed; stroke: #5b21b6; }
+  .node.benchmark circle { fill: #ea580c; stroke: #c2410c; }
+
+  .node:hover circle { filter: brightness(1.05); }
+  .node.selected circle { stroke-width: 2.5; }
+
+  /* Info Panel */
+  .gpt5-panel {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: min(340px, 90vw);
+    max-height: calc(100% - 16px);
+    background: #ffffff;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    padding: 12px;
+    overflow: auto;
+    transform: translateX(110%);
+    transition: transform .2s ease;
+    z-index: 5;
+  }
+  .gpt5-panel[aria-hidden="false"] { transform: translateX(0); }
+  .gpt5-panel .close {
+    appearance: none; border: none; background: transparent;
+    font-size: 22px; line-height: 1; cursor: pointer; float: right; color: #6b7280;
+  }
+  .gpt5-panel .content { clear: both; }
+  .gpt5-panel h3 { margin: 0.25rem 0 0.25rem; }
+  .gpt5-panel .actions { margin: 0.5rem 0 0.25rem; }
+  .gpt5-panel .expand {
+    appearance: none;
+    border: 1px solid var(--border, #e5e7eb);
+    background: #111827; color: #fff; padding: 6px 10px;
+    border-radius: 8px; cursor: pointer; font-size: 0.95rem;
+  }
+  .gpt5-panel .items { margin: 0.5rem 0; padding-left: 1.1rem; }
+  .gpt5-panel .items li { margin: 0.25rem 0; }
+
+  /* Zoom hint badge */
+  .zoom-hint {
+    position: absolute; left: 12px; bottom: 12px;
+    background: rgba(17,24,39,0.85); color: #f9fafb;
+    padding: 6px 10px; border-radius: 8px; font-size: 12px;
+    z-index: 4;
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script>
+(function() {
+  const root = document.getElementById('gpt5-graph');
+  if (!root) return;
+
+  // Node metadata and expandable children
+  const baseNodes = [
+    { id: 'gpt5', label: 'GPT‑5', group: 'core', desc: 'Core model: improved reasoning, tool-use, long context, and safer defaults.' },
+    { id: 'tech', label: 'Technologies', group: 'pillar', desc: 'Key capabilities and underlying tech advancing GPT‑5.' },
+    { id: 'training', label: 'Training', group: 'pillar', desc: 'Data curation, objectives, and optimization methods.' },
+    { id: 'bench', label: 'Benchmarks', group: 'pillar', desc: 'Evaluations to measure performance and safety.' }
+  ];
+  const baseLinks = [
+    { source: 'gpt5', target: 'tech' },
+    { source: 'gpt5', target: 'training' },
+    { source: 'gpt5', target: 'bench' }
+  ];
+
+  // Children registry for "expand" (you can add more)
+  const childrenMap = {
+    tech: [
+      { id: 'tools',   label: 'Tool Use',     group: 'feature',   desc: 'External tool calls: search, code exec, retrieval, structured I/O.' },
+      { id: 'longctx', label: 'Long Context', group: 'feature',   desc: 'Larger context windows, chunk linking, long-session coherence.' },
+      { id: 'planning',label: 'Planning',     group: 'feature',   desc: 'Multi-step reasoning, decomposition, and orchestration.' }
+    ],
+    training: [
+      { id: 'sft',   label: 'SFT',            group: 'method',    desc: 'Supervised fine-tuning on curated, high-quality instruction data.' },
+      { id: 'rl',    label: 'RL Alignment',   group: 'method',    desc: 'Preference/RL-based alignment for safer, calibrated responses.' },
+      { id: 'data',  label: 'Data Mix',       group: 'method',    desc: 'Balanced sources: code, web, academic, synthetic, curated.' }
+    ],
+    bench: [
+      { id: 'evals',  label: 'Evals',         group: 'benchmark', desc: 'Scenario-driven evals: reasoning, tool-use reliability, safety.' },
+      { id: 'leader', label: 'Leaderboards',  group: 'benchmark', desc: 'Public metrics: reasoning/coding/knowledge suites.' }
+    ],
+    // Example: expanding a lower node later
+    tools: [
+      { id: 'retrieval', label: 'Retrieval',  group: 'feature',   desc: 'Indexing + retrieval pipelines (RAG) for current context.' },
+      { id: 'codeexec',  label: 'Code Exec',  group: 'feature',   desc: 'Secure sandboxes and runtime for programmatic actions.' }
+    ]
+  };
+
+  // Optional per-node bullet items for the panel
+  const itemsMap = {
+    gpt5: ['Reasoning-first architecture', 'Longer context window', 'Safer defaults and refusals'],
+    tech: ['Capabilities powered by infra + algorithms', 'Bridges model core with user tasks'],
+    training: ['Objective design and optimization', 'Data quality and preference learning'],
+    bench: ['Holistic accountability for quality', 'Tracks regressions and improvements'],
+    tools: ['Function calling schemas', 'Reliability and error handling'],
+    longctx: ['Segment linking', 'Summarization within context window'],
+    planning: ['Self-check loops', 'Task decomposition heuristics'],
+    sft: ['Curated datasets', 'Instruction templates'],
+    rl: ['DPO/PPO-style approaches', 'Human/AI preference data'],
+    data: ['Mixture balancing', 'Deduplication and filtering'],
+    evals: ['Reasoning suites', 'Safety probes'],
+    leader: ['Public comparisons', 'Standardized tasks'],
+    retrieval: ['Embedding + index selection', 'Fresh knowledge access'],
+    codeexec: ['Sandbox design', 'Resource/time limits']
+  };
+
+  // State
+  const nodes = [...baseNodes];
+  const links = [...baseLinks];
+
+  // Dimensions
+  const width  = root.clientWidth || 860;
+  const height = 560;
+
+  // SVG + zoom scaffolding
+  const svg = d3.select(root).append('svg')
+    .attr('viewBox', [0, 0, width, height])
+    .attr('role', 'img');
+
+  const g = svg.append('g');
+
+  const zoom = d3.zoom()
+    .scaleExtent([0.25, 3])
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform);
+    });
+
+  svg.call(zoom).on("dblclick.zoom", null);
+  // Zoom hint
+  const hint = d3.select(root)
+    .append('div')
+    .attr('class', 'zoom-hint')
+    .text('Scroll to zoom, drag background to pan, drag nodes to move');
+  setTimeout(() => hint.remove(), 4500);
+
+  // Simulation
+  const rFor = (d) => d.id === 'gpt5' ? 34 : (['pillar'].includes(d.group) ? 20 : 13);
+  const simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(d => (d.source.id === 'gpt5' || d.target.id === 'gpt5') ? 150 : 90).strength(0.3))
+    .force('charge', d3.forceManyBody().strength(-260))
+    .force('center', d3.forceCenter(width/2, height/2))
+    .force('collision', d3.forceCollide().radius(d => rFor(d) + 4));
+
+  // Draw
+  let linkSel = g.append('g').attr('stroke-opacity', 0.9).selectAll('line');
+  let nodeSel = g.append('g').selectAll('g');
+
+  function update() {
+    linkSel = linkSel.data(links, d => d.source.id + '->' + d.target.id);
+    linkSel.exit().remove();
+    const linkEnter = linkSel.enter().append('line').attr('class', 'link');
+    linkSel = linkEnter.merge(linkSel);
+
+    nodeSel = nodeSel.data(nodes, d => d.id);
+    nodeSel.exit().remove();
+
+    const nodeEnter = nodeSel.enter().append('g')
+      .attr('class', d => `node ${d.group || ''}`)
+      .call(d3.drag()
+        .on('start', dragstarted)
+        .on('drag', dragged)
+        .on('end', dragended)
+      )
+      .on('click', (_, d) => onNodeClick(d));
+
+    nodeEnter.append('circle')
+      .attr('r', d => rFor(d));
+
+    nodeEnter.append('text')
+      .attr('class', 'label')
+      .attr('x', d => rFor(d) + 6)
+      .attr('y', 4)
+      .text(d => d.label);
+
+    nodeSel = nodeEnter.merge(nodeSel);
+
+    simulation.nodes(nodes).on('tick', ticked);
+    simulation.force('link').links(links);
+    simulation.alpha(0.9).restart();
+  }
+
+  function ticked() {
+    linkSel
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+
+    nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
+  }
+
+  function dragstarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x; d.fy = d.y;
+  }
+  function dragged(event, d) {
+    d.fx = event.x; d.fy = event.y;
+  }
+  function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    // Keep node where dropped (pinned). To unpin on double-click:
+    // d.fx = null; d.fy = null;
+  }
+
+  // Panel behavior
+  const panel = document.getElementById('gpt5-panel');
+  const titleEl = document.getElementById('panel-title');
+  const descEl  = document.getElementById('panel-desc');
+  const itemsEl = document.getElementById('panel-items');
+  const expandBtn = document.getElementById('panel-expand');
+  const closeBtn  = panel.querySelector('.close');
+  let selectedId = null;
+
+  function openPanel(d) {
+    titleEl.textContent = d.label;
+    descEl.textContent = d.desc || '';
+    itemsEl.innerHTML = '';
+    (itemsMap[d.id] || []).forEach(t => {
+      const li = document.createElement('li'); li.textContent = t; itemsEl.appendChild(li);
+    });
+
+    // Enable/disable expand availability
+    const canExpand = !!childrenMap[d.id];
+    expandBtn.disabled = !canExpand;
+    expandBtn.textContent = canExpand ? 'Expand' : 'No more children';
+
+    panel.setAttribute('aria-hidden', 'false');
+  }
+
+  function closePanel() {
+    panel.setAttribute('aria-hidden', 'true');
+    selectedId = null;
+    nodeSel.classed('selected', false);
+  }
+
+  closeBtn.addEventListener('click', closePanel);
+
+  function onNodeClick(d) {
+    selectedId = d.id;
+    nodeSel.classed('selected', n => n.id === selectedId);
+    openPanel(d);
+  }
+
+  expandBtn.addEventListener('click', () => {
+    if (!selectedId) return;
+    const children = childrenMap[selectedId];
+    if (!children || !children.length) return;
+
+    const existingIds = new Set(nodes.map(n => n.id));
+    const newKids = children.filter(c => !existingIds.has(c.id));
+    if (!newKids.length) return;
+
+    // Add nodes and links, connect to selected
+    newKids.forEach(kid => {
+      // seed near parent
+      const parent = nodes.find(n => n.id === selectedId);
+      kid.x = (parent?.x || width/2) + (Math.random() - 0.5) * 40;
+      kid.y = (parent?.y || height/2) + (Math.random() - 0.5) * 40;
+      nodes.push(kid);
+      links.push({ source: selectedId, target: kid.id });
+    });
+
+    update();
+  });
+
+  // Initialize
+  update();
+})();
+</script>
