@@ -6,25 +6,21 @@ date: 2025-11-11
 
 # DeepWiki: Architecture and Pipeline
 
-A concise overview of the open-source DeepWiki system that generates structured, high-quality wiki documentation for any code repository.
+DeepWiki is an LLM-powered tool from DevinAI designed to help users understand any code repository. To try it, visit https://deepwiki.com/ and paste a GitHub repository URL. You can then use Devin Chat to ask questions about the repo. Unfortunately, DeepWiki is closed-source, we can’t see what’s under the hood.
 
-Repository: https://github.com/AsyncFuncAI/deepwiki-open
+However, there’s a strong open-source effort to reproduce DeepWiki’s core ideas. While it won’t match the multimillion‑dollar counterpart, it offers practical strategies for using LLMs to understand a repository. 
+
+Let us dissect how this open-source DeepWiki generates wiki documents for a repository.
+
+Open-source DeepWiki repository: https://github.com/AsyncFuncAI/deepwiki-open
 
 ---
-
 ## 1) What DeepWiki Does
+In brief, the open-source DeepWiki generates wiki documents in two steps:
+1. It sends the file tree (repository structure) and README to an LLM to propose a wiki structure. For example, a web application might get pages for the frontend, backend, and core technologies. This creates a wiki folder with titled, empty pages.
+2. It iteratively asks the LLM to fill one page at a time. For each page, it gathers related files (based on the repository structure and/or embedding search to find relevant code) and generates content grounded in those files.
 
-DeepWiki generates high-quality, structured wiki documentation for a code repository by:
-- Maintaining embeddings for all source files in the repo for semantic retrieval
-- Using repository metadata (file tree + README) to synthesize a wiki structure with an LLM
-- Generating each wiki page by retrieving the most relevant files (via embeddings) and streaming LLM content into the UI
-- Caching results and supporting export in Markdown/JSON
 
-Key outcomes:
-- Consistent, navigable wiki (sections, pages, summaries)
-- Grounded content via semantic retrieval across the codebase
-- Fast iteration via streaming UX and server-side caching
-- Portable exports in Markdown or JSON
 
 ---
 
