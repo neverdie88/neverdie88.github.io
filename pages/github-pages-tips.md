@@ -291,7 +291,6 @@ Use `relative_url` so links work with or without a `baseurl`.
 ```html
 <nav>
   <a href="{{ '/' | relative_url }}">Home</a>
-  <a href="{{ '/guide/latexml-builder/' | relative_url }}">LaTeXML Builder</a>
   <a href="{{ '/guide/deepwiki/' | relative_url }}">DeepWiki</a>
 </nav>
 ```
