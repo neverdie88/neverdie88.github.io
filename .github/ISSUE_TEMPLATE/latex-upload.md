@@ -1,33 +1,30 @@
 ---
 name: LaTeX upload (LaTeXML build)
-about: Upload a LaTeX project (.zip/.tar/.tar.gz) or provide an arXiv ID to build HTML via LaTeXML and publish under /latexml/<slug>/
+about: Upload a .tex or .zip/.tar(.gz) LaTeX project to convert to HTML via LaTeXML and get a downloadable artifact
 title: "[LaTeX] "
 labels: ["latex-upload"]
 assignees: []
 ---
 
-Provide the details below, then drag-and-drop your LaTeX archive into this issue before submitting.
+Provide the details below, then drag-and-drop your LaTeX source (.tex) or archive (.zip/.tar/.tar.gz) into this issue before submitting.
 
-This will trigger the "LaTeXML build" GitHub Action and publish the generated HTML to:
-https://{YOUR_USER}.github.io/{YOUR_REPO}/latexml/<output_slug>/
+This will trigger the "LaTeX to HTML (LaTeXML)" GitHub Action and produce a downloadable artifact (contains index.html and assets). The Action will add a comment to this issue with a link to the workflow run; download the artifact from the run’s Artifacts section.
 
 Required
 - output_slug: my-paper-slug
-- main_tex: main.tex
 
-Optional (choose one source method)
-- arxiv_id: 2508.12631v2
-- OR archive_url: https://example.com/my-paper.zip
+Optional
+- main_tex: main.tex
+- archive_url: https://example.com/my-paper.zip
 
 Notes
-- If you’re uploading the archive here, just drag-and-drop the .zip/.tar(.gz) below. GitHub will turn it into a downloadable link included in the issue body.
-- If the main TeX file isn’t main.tex, set main_tex accordingly (e.g., src/paper.tex).
-- If both arxiv_id and archive_url are provided, arXiv takes precedence in the workflow.
+- If you attach a file here, GitHub will include the uploaded asset URL in the issue body; the Action will detect and use it automatically.
+- Set main_tex if your entry-point TeX file is not main.tex (e.g., src/paper.tex).
+- If both an attachment and archive_url are present, either will work; the Action picks the first URL in the body.
 
 Paste/edit fields
 output_slug:
 main_tex:
-arxiv_id:
 archive_url:
 
-Attach your archive below (drag-and-drop .zip/.tar/.tar.gz):
+Attach your file below (drag-and-drop .tex/.zip/.tar/.tar.gz):
