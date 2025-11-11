@@ -259,6 +259,41 @@ jobs:
           set -e
           echo "Output path: latexml/${{ steps.decide_slug.outputs.slug }}/index.html"
 
+      - name: Summarize build info
+        run: |
+          set -e
+          owner="${{ github.repository_owner }}"
+          repo_full="${{ github.repository }}"
+          repo="${repo_full#*/}"
+          if echo "$repo" | grep -qiE "^${owner}\.github\.io$"; then
+            base="https://${owner}.github.io"
+          else
+            base="https://${owner}.github.io/${repo}"
+          fi
+          slug="${{ steps.decide_slug.outputs.slug }}"
+          event="${{ steps.detect_trigger.outputs.event_name }}"
+          main="${{ steps.detect_main.outputs.main }}"
+          arxiv_wd="${{ steps.gather_wd.outputs.arxiv_id }}"
+          arxiv_issue="${{ steps.gather_issue.outputs.arxiv_id }}"
+          arxiv="${arxiv_wd:-$arxiv_issue}"
+          url="${base}/latexml/${slug}/"
+
+          echo "EVENT=$event"
+          echo "SLUG=$slug"
+          echo "MAIN_TEX=$main"
+          echo "ARXIV_ID=${arxiv:-none}"
+          echo "URL=$url"
+
+          {
+            echo "### LaTeXML build outputs"
+            echo
+            echo "- Event: $event"
+            echo "- Output slug: $slug"
+            echo "- Main TeX: $main"
+            echo "- arXiv ID: ${arxiv:-none}"
+            echo "- Published URL: $url"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Commit build to repo
         run: |
           set -e
