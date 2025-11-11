@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{{ page.title }} | {{ site.title }}</title>
+  <meta name="description" content="{{ site.description }}" />
+  <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%232563eb"/><text x="50%" y="58%" text-anchor="middle" font-size="40" font-family="Arial" fill="%23ffffff">T</text></svg>' />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --link: #2563eb;
+      --border: #e5e7eb;
+      --accent: #f3f4f6;
+      --sidebar-bg: #fafafa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      position: relative; /* allow absolute-positioned floating boxes anywhere on the page */
+    }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 1rem; }
+    /* Full-bleed content area in guide pages */
+    main.container {
+      padding-left: 0;
+      padding-right: 0;
+      max-width: none; /* override site-wide 1100px cap for main only */
+      width: 100%;
+      margin: 0;      /* ensure it spans full viewport width */
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.9rem 0;
+      gap: 1rem;
+    }
+    .site-title { font-size: 1.1rem; margin: 0; font-weight: 700; }
+    nav a { margin-left: 1rem; color: var(--text); }
+    nav a:first-child { margin-left: 0; }
+
+    main { padding: 2rem 0; }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.25rem 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    /* Guide layout */
+    .layout-guide {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 1.5rem;
+      align-items: stretch; /* ensure content column stretches full height */
+    }
+    .guide-sidebar {
+      border: 1px solid var(--border);
+      background: var(--sidebar-bg);
+      border-radius: 12px;
+      padding: 1rem;
+      position: sticky;
+      top: 4.25rem; /* below sticky header */
+      height: fit-content;
+      max-height: calc(100vh - 5rem);
+      overflow: auto;
+    }
+    .guide-sidebar h2 {
+      font-size: 0.95rem;
+      margin: 0 0 0.5rem 0;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .guide-toc {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0.98rem;
+    }
+    .guide-toc li {
+      margin: 0.15rem 0;
+    }
+    .guide-toc a {
+      color: var(--text);
+    }
+    .guide-toc a:hover {
+      text-decoration: underline;
+    }
+    .guide-content {
+      min-width: 0;
+      position: relative;
+    }
+    .guide-content.split-mode {
+      height: calc(100vh - 180px); /* fixed viewport-sized canvas */
+      overflow: hidden;            /* prevent page scrolling; panes scroll inside */
+    }
+    /* Split system (VSCode-like) */
+    .guide-content.drop-target {
+      outline: 2px dashed var(--link);
+      outline-offset: 6px;
+    }
+    .split {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      height: 100%;
+      min-height: 100%; /* fill the fixed guide-content height */
+    }
+    .split.vertical { flex-direction: row; }
+    .split.horizontal { flex-direction: column; }
+    .gutter {
+      flex: 0 0 6px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 2px,
+        var(--border) 2px,
+        var(--border) 3px
+      );
+    }
+    .gutter.vertical { cursor: col-resize; }
+    .gutter.horizontal {
+      cursor: row-resize;
+      height: 6px;
+      flex-basis: 6px;
+      background: repeating-linear-gradient(
+        180deg,
+        transparent,
+        transparent 2px,
+        var(--border) 2px,
+        var(--border) 3px
+      );
+    }
+    .pane {
+      border: none;            /* no inner border so content reaches edges */
+      border-radius: 0;        /* square edges for full-bleed look */
+      background: var(--bg);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .pane-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--accent);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .pane-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    .pane-body {
+      padding: 0;              /* fill to pane boundaries */
+      overflow: auto;          /* independent scrolling */
+      min-height: 0;
+    }
+    .pane-close {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .pane-close:hover { background: var(--accent); }
+    .split-preview {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(37, 99, 235, 0.08);
+      border: 2px dashed var(--link);
+      border-radius: 6px;
+      display: none;
+      top: 0; left: 0; right: 0; bottom: 0;
+    }
+    /* Floating text boxes (no window split) */
+    .float-box {
+      position: fixed; /* keep box fixed on page scroll */
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      width: 420px;
+      height: 300px;
+      min-width: 240px;
+      min-height: 160px;
+      overflow: hidden; /* required for resize */
+      resize: both;     /* user-resizable box */
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+    }
+    .float-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--accent);
+      cursor: move; /* for dragging the box */
+      user-select: none;
+    }
+    .float-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .float-close {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .float-close:hover { background: var(--accent); }
+    .float-body {
+      overflow: auto;   /* independent scrolling inside the box */
+      min-height: 0;
+      padding: 0.5rem 0.75rem;
+    }
+
+    /* Easier resizing: thick edge and corner handles */
+    .float-box .resizer {
+      position: absolute;
+      z-index: 2;
+      background: transparent; /* keep invisible but large hit area */
+    }
+    /* edges */
+    .float-box .resizer.e { top: 0; bottom: 0; right: -6px; width: 12px; cursor: ew-resize; }
+    .float-box .resizer.w { top: 0; bottom: 0; left:  -6px; width: 12px; cursor: ew-resize; }
+    .float-box .resizer.s { left: 0; right: 0; bottom: -6px; height: 12px; cursor: ns-resize; }
+    .float-box .resizer.n { left: 0; right: 0; top:    -6px; height: 12px; cursor: ns-resize; }
+    /* corners */
+    .float-box .resizer.se { right: -10px; bottom: -10px; width: 20px; height: 20px; cursor: nwse-resize; }
+    .float-box .resizer.ne { right: -10px; top:    -10px; width: 20px; height: 20px; cursor: nesw-resize; }
+    .float-box .resizer.sw { left:  -10px; bottom: -10px; width: 20px; height: 20px; cursor: nesw-resize; }
+    .float-box .resizer.nw { left:  -10px; top:    -10px; width: 20px; height: 20px; cursor: nwse-resize; }
+
+    .hero {
+      background: var(--accent);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1rem;
+      margin-bottom: 2rem;
+    }
+    article h1, article h2, article h3 { line-height: 1.3; }
+    pre { background: #0b1021; color: #e5e7eb; padding: 1rem; overflow: auto; border-radius: 8px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .muted { color: var(--muted); }
+
+    @media (max-width: 860px) {
+      .layout-guide {
+        grid-template-columns: 1fr;
+      }
+      .guide-sidebar {
+        position: relative;
+        top: 0;
+        max-height: none;
+        margin-bottom: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <h1 class="site-title"><a href="{{ '/' | relative_url }}">{{ site.title }}</a></h1>
+      <nav>
+        <a href="{{ '/' | relative_url }}">Home</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="layout-guide">
+      <aside class="guide-sidebar" aria-label="On this page">
+        <h2>On this page</h2>
+        <ul class="guide-toc"></ul>
+      </aside>
+      <article class="guide-content">
+        {{ content }}
+      </article>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      &copy; {{ "now" | date: "%Y" }} {{ site.author.name }}.
+    </div>
+  </footer>
+
+  <script>
+    // Build dynamic sidebar TOC from article headings (h2/h3)
+    document.addEventListener('DOMContentLoaded', function () {
+      const article = document.querySelector('.guide-content');
+      const toc = document.querySelector('.guide-toc');
+      if (!article || !toc) return;
+
+      // Track the current dragged section id as a fallback when DataTransfer is blocked
+      let currentDragId = null;
+
+      // CSS.escape polyfill (for older browsers)
+      if (!window.CSS || !CSS.escape) {
+        window.CSS = window.CSS || {};
+        CSS.escape = function (s) {
+          return String(s).replace(/[^a-zA-Z0-9_\-]/g, '\\$&');
+        };
+      }
+
+      const headings = article.querySelectorAll('h2, h3');
+      if (!headings.length) {
+        toc.innerHTML = '<li class="muted">No sections</li>';
+        return;
+      }
+
+      const slugify = (s) =>
+        s.toLowerCase()
+         .trim()
+         .replace(/[^\w\s-]/g, '')
+         .replace(/\s+/g, '-');
+
+      const used = new Set();
+
+      headings.forEach((h) => {
+        let id = h.getAttribute('id');
+        if (!id) {
+          const base = slugify(h.textContent || h.innerText || '');
+          let unique = base || 'section';
+          let i = 2;
+          while (used.has(unique) || document.getElementById(unique)) {
+            unique = base + '-' + i++;
+          }
+          id = unique;
+          h.id = id;
+        }
+        used.add(id);
+
+        const li = document.createElement('li');
+        if (h.tagName === 'H3') {
+          li.style.marginLeft = '1rem'; // indent second level
+        }
+        const a = document.createElement('a');
+        a.href = '#' + id;
+        a.textContent = h.textContent || h.innerText || id;
+
+        // Make TOC entries draggable
+        a.dataset.sectionId = id;
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = document.getElementById(id);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        a.setAttribute('draggable', 'true');
+        a.addEventListener('dragstart', (e) => {
+          currentDragId = id;
+          try { e.dataTransfer.setData('text/plain', id); } catch (_) {}
+          e.dataTransfer.effectAllowed = 'copy';
+        });
+
+        li.appendChild(a);
+        toc.appendChild(li);
+      });
+
+      // Floating box drop: create a text box where user drops
+      const dropTarget = document.body;
+      const highlightOn = () => dropTarget.classList.add('drop-target');
+      const highlightOff = () => dropTarget.classList.remove('drop-target');
+
+      let zCounter = 20;
+
+      dropTarget.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        highlightOn();
+      });
+
+      dropTarget.addEventListener('dragleave', () => { highlightOff(); });
+
+      dropTarget.addEventListener('drop', (e) => {
+        e.preventDefault();
+        highlightOff();
+
+        let id = '';
+        try { id = e.dataTransfer.getData('text/plain'); } catch (_) {}
+        if (!id) { id = currentDragId; }
+        currentDragId = null;
+        if (!id) return;
+
+        const content = collectSectionNodes(id);
+        if (!content) return;
+
+        const box = createFloatBox(content.title, content.nodes);
+        dropTarget.appendChild(box);
+
+        // Initial size
+        const defaultW = 420, defaultH = 300;
+
+        // Position box centered at drop point (viewport coordinates), clamped to viewport
+        const viewportW = document.documentElement.clientWidth;
+        const viewportH = document.documentElement.clientHeight;
+
+        let left = e.clientX - defaultW / 2;
+        let top  = e.clientY - 40; // account for header/title height
+
+        const minLeft = 0;
+        const maxLeft = viewportW - defaultW;
+        const minTop  = 0;
+        const maxTop  = viewportH - defaultH;
+
+        left = Math.max(minLeft, Math.min(left, maxLeft));
+        top  = Math.max(minTop,  Math.min(top,  maxTop));
+
+        box.style.left = left + 'px';
+        box.style.top  = top  + 'px';
+        box.style.width  = defaultW + 'px';
+        box.style.height = defaultH + 'px';
+        box.style.zIndex = (++zCounter).toString();
+      });
+
+      function createFloatBox(title, nodes) {
+        const box = document.createElement('div');
+        box.className = 'float-box';
+        box.style.left = '0px';
+        box.style.top = '0px';
+
+        const header = document.createElement('div');
+        header.className = 'float-header';
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'float-title';
+        titleEl.textContent = title;
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'float-close';
+        close.textContent = 'Close';
+        close.addEventListener('click', () => box.remove());
+
+        header.appendChild(titleEl);
+        header.appendChild(close);
+
+        const body = document.createElement('div');
+        body.className = 'float-body';
+        nodes.forEach(n => body.appendChild(n));
+
+        box.appendChild(header);
+        box.appendChild(body);
+
+        // Drag-move behavior via header
+        enableDragMove(box, header);
+        // Add visible resize handles on edges and corners
+        addResizeHandles(box);
+
+        // Bring to front on mousedown
+        box.addEventListener('mousedown', () => box.style.zIndex = (++zCounter).toString());
+
+        return box;
+      }
+
+      function enableDragMove(box, handle) {
+        let dragging = false;
+        let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+        const onMouseDown = (e) => {
+          dragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          startLeft = parseFloat(box.style.left || '0');
+          startTop  = parseFloat(box.style.top  || '0');
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+          e.preventDefault();
+        };
+
+        const onMouseMove = (e) => {
+          if (!dragging) return;
+
+          const viewportW = document.documentElement.clientWidth;
+          const viewportH = document.documentElement.clientHeight;
+          const boxRect = box.getBoundingClientRect();
+
+          let newLeft = startLeft + (e.clientX - startX);
+          let newTop  = startTop  + (e.clientY - startY);
+
+          // Clamp within current viewport (position: fixed uses viewport coords)
+          const minLeft = 0;
+          const maxLeft = viewportW - boxRect.width;
+          const minTop  = 0;
+          const maxTop  = viewportH - boxRect.height;
+
+          newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+          newTop  = Math.max(minTop,  Math.min(newTop,  maxTop));
+
+          box.style.left = newLeft + 'px';
+          box.style.top  = newTop  + 'px';
+        };
+
+        const onMouseUp = () => {
+          dragging = false;
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        };
+
+        handle.addEventListener('mousedown', onMouseDown);
+      }
+
+      function addResizeHandles(box) {
+        const handles = ['n','s','e','w','ne','nw','se','sw'];
+        handles.forEach(dir => {
+          const h = document.createElement('div');
+          h.className = 'resizer ' + dir;
+          box.appendChild(h);
+        });
+
+        const minW = 240;
+        const minH = 160;
+
+        function startResize(e, dir) {
+          e.preventDefault();
+          e.stopPropagation();
+          const startX = e.clientX;
+          const startY = e.clientY;
+          const rect = box.getBoundingClientRect();
+          const startLeft = rect.left;
+          const startTop  = rect.top;
+          const startW = rect.width;
+          const startH = rect.height;
+
+          const onMove = (ev) => {
+            ev.preventDefault();
+            const dx = ev.clientX - startX;
+            const dy = ev.clientY - startY;
+
+            let newLeft = startLeft;
+            let newTop  = startTop;
+            let newW = startW;
+            let newH = startH;
+
+            const vw = document.documentElement.clientWidth;
+            const vh = document.documentElement.clientHeight;
+
+            const applyClamp = () => {
+              // clamp sizes
+              newW = Math.max(minW, Math.min(newW, vw));
+              newH = Math.max(minH, Math.min(newH, vh));
+              // clamp positions so box stays in viewport
+              newLeft = Math.max(0, Math.min(newLeft, vw - newW));
+              newTop  = Math.max(0, Math.min(newTop,  vh - newH));
+            };
+
+            // Horizontal adjustments
+            if (dir.includes('e')) {
+              newW = startW + dx;
+            }
+            if (dir.includes('w')) {
+              newW = startW - dx;
+              newLeft = startLeft + dx;
+            }
+            // Vertical adjustments
+            if (dir.includes('s')) {
+              newH = startH + dy;
+            }
+            if (dir.includes('n')) {
+              newH = startH - dy;
+              newTop = startTop + dy;
+            }
+
+            applyClamp();
+            box.style.left = newLeft + 'px';
+            box.style.top  = newTop  + 'px';
+            box.style.width  = newW + 'px';
+            box.style.height = newH + 'px';
+          };
+
+          const onUp = () => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+          };
+
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        }
+
+        // attach events
+        box.querySelectorAll('.resizer').forEach(h => {
+          const dir = Array.from(h.classList).find(c => ['n','s','e','w','ne','nw','se','sw'].includes(c));
+          h.addEventListener('mousedown', (e) => startResize(e, dir || 'e'));
+        });
+      }
+
+      function collectSectionNodes(id) {
+        const heading = article.querySelector('#' + CSS.escape(id));
+        if (!heading) return null;
+        const nodes = [];
+        nodes.push(heading.cloneNode(true));
+        let node = heading.nextElementSibling;
+        while (node && !/^H2$/i.test(node.tagName)) {
+          nodes.push(node.cloneNode(true));
+          node = node.nextElementSibling;
+        }
+        return { title: heading.textContent || heading.innerText || 'Section', nodes };
+      }
+
+      function createPaneWithContent(title, nodes) {
+        const pane = document.createElement('div');
+        pane.className = 'pane';
+
+        const header = document.createElement('div');
+        header.className = 'pane-header';
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'pane-title';
+        titleEl.textContent = title;
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'pane-close';
+        close.textContent = 'Close';
+        close.addEventListener('click', () => {
+          const split = pane.parentElement;
+          pane.remove();
+          collapseIfSingle(split);
+          // If we returned to normal content (no panes), allow page to scroll again
+          if (!article.querySelector('.pane') && !article.querySelector('.split')) {
+            article.classList.remove('split-mode');
+          }
+        });
+
+        header.appendChild(titleEl);
+        header.appendChild(close);
+
+        const body = document.createElement('div');
+        body.className = 'pane-body';
+        nodes.forEach(n => body.appendChild(n));
+
+        pane.appendChild(header);
+        pane.appendChild(body);
+        return pane;
+      }
+
+      function createGutter(orientation, prevPane, nextPane, split) {
+        const gutter = document.createElement('div');
+        gutter.className = 'gutter ' + (orientation === 'vertical' ? 'vertical' : 'horizontal');
+
+        let dragging = false;
+        gutter.addEventListener('mousedown', () => dragging = true);
+        document.addEventListener('mouseup', () => dragging = false);
+        document.addEventListener('mousemove', (e) => {
+          if (!dragging) return;
+          const rect = split.getBoundingClientRect();
+          if (orientation === 'vertical') {
+            const x = Math.min(Math.max(e.clientX - rect.left, 120), rect.width - 120);
+            const leftPct = (x / rect.width) * 100;
+            prevPane.style.flexBasis = leftPct + '%';
+            nextPane.style.flexBasis = (100 - leftPct) + '%';
+          } else {
+            const y = Math.min(Math.max(e.clientY - rect.top, 120), rect.height - 120);
+            const topPct = (y / rect.height) * 100;
+            prevPane.style.flexBasis = topPct + '%';
+            nextPane.style.flexBasis = (100 - topPct) + '%';
+          }
+        });
+
+        return gutter;
+      }
+
+      // Visual split preview boundaries in the target pane
+      function showSplitPreview(pane, orientation, side) {
+        if (!pane) return;
+        let preview = pane.querySelector('.split-preview');
+        if (!preview) {
+          preview = document.createElement('div');
+          preview.className = 'split-preview';
+          pane.appendChild(preview);
+        }
+        preview.style.display = 'block';
+        // Reset to full and then clip half by adjusting sides
+        preview.style.top = '0'; preview.style.left = '0';
+        preview.style.right = '0'; preview.style.bottom = '0';
+
+        if (orientation === 'vertical') {
+          if (side === 'before') {
+            // left half
+            preview.style.right = '50%';
+          } else {
+            // right half
+            preview.style.left = '50%';
+          }
+        } else {
+          if (side === 'before') {
+            // top half
+            preview.style.bottom = '50%';
+          } else {
+            // bottom half
+            preview.style.top = '50%';
+          }
+        }
+      }
+      function clearSplitPreview() {
+        document.querySelectorAll('.split-preview').forEach(el => { el.style.display = 'none'; });
+      }
+
+      function splitPane(targetPane, orientation, side, id) {
+        const sec = collectSectionNodes(id);
+        if (!sec) return;
+
+        // Wrap targetPane into a split container
+        const parent = targetPane.parentElement;
+        const split = document.createElement('div');
+        split.className = 'split ' + (orientation === 'vertical' ? 'vertical' : 'horizontal');
+
+        // Build the new pane with content
+        const newPane = createPaneWithContent(sec.title, sec.nodes);
+
+        // Determine order
+        let firstPane, secondPane;
+        if (side === 'before') {
+          firstPane = newPane;
+          secondPane = targetPane;
+        } else {
+          firstPane = targetPane;
+          secondPane = newPane;
+        }
+
+        // Initialize sizes
+        firstPane.style.flex = '0 0 50%';
+        secondPane.style.flex = '0 0 50%';
+
+        // Assemble with gutter
+        const gutter = createGutter(orientation, firstPane, secondPane, split);
+        if (orientation === 'vertical') {
+          split.appendChild(firstPane);
+          split.appendChild(gutter);
+          split.appendChild(secondPane);
+        } else {
+          split.appendChild(firstPane);
+          split.appendChild(gutter);
+          split.appendChild(secondPane);
+        }
+
+        // Insert split at the original target position safely (even if targetPane was moved)
+        const placeholder = document.createComment('split-placeholder');
+        if (parent.contains(targetPane)) {
+          parent.replaceChild(placeholder, targetPane);
+        } else {
+          parent.appendChild(placeholder);
+        }
+        placeholder.parentNode.replaceChild(split, placeholder);
+      }
+
+      function collapseIfSingle(split) {
+        if (!split || !split.classList.contains('split')) return;
+        const panes = Array.from(split.children).filter(ch => ch.classList && ch.classList.contains('pane'));
+        if (panes.length === 1) {
+          // Replace the split with its only pane
+          split.parentElement.replaceChild(panes[0], split);
+        }
+      }
+
+      function ensureRootPane() {
+        // If any pane exists, return the first leaf pane under the article
+        const existingPane = article.querySelector('.pane');
+        if (existingPane) return existingPane;
+
+        // Create a single root pane with current article content
+        const pane = document.createElement('div');
+        pane.className = 'pane';
+
+        const header = document.createElement('div');
+        header.className = 'pane-header';
+        const titleEl = document.createElement('div');
+        titleEl.className = 'pane-title';
+        titleEl.textContent = document.title || 'Content';
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'pane-close';
+        close.textContent = 'Close';
+        close.addEventListener('click', () => {
+          // Remove pane contents back to article (rarely used before splits)
+          const bodyEl = pane.querySelector('.pane-body');
+          if (bodyEl) {
+            const frag = document.createDocumentFragment();
+            while (bodyEl.firstChild) frag.appendChild(bodyEl.firstChild);
+            while (article.firstChild) article.removeChild(article.firstChild);
+            article.appendChild(frag);
+          }
+          pane.remove();
+        });
+        header.appendChild(titleEl);
+        header.appendChild(close);
+
+        const body = document.createElement('div');
+        body.className = 'pane-body';
+        while (article.firstChild) body.appendChild(article.firstChild);
+
+        pane.appendChild(header);
+        pane.appendChild(body);
+        article.appendChild(pane);
+        return pane;
+      }
+
+      function findPaneAt(x, y) {
+        const el = document.elementFromPoint(x, y);
+        if (!el) return null;
+        return el.closest && el.closest('.pane') && article.contains(el.closest('.pane'))
+          ? el.closest('.pane')
+          : article.querySelector('.pane');
+      }
+
+    });
+  </script>
+</body>
+</html>

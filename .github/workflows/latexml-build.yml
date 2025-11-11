@@ -1,0 +1,260 @@
+name: LaTeXML build
+
+on:
+  workflow_dispatch:
+    inputs:
+      arxiv_id:
+        description: "arXiv ID (e.g., 2508.12631 or 2508.12631v2)"
+        required: false
+        default: ""
+      archive_url:
+        description: "Optional URL to a .zip or .tar(.gz) LaTeX project"
+        required: false
+        default: ""
+      main_tex:
+        description: "Main TeX file path relative to project root (if known)"
+        required: false
+        default: "main.tex"
+      output_slug:
+        description: "Output folder under latexml/ (e.g., 2508.12631v2)"
+        required: true
+        default: "paper"
+  issues:
+    types: [opened, edited, labeled]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare workspace
+        run: |
+          mkdir -p paper out latexml
+
+      - name: Determine trigger and inputs
+        id: detect_trigger
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: |
+          echo "event_name=$GITHUB_EVENT_NAME" >> $GITHUB_OUTPUT
+
+      - name: Gather inputs (workflow_dispatch)
+        id: gather_wd
+        if: ${{ steps.detect_trigger.outputs.event_name == 'workflow_dispatch' }}
+        run: |
+          echo "arxiv_id=${{ github.event.inputs.arxiv_id }}" >> $GITHUB_OUTPUT
+          echo "archive_url=${{ github.event.inputs.archive_url }}" >> $GITHUB_OUTPUT
+          echo "main_tex=${{ github.event.inputs.main_tex }}" >> $GITHUB_OUTPUT
+          echo "output_slug=${{ github.event.inputs.output_slug }}" >> $GITHUB_OUTPUT
+
+      - name: Gather inputs (issues)
+        id: gather_issue
+        if: ${{ steps.detect_trigger.outputs.event_name == 'issues' }}
+        env:
+          EVENT_PATH: ${{ github.event_path }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+          body=$(jq -r '.issue.body // ""' "$EVENT_PATH")
+          labels=$(jq -r '.issue.labels[].name // empty' "$EVENT_PATH" | tr '\n' ' ')
+          title=$(jq -r '.issue.title // ""' "$EVENT_PATH")
+
+          # Only proceed if labeled 'latex-upload' OR title contains 'latex'
+          if ! echo "$labels $title" | grep -qiE 'latex-upload|latex'; then
+            echo "Issue not marked for LaTeX upload (needs label 'latex-upload' or 'latex' in title). Skipping."
+            echo "skip_build=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Extract first archive URL (.zip|.tar|.tar.gz|.tgz) from body
+          archive_url=$(echo "$body" | grep -Eo '(https?://[^) \"]+\.(zip|tar|tar\.gz|tgz))' | head -n1 || true)
+          if [ -z "$archive_url" ]; then
+            echo "No archive URL found in issue body. Provide a link to a .zip or .tar(.gz)."
+          fi
+
+          # Extract optional output slug
+          # Accept lines like: output_slug: my-paper-123
+          output_slug=$(echo "$body" | awk -F':' '/^[[:space:]]*output_slug[[:space:]]*:/ {gsub(/^[[:space:]]+|[[:space:]]+$/,"",$2); print $2; exit}')
+          if [ -z "$output_slug" ]; then
+            # Derive from title or fallback
+            output_slug=$(echo "$title" | tr ' ' '-' | tr -cd '[:alnum:]-' | tr '[:upper:]' '[:lower:]')
+            [ -z "$output_slug" ] && output_slug="paper-${GITHUB_RUN_ID}"
+          fi
+
+          # Extract optional main tex
+          main_tex=$(echo "$body" | awk -F':' '/^[[:space:]]*main_tex[[:space:]]*:/ {gsub(/^[[:space:]]+|[[:space:]]+$/,"",$2); print $2; exit}')
+          [ -z "$main_tex" ] && main_tex="main.tex"
+
+          echo "archive_url=$archive_url" >> $GITHUB_OUTPUT
+          echo "output_slug=$output_slug" >> $GITHUB_OUTPUT
+          echo "main_tex=$main_tex" >> $GITHUB_OUTPUT
+          echo "skip_build=false" >> $GITHUB_OUTPUT
+
+      - name: Stop if issue not applicable
+        if: ${{ steps.detect_trigger.outputs.event_name == 'issues' && steps.gather_issue.outputs.skip_build == 'true' }}
+        run: echo "Skipping non-latex issue."
+
+      - name: Fetch arXiv source (workflow_dispatch)
+        if: ${{ steps.detect_trigger.outputs.event_name == 'workflow_dispatch' && steps.gather_wd.outputs.arxiv_id != '' }}
+        run: |
+          set -e
+          echo "Downloading arXiv source for ${{ steps.gather_wd.outputs.arxiv_id }} ..."
+          curl -sSL "https://arxiv.org/src/${{ steps.gather_wd.outputs.arxiv_id }}" -o paper.tar.gz
+          tar -xzf paper.tar.gz -C paper || tar -xf paper.tar.gz -C paper
+
+      - name: Fetch archive URL (workflow_dispatch)
+        if: ${{ steps.detect_trigger.outputs.event_name == 'workflow_dispatch' && steps.gather_wd.outputs.archive_url != '' }}
+        run: |
+          set -e
+          echo "Downloading LaTeX archive: ${{ steps.gather_wd.outputs.archive_url }}"
+          curl -sSL "${{ steps.gather_wd.outputs.archive_url }}" -o paper.bin
+          if file paper.bin | grep -qi zip; then
+            sudo apt-get update >/dev/null 2>&1 || true
+            sudo apt-get install -y unzip >/dev/null 2>&1 || true
+            unzip -q paper.bin -d paper
+          else
+            tar -xzf paper.bin -C paper || tar -xf paper.bin -C paper
+          fi
+
+      - name: Fetch archive URL (issues)
+        if: ${{ steps.detect_trigger.outputs.event_name == 'issues' && steps.gather_issue.outputs.archive_url != '' }}
+        run: |
+          set -e
+          echo "Downloading LaTeX archive from issue: ${{ steps.gather_issue.outputs.archive_url }}"
+          curl -sSL "${{ steps.gather_issue.outputs.archive_url }}" -o paper.bin
+          if file paper.bin | grep -qi zip; then
+            sudo apt-get update >/dev/null 2>&1 || true
+            sudo apt-get install -y unzip >/dev/null 2>&1 || true
+            unzip -q paper.bin -d paper
+          else
+            tar -xzf paper.bin -C paper || tar -xf paper.bin -C paper
+          fi
+
+      - name: Fallback to repo folder (no inputs provided)
+        if: ${{ (steps.detect_trigger.outputs.event_name == 'workflow_dispatch' && steps.gather_wd.outputs.arxiv_id == '' && steps.gather_wd.outputs.archive_url == '') || (steps.detect_trigger.outputs.event_name == 'issues' && steps.gather_issue.outputs.archive_url == '') }}
+        run: |
+          if [ -d "latex" ]; then
+            echo "Using latex/ folder from repo."
+            rsync -a latex/ paper/
+          else
+            echo "No arXiv/archive provided and no latex/ folder. Nothing to convert."
+            exit 1
+          fi
+
+      - name: Detect main tex
+        id: detect_main
+        run: |
+          # Decide main_tex based on trigger source
+          if [ "${{ steps.detect_trigger.outputs.event_name }}" = "workflow_dispatch" ]; then
+            MAIN="${{ steps.gather_wd.outputs.main_tex }}"
+          else
+            MAIN="${{ steps.gather_issue.outputs.main_tex }}"
+          fi
+
+          if [ ! -f "paper/$MAIN" ]; then
+            MATCH=$(find paper -maxdepth 3 -type f -name "*.tex" | head -n1)
+            if [ -z "$MATCH" ]; then
+              echo "No .tex file found." >&2
+              exit 1
+            fi
+            MAIN="${MATCH#paper/}"
+          fi
+
+          echo "main=$MAIN" >> $GITHUB_OUTPUT
+          echo "Main TeX: $MAIN"
+
+      - name: Pull LaTeXML docker image
+        run: docker pull latexml/latexml:latest
+
+      - name: Convert with LaTeXML
+        run: |
+          set -e
+          echo "Converting ${{ steps.detect_main.outputs.main }} ..."
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE/paper:/data" \
+            -v "$GITHUB_WORKSPACE/out:/out" \
+            latexml/latexml:latest \
+            latexmlc --format=html5 --destination=/out/index.html \
+                     --noparse-errors --path=/data "${{ steps.detect_main.outputs.main }}"
+          ls -lah out/ || true
+
+      - name: Decide output slug
+        id: decide_slug
+        run: |
+          if [ "${{ steps.detect_trigger.outputs.event_name }}" = "workflow_dispatch" ]; then
+            SLUG="${{ steps.gather_wd.outputs.output_slug }}"
+          else
+            SLUG="${{ steps.gather_issue.outputs.output_slug }}"
+          fi
+          [ -z "$SLUG" ] && SLUG="paper-${GITHUB_RUN_ID}"
+          echo "slug=$SLUG" >> $GITHUB_OUTPUT
+          echo "Output slug: $SLUG"
+
+      - name: Wrap LaTeXML HTML with guide layout
+        run: |
+          set -e
+          slug="${{ steps.decide_slug.outputs.slug }}"
+          mkdir -p "latexml/${slug}"
+          # Copy raw output first (resources, images, etc.)
+          rsync -a out/ "latexml/${slug}/"
+
+          # Extract title from LaTeXML head
+          TITLE=$(sed -n 's/.*<title>\(.*\)<\/title>.*/\1/p' out/index.html | head -n1)
+          if [ -z "$TITLE" ]; then TITLE="LaTeXML: ${slug}"; fi
+          # Escape double quotes in title for YAML
+          TITLE_ESC=$(printf '%s\n' "$TITLE" | sed 's/"/\\"/g')
+
+          # Extract body into a temp file using Python (handles multi-line robustly)
+          python3 - << 'PY'
+import re, sys, pathlib
+html = pathlib.Path("out/index.html").read_text(encoding="utf-8", errors="ignore")
+m = re.search(r"<body[^>]*>([\\s\\S]*?)</body>", html, flags=re.I)
+body = m.group(1) if m else html
+pathlib.Path("out/__body__.html").write_text(body, encoding="utf-8")
+PY
+
+          # Compose Jekyll page using guide layout and inject LaTeXML body
+          {
+            echo "---"
+            echo "layout: guide"
+            echo "title: \"${TITLE_ESC}\""
+            echo "permalink: /latexml/${slug}/"
+            echo "---"
+            echo
+            echo "<div class=\"latexml-content\">"
+            cat out/__body__.html
+            echo "</div>"
+          } > "latexml/${slug}/index.html"
+
+          echo "Wrapped LaTeXML HTML with site guide layout → latexml/${slug}/index.html"
+
+      - name: Copy output into site
+        run: |
+          set -e
+          echo "Output path: latexml/${{ steps.decide_slug.outputs.slug }}/index.html"
+
+      - name: Commit build to repo
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add latexml/
+          git commit -m "LaTeXML build: ${{ steps.decide_slug.outputs.slug }}" || echo "No changes to commit"
+          git push
+
+      - name: Post issue comment with link (issues)
+        if: ${{ steps.detect_trigger.outputs.event_name == 'issues' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          issue_number="${{ github.event.issue.number }}"
+          slug="${{ steps.decide_slug.outputs.slug }}"
+          url="https://${{ github.repository_owner }}.github.io/${REPO#*/}/latexml/${slug}/"
+          gh api repos/$REPO/issues/$issue_number/comments -f body="LaTeXML HTML published: $url"
