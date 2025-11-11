@@ -210,14 +210,14 @@ jobs:
           # Escape double quotes in title for YAML
           TITLE_ESC=$(printf '%s\n' "$TITLE" | sed 's/"/\\"/g')
 
-          # Extract body into a temp file using Python (handles multi-line robustly)
-          python3 - << 'PY'
-import re, sys, pathlib
-html = pathlib.Path("out/index.html").read_text(encoding="utf-8", errors="ignore")
-m = re.search(r"<body[^>]*>([\\s\\S]*?)</body>", html, flags=re.I)
-body = m.group(1) if m else html
-pathlib.Path("out/__body__.html").write_text(body, encoding="utf-8")
-PY
+          # Extract body content using sed between <body> and </body>.
+          # If not found, fallback to whole file.
+          if sed -n '/<body[^>]*>/,/<\/body>/p' out/index.html | sed '1d;$d' > out/__body__.html; then
+            echo "Extracted body into out/__body__.html"
+          else
+            echo "Could not extract body; using full file"
+            cp out/index.html out/__body__.html
+          fi
 
           # Compose Jekyll page using guide layout and inject LaTeXML body
           {
