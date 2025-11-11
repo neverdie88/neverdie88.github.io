@@ -59,8 +59,6 @@ graph TD
   end
 ```
 
-If the diagram does not render, it will display as a code block. See “Mermaid rendering” at the end of this page for an optional client-side renderer.
-
 ---
 
 ## 3) Pipeline Description
@@ -138,18 +136,3 @@ If the diagram does not render, it will display as a code block. See “Mermaid 
 - Provider/model choice affects latency and style; keep prompts strict and stable.
 - Use exports to version generated docs alongside source code.
 - For multi-language repos, ensure language is specified in prompts and UI.
-
----
-
-## Mermaid rendering (optional)
-
-This page uses a Mermaid code block for the pipeline diagram. If your browser does not render it automatically, you can enable client-side rendering by adding the following script. GitHub Pages allows inline scripts, so you can keep this in-page if desired.
-
-```html
-<script type="module">
-  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
-  mermaid.initialize({ startOnLoad: true, theme: "default" });
-</script>
-```
-
-Alternatively, leave the diagram as a fenced code block for readability without a runtime.
