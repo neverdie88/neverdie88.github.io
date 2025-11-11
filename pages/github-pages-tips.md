@@ -204,6 +204,118 @@ Notes:
 
 ---
 
+## GitHub Actions: Jekyll build for Pages (recommended)
+
+When using GitHub Actions to build and deploy Jekyll to Pages, use a supported workflow. Avoid non-existent actions like `actions/jekyll-build`.
+
+Example (known-good) workflow:
+```yaml
+name: Deploy Jekyll site to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3' # If native gem issues, try '3.2'
+          bundler-cache: true
+
+      - name: Build with Jekyll
+        run: bundle exec jekyll build -d ./_site --trace
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+```
+
+### Troubleshooting: "Unable to resolve action actions/jekyll-build"
+- Symptom: GitHub Actions fails with “Unable to resolve action actions/jekyll-build, repository not found”.
+- Cause: `actions/jekyll-build` is not a valid GitHub Action.
+- Fix:
+  - Replace that step with:
+    - `ruby/setup-ruby@v1` to install Ruby and cache gems
+    - `bundle exec jekyll build -d ./_site` to build the site
+    - Keep `actions/configure-pages@v5`, `actions/upload-pages-artifact@v3`, and `actions/deploy-pages@v4`
+- Also check:
+  - Repo Settings → Pages → Build and deployment → Source = “GitHub Actions”
+  - Gemfile contains either:
+    - `gem "github-pages", group: :jekyll_plugins` (parity with GitHub Pages environment), or
+    - `gem "jekyll"` plus any plugins you need (Actions builds are not restricted by the Pages plugin allowlist)
+  - If bundler/gems fail on Actions, try `ruby-version: '3.2'` as a fallback for native extensions.
+
+---
+
+## Navigation updates across layouts
+
+If you add a new guide page (e.g., `/guide/deepwiki/`), update the top nav in both layouts for consistency:
+- `_layouts/default.html` (site-wide pages)
+- `_layouts/guide.html` (guide pages with sidebar)
+
+Use `relative_url` so links work with or without a `baseurl`.
+
+{% raw %}
+```html
+<nav>
+  <a href="{{ '/' | relative_url }}">Home</a>
+  <a href="{{ '/guide/latexml-builder/' | relative_url }}">LaTeXML Builder</a>
+  <a href="{{ '/guide/deepwiki/' | relative_url }}">DeepWiki</a>
+</nav>
+```
+{% endraw %}
+
+---
+
+## Mermaid diagrams on GitHub Pages (optional)
+
+Mermaid in Markdown code fences renders as plain text by default. For in-browser rendering, include a client-side script:
+
+```html
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "default" });
+</script>
+```
+
+Notes:
+- Inline scripts are allowed on GitHub Pages (no special plugin needed).
+- If you use a strict Content Security Policy (CSP), adjust it to permit the CDN or self-host Mermaid.
+
+---
+
 ## URLs and baseurl gotchas
 
 - For user sites (`<username>.github.io`), `baseurl` is often empty.
