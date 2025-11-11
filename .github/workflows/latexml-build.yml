@@ -1,29 +1,26 @@
-name: LaTeXML build
+name: LaTeX to HTML (LaTeXML)
 
 on:
   workflow_dispatch:
     inputs:
-      arxiv_id:
-        description: "arXiv ID (e.g., 2508.12631 or 2508.12631v2)"
-        required: false
-        default: ""
       archive_url:
-        description: "Optional URL to a .zip or .tar(.gz) LaTeX project"
+        description: "URL to a .tex or .zip/.tar(.gz) LaTeX project"
         required: false
         default: ""
       main_tex:
-        description: "Main TeX file path relative to project root (if known)"
+        description: "Main TeX file path (defaults to main.tex or auto-detected)"
         required: false
         default: "main.tex"
       output_slug:
-        description: "Output folder under latexml/ (e.g., 2508.12631v2)"
+        description: "Name for the downloadable artifact (e.g., my-paper)"
         required: true
         default: "paper"
   issues:
     types: [opened, edited, labeled]
 
 permissions:
-  contents: write
+  contents: read
+  issues: write
 
 jobs:
   build:
@@ -35,20 +32,18 @@ jobs:
 
       - name: Prepare workspace
         run: |
-          mkdir -p paper out latexml
+          set -e
+          mkdir -p paper out
 
-      - name: Determine trigger and inputs
+      - name: Determine trigger
         id: detect_trigger
-        env:
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
-          echo "event_name=$GITHUB_EVENT_NAME" >> $GITHUB_OUTPUT
+          echo "event_name=${{ github.event_name }}" >> $GITHUB_OUTPUT
 
       - name: Gather inputs (workflow_dispatch)
         id: gather_wd
         if: ${{ steps.detect_trigger.outputs.event_name == 'workflow_dispatch' }}
         run: |
-          echo "arxiv_id=${{ github.event.inputs.arxiv_id }}" >> $GITHUB_OUTPUT
           echo "archive_url=${{ github.event.inputs.archive_url }}" >> $GITHUB_OUTPUT
           echo "main_tex=${{ github.event.inputs.main_tex }}" >> $GITHUB_OUTPUT
           echo "output_slug=${{ github.event.inputs.output_slug }}" >> $GITHUB_OUTPUT
@@ -58,114 +53,143 @@ jobs:
         if: ${{ steps.detect_trigger.outputs.event_name == 'issues' }}
         env:
           EVENT_PATH: ${{ github.event_path }}
-          REPO: ${{ github.repository }}
         run: |
           set -e
           body=$(jq -r '.issue.body // ""' "$EVENT_PATH")
           labels=$(jq -r '.issue.labels[].name // empty' "$EVENT_PATH" | tr '\n' ' ')
           title=$(jq -r '.issue.title // ""' "$EVENT_PATH")
 
-          # Only proceed if labeled 'latex-upload' OR title contains 'latex' OR body has an arXiv link
-          if ! echo "$labels $title $body" | grep -qiE 'latex-upload|latex|arxiv\.org/(abs|src)/[0-9]+\.[0-9]+'; then
-            echo "Issue not marked for LaTeX upload (add label 'latex-upload', include 'latex' in title, or include an arXiv link). Skipping."
+          # Gate: require label 'latex-upload' OR 'latex' in title
+          if ! echo "$labels $title" | grep -qiE 'latex-upload|latex'; then
             echo "skip_build=true" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          # Extract first archive URL (.zip|.tar|.tar.gz|.tgz) from body
-          archive_url=$(echo "$body" | grep -Eo '(https?://[^) \"]+\.(zip|tar|tar\.gz|tgz))' | head -n1 || true)
-          if [ -z "$archive_url" ]; then
-            echo "No archive URL found in issue body. Provide a link to a .zip or .tar(.gz)."
-          fi
-
-          # Extract optional output slug
-          # Accept lines like: output_slug: my-paper-123
+          # Parse fields from body
+          # output_slug: prefer explicit, else derive from title, else fallback
           output_slug=$(echo "$body" | awk -F':' '/^[[:space:]]*output_slug[[:space:]]*:/ {gsub(/^[[:space:]]+|[[:space:]]+$/,"",$2); print $2; exit}')
           if [ -z "$output_slug" ]; then
-            # Derive from title or fallback
             output_slug=$(echo "$title" | tr ' ' '-' | tr -cd '[:alnum:]-' | tr '[:upper:]' '[:lower:]')
             [ -z "$output_slug" ] && output_slug="paper-${GITHUB_RUN_ID}"
           fi
 
-          # Extract optional main tex
           main_tex=$(echo "$body" | awk -F':' '/^[[:space:]]*main_tex[[:space:]]*:/ {gsub(/^[[:space:]]+|[[:space:]]+$/,"",$2); print $2; exit}')
           [ -z "$main_tex" ] && main_tex="main.tex"
 
-          # Extract arXiv id from body or explicit field
-          arxiv_id=$(echo "$body" | awk -F':' '/^[[:space:]]*arxiv_id[[:space:]]*:/ {gsub(/^[[:space:]]+|[[:space:]]+$/,"",$2); print $2; exit}')
-          if [ -z "$arxiv_id" ]; then
-            arxiv_id=$(echo "$body" | grep -Eo 'arxiv\.org/(abs|src)/[0-9]+\.[0-9]+(v[0-9]+)?' | sed -E 's#.*/(abs|src)/##' | head -n1 || true)
-          fi
+          # First URL found in the body (any). We'll detect the type after download.
+          source_url=$(echo "$body" | grep -Eo '(https?://[^) "\r\n]+)' | head -n1 || true)
 
-          echo "archive_url=$archive_url" >> $GITHUB_OUTPUT
           echo "output_slug=$output_slug" >> $GITHUB_OUTPUT
           echo "main_tex=$main_tex" >> $GITHUB_OUTPUT
-          echo "arxiv_id=$arxiv_id" >> $GITHUB_OUTPUT
+          echo "source_url=$source_url" >> $GITHUB_OUTPUT
           echo "skip_build=false" >> $GITHUB_OUTPUT
 
       - name: Stop if issue not applicable
         if: ${{ steps.detect_trigger.outputs.event_name == 'issues' && steps.gather_issue.outputs.skip_build == 'true' }}
-        run: echo "Skipping non-latex issue."
+        run: echo "Skipping: Issue missing label/title signal."
 
-      - name: Fetch arXiv source (workflow_dispatch)
-        if: ${{ steps.detect_trigger.outputs.event_name == 'workflow_dispatch' && steps.gather_wd.outputs.arxiv_id != '' }}
-        run: |
-          set -e
-          echo "Downloading arXiv source for ${{ steps.gather_wd.outputs.arxiv_id }} ..."
-          curl -sSL "https://arxiv.org/src/${{ steps.gather_wd.outputs.arxiv_id }}" -o paper.tar.gz
-          tar -xzf paper.tar.gz -C paper || tar -xf paper.tar.gz -C paper
-
-      - name: Fetch archive URL (workflow_dispatch)
+      - name: Fetch source (workflow_dispatch)
         if: ${{ steps.detect_trigger.outputs.event_name == 'workflow_dispatch' && steps.gather_wd.outputs.archive_url != '' }}
         run: |
           set -e
-          echo "Downloading LaTeX archive: ${{ steps.gather_wd.outputs.archive_url }}"
-          curl -sSL "${{ steps.gather_wd.outputs.archive_url }}" -o paper.bin
-          if file paper.bin | grep -qi zip; then
-            sudo apt-get update >/dev/null 2>&1 || true
-            sudo apt-get install -y unzip >/dev/null 2>&1 || true
-            unzip -q paper.bin -d paper
-          else
-            tar -xzf paper.bin -C paper || tar -xf paper.bin -C paper
-          fi
+          url="${{ steps.gather_wd.outputs.archive_url }}"
+          echo "Downloading: $url"
+          curl -sSL -D headers.txt "$url" -o paper.bin
+          sudo apt-get update >/dev/null 2>&1 || true
+          sudo apt-get install -y unzip >/dev/null 2>&1 || true
+          mime=$(file -b --mime-type paper.bin || true)
+          name=$(grep -i '^content-disposition:' headers.txt | sed -E 's/.*filename="?([^";]+).*/\1/i' | tr -d '\r' || true)
+          [ -z "$name" ] && name="$(basename "${url%%\?*}")"
+          echo "Detected mime=$mime name=$name"
+          if [ -z "$mime" ]; then mime=$(file -b paper.bin || true); fi
 
-      - name: Fetch archive URL (issues)
-        if: ${{ steps.detect_trigger.outputs.event_name == 'issues' && steps.gather_issue.outputs.archive_url != '' }}
+          case "$mime" in
+            text/plain|application/x-tex)
+              cp paper.bin "paper/${{ steps.gather_wd.outputs.main_tex }}"
+              ;;
+            application/zip|application/x-zip|application/x-zip-compressed)
+              unzip -q paper.bin -d paper
+              ;;
+            application/gzip|application/x-gzip)
+              tar -xzf paper.bin -C paper || true
+              ;;
+            application/x-tar|application/x-gtar|application/x-archive|application/octet-stream)
+              tar -xzf paper.bin -C paper || tar -xf paper.bin -C paper || {
+                if echo "$name" | grep -qiE '\.tex$'; then cp paper.bin "paper/${{ steps.gather_wd.outputs.main_tex }}"; else echo "Unknown archive type"; fi
+              }
+              ;;
+            *)
+              if echo "$name" | grep -qiE '\.tex$'; then
+                cp paper.bin "paper/${{ steps.gather_wd.outputs.main_tex }}"
+              elif echo "$name" | grep -qiE '\.(zip|tgz|tar\.gz|tar)$'; then
+                tar -xzf paper.bin -C paper || tar -xf paper.bin -C paper || unzip -q paper.bin -d paper || true
+              else
+                unzip -q paper.bin -d paper || tar -xzf paper.bin -C paper || tar -xf paper.bin -C paper || {
+                  echo "Unable to detect file type. Provide a .tex or archive URL." >&2; exit 1;
+                }
+              fi
+              ;;
+          esac
+
+      - name: Fetch source (issues)
+        if: ${{ steps.detect_trigger.outputs.event_name == 'issues' && steps.gather_issue.outputs.source_url != '' }}
         run: |
           set -e
-          echo "Downloading LaTeX archive from issue: ${{ steps.gather_issue.outputs.archive_url }}"
-          curl -sSL "${{ steps.gather_issue.outputs.archive_url }}" -o paper.bin
-          if file paper.bin | grep -qi zip; then
-            sudo apt-get update >/dev/null 2>&1 || true
-            sudo apt-get install -y unzip >/dev/null 2>&1 || true
-            unzip -q paper.bin -d paper
-          else
-            tar -xzf paper.bin -C paper || tar -xf paper.bin -C paper
-          fi
+          url="${{ steps.gather_issue.outputs.source_url }}"
+          echo "Downloading: $url"
+          curl -sSL -D headers.txt "$url" -o paper.bin
+          sudo apt-get update >/dev/null 2>&1 || true
+          sudo apt-get install -y unzip >/dev/null 2>&1 || true
+          mime=$(file -b --mime-type paper.bin || true)
+          name=$(grep -i '^content-disposition:' headers.txt | sed -E 's/.*filename="?([^";]+).*/\1/i' | tr -d '\r' || true)
+          [ -z "$name" ] && name="$(basename "${url%%\?*}")"
+          echo "Detected mime=$mime name=$name"
+          if [ -z "$mime" ]; then mime=$(file -b paper.bin || true); fi
 
-      - name: Fetch arXiv source (issues)
-        if: ${{ steps.detect_trigger.outputs.event_name == 'issues' && steps.gather_issue.outputs.arxiv_id != '' }}
+          case "$mime" in
+            text/plain|application/x-tex)
+              cp paper.bin "paper/${{ steps.gather_issue.outputs.main_tex }}"
+              ;;
+            application/zip|application/x-zip|application/x-zip-compressed)
+              unzip -q paper.bin -d paper
+              ;;
+            application/gzip|application/x-gzip)
+              tar -xzf paper.bin -C paper || true
+              ;;
+            application/x-tar|application/x-gtar|application/x-archive|application/octet-stream)
+              tar -xzf paper.bin -C paper || tar -xf paper.bin -C paper || {
+                if echo "$name" | grep -qiE '\.tex$'; then cp paper.bin "paper/${{ steps.gather_issue.outputs.main_tex }}"; else echo "Unknown archive type"; fi
+              }
+              ;;
+            *)
+              if echo "$name" | grep -qiE '\.tex$'; then
+                cp paper.bin "paper/${{ steps.gather_issue.outputs.main_tex }}"
+              elif echo "$name" | grep -qiE '\.(zip|tgz|tar\.gz|tar)$'; then
+                tar -xzf paper.bin -C paper || tar -xf paper.bin -C paper || unzip -q paper.bin -d paper || true
+              else
+                unzip -q paper.bin -d paper || tar -xzf paper.bin -C paper || tar -xf paper.bin -C paper || {
+                  echo "Unable to detect file type. Provide a .tex or archive URL." >&2; exit 1;
+                }
+              fi
+              ;;
+          esac
+
+      - name: Fallback to repo latex/ (optional)
+        if: ${{ (steps.detect_trigger.outputs.event_name == 'workflow_dispatch' && steps.gather_wd.outputs.archive_url == '') || (steps.detect_trigger.outputs.event_name == 'issues' && steps.gather_issue.outputs.source_url == '') }}
         run: |
           set -e
-          echo "Downloading arXiv source for ${{ steps.gather_issue.outputs.arxiv_id }} ..."
-          curl -sSL "https://arxiv.org/src/${{ steps.gather_issue.outputs.arxiv_id }}" -o paper.tar.gz
-          tar -xzf paper.tar.gz -C paper || tar -xf paper.tar.gz -C paper
-
-      - name: Fallback to repo folder (no inputs provided)
-        if: ${{ (steps.detect_trigger.outputs.event_name == 'workflow_dispatch' && steps.gather_wd.outputs.arxiv_id == '' && steps.gather_wd.outputs.archive_url == '') || (steps.detect_trigger.outputs.event_name == 'issues' && steps.gather_issue.outputs.archive_url == '' && steps.gather_issue.outputs.arxiv_id == '') }}
-        run: |
           if [ -d "latex" ]; then
             echo "Using latex/ folder from repo."
             rsync -a latex/ paper/
           else
-            echo "No arXiv/archive provided and no latex/ folder. Nothing to convert."
+            echo "No source provided and no latex/ folder. Nothing to convert."
             exit 1
           fi
 
       - name: Detect main tex
         id: detect_main
         run: |
-          # Decide main_tex based on trigger source
+          set -e
           if [ "${{ steps.detect_trigger.outputs.event_name }}" = "workflow_dispatch" ]; then
             MAIN="${{ steps.gather_wd.outputs.main_tex }}"
           else
@@ -173,6 +197,7 @@ jobs:
           fi
 
           if [ ! -f "paper/$MAIN" ]; then
+            # Try to auto-detect a single .tex
             MATCH=$(find paper -maxdepth 3 -type f -name "*.tex" | head -n1)
             if [ -z "$MATCH" ]; then
               echo "No .tex file found." >&2
@@ -199,124 +224,49 @@ jobs:
                      --noparse-errors --path=/data "${{ steps.detect_main.outputs.main }}"
           ls -lah out/ || true
 
-      - name: Decide output slug
+      - name: Decide artifact name (slug)
         id: decide_slug
         run: |
           if [ "${{ steps.detect_trigger.outputs.event_name }}" = "workflow_dispatch" ]; then
             SLUG="${{ steps.gather_wd.outputs.output_slug }}"
-            ARXIV="${{ steps.gather_wd.outputs.arxiv_id }}"
           else
             SLUG="${{ steps.gather_issue.outputs.output_slug }}"
-            ARXIV="${{ steps.gather_issue.outputs.arxiv_id }}"
-          fi
-          if [ -z "$SLUG" ] && [ -n "$ARXIV" ]; then
-            SLUG="$ARXIV"
           fi
           [ -z "$SLUG" ] && SLUG="paper-${GITHUB_RUN_ID}"
           echo "slug=$SLUG" >> $GITHUB_OUTPUT
-          echo "Output slug: $SLUG"
+          echo "Artifact name: $SLUG"
 
-      - name: Wrap LaTeXML HTML with guide layout
-        run: |
-          set -e
-          slug="${{ steps.decide_slug.outputs.slug }}"
-          mkdir -p "latexml/${slug}"
-          # Copy raw output first (resources, images, etc.)
-          rsync -a out/ "latexml/${slug}/"
-
-          # Extract title from LaTeXML head
-          TITLE=$(sed -n 's/.*<title>\(.*\)<\/title>.*/\1/p' out/index.html | head -n1)
-          if [ -z "$TITLE" ]; then TITLE="LaTeXML: ${slug}"; fi
-          # Escape double quotes in title for YAML
-          TITLE_ESC=$(printf '%s\n' "$TITLE" | sed 's/"/\\"/g')
-
-          # Extract body content using sed between <body> and </body>.
-          # If not found, fallback to whole file.
-          if sed -n '/<body[^>]*>/,/<\/body>/p' out/index.html | sed '1d;$d' > out/__body__.html; then
-            echo "Extracted body into out/__body__.html"
-          else
-            echo "Could not extract body; using full file"
-            cp out/index.html out/__body__.html
-          fi
-
-          # Compose Jekyll page using guide layout and inject LaTeXML body
-          {
-            echo "---"
-            echo "layout: guide"
-            echo "title: \"${TITLE_ESC}\""
-            echo "permalink: /latexml/${slug}/"
-            echo "---"
-            echo
-            echo "<div class=\"latexml-content\">"
-            cat out/__body__.html
-            echo "</div>"
-          } > "latexml/${slug}/index.html"
-
-          echo "Wrapped LaTeXML HTML with site guide layout → latexml/${slug}/index.html"
-
-      - name: Copy output into site
-        run: |
-          set -e
-          echo "Output path: latexml/${{ steps.decide_slug.outputs.slug }}/index.html"
+      - name: Upload HTML bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: latexml-${{ steps.decide_slug.outputs.slug }}
+          path: out/
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 30
 
       - name: Summarize build info
         run: |
           set -e
-          owner="${{ github.repository_owner }}"
-          repo_full="${{ github.repository }}"
-          repo="${repo_full#*/}"
-          if echo "$repo" | grep -qiE "^${owner}\.github\.io$"; then
-            base="https://${owner}.github.io"
-          else
-            base="https://${owner}.github.io/${repo}"
-          fi
+          run_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           slug="${{ steps.decide_slug.outputs.slug }}"
-          event="${{ steps.detect_trigger.outputs.event_name }}"
           main="${{ steps.detect_main.outputs.main }}"
-          arxiv_wd="${{ steps.gather_wd.outputs.arxiv_id }}"
-          arxiv_issue="${{ steps.gather_issue.outputs.arxiv_id }}"
-          arxiv="${arxiv_wd:-$arxiv_issue}"
-          url="${base}/latexml/${slug}/"
-
-          echo "EVENT=$event"
-          echo "SLUG=$slug"
-          echo "MAIN_TEX=$main"
-          echo "ARXIV_ID=${arxiv:-none}"
-          echo "URL=$url"
-
           {
-            echo "### LaTeXML build outputs"
+            echo "### LaTeXML conversion complete"
             echo
-            echo "- Event: $event"
-            echo "- Output slug: $slug"
+            echo "- Artifact: latexml-$slug"
+            echo "- Contains: index.html (and assets)"
             echo "- Main TeX: $main"
-            echo "- arXiv ID: ${arxiv:-none}"
-            echo "- Published URL: $url"
+            echo "- Download from: $run_url (Artifacts section)"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Commit build to repo
-        run: |
-          set -e
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add latexml/
-          git commit -m "LaTeXML build: ${{ steps.decide_slug.outputs.slug }}" || echo "No changes to commit"
-          git push
-
-      - name: Post issue comment with link (issues)
+      - name: Comment on issue with download link
         if: ${{ steps.detect_trigger.outputs.event_name == 'issues' }}
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
           issue_number="${{ github.event.issue.number }}"
+          run_url="https://github.com/${REPO}/actions/runs/${{ github.run_id }}"
           slug="${{ steps.decide_slug.outputs.slug }}"
-          owner="${{ github.repository_owner }}"
-          repo="${REPO#*/}"
-          if echo "$repo" | grep -qiE "^${owner}\.github\.io$"; then
-            base="https://${owner}.github.io"
-          else
-            base="https://${owner}.github.io/${repo}"
-          fi
-          url="${base}/latexml/${slug}/"
-          gh api repos/$REPO/issues/$issue_number/comments -f body="LaTeXML HTML published: $url"
+          gh api repos/$REPO/issues/$issue_number/comments -f body="LaTeXML conversion completed.\nDownload the HTML bundle artifact (latexml-${slug}) from:\n${run_url}"
