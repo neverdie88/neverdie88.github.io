@@ -65,9 +65,9 @@ jobs:
           labels=$(jq -r '.issue.labels[].name // empty' "$EVENT_PATH" | tr '\n' ' ')
           title=$(jq -r '.issue.title // ""' "$EVENT_PATH")
 
-          # Only proceed if labeled 'latex-upload' OR title contains 'latex'
-          if ! echo "$labels $title" | grep -qiE 'latex-upload|latex'; then
-            echo "Issue not marked for LaTeX upload (needs label 'latex-upload' or 'latex' in title). Skipping."
+          # Only proceed if labeled 'latex-upload' OR title contains 'latex' OR body has an arXiv link
+          if ! echo "$labels $title $body" | grep -qiE 'latex-upload|latex|arxiv\.org/(abs|src)/[0-9]+\.[0-9]+'; then
+            echo "Issue not marked for LaTeX upload (add label 'latex-upload', include 'latex' in title, or include an arXiv link). Skipping."
             echo "skip_build=true" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -204,8 +204,13 @@ jobs:
         run: |
           if [ "${{ steps.detect_trigger.outputs.event_name }}" = "workflow_dispatch" ]; then
             SLUG="${{ steps.gather_wd.outputs.output_slug }}"
+            ARXIV="${{ steps.gather_wd.outputs.arxiv_id }}"
           else
             SLUG="${{ steps.gather_issue.outputs.output_slug }}"
+            ARXIV="${{ steps.gather_issue.outputs.arxiv_id }}"
+          fi
+          if [ -z "$SLUG" ] && [ -n "$ARXIV" ]; then
+            SLUG="$ARXIV"
           fi
           [ -z "$SLUG" ] && SLUG="paper-${GITHUB_RUN_ID}"
           echo "slug=$SLUG" >> $GITHUB_OUTPUT
