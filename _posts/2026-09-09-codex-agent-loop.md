@@ -3,763 +3,411 @@ layout: default
 title: "How the Codex Agent Loop Works"
 date: 2026-09-09
 permalink: /codex-agent-loop.html
-description: "A source-grounded visual guide to Codex model sampling, tool feedback, pending input, stop hooks, and optional Goal continuation."
-excerpt: "A source-grounded visual guide to the Codex turn loop: model sampling, tool feedback, pending input, stop hooks, and optional Goal continuation."
+description: "A source-grounded technical document describing Codex model sampling, tool feedback, pending input, stop hooks, and optional Goal continuation."
+excerpt: "A technical reference for the Codex agent loop: turns, sampling cycles, tools, continuation gates, pending input, stop hooks, and Goals."
 ---
 
-<article class="loop-page">
-  <div class="loop-hero">
-    <div>
-      <p class="loop-eyebrow">CODEX INTERNALS · VISUAL GUIDE</p>
-      <h1>How the Codex agent loop works</h1>
-      <p class="loop-lede">A Codex turn is not one model response. It is a runtime loop that can sample the model, execute tools, add their results to history, accept new input, and sample again before the turn ends.</p>
-    </div>
-    <div class="loop-hero-mark" aria-hidden="true">
-      <span>MODEL</span>
-      <b>↻</b>
-      <span>TOOLS</span>
-    </div>
-  </div>
+<article class="agent-loop-document" markdown="1">
 
-  <section class="loop-thesis" aria-label="Central idea">
-    <span class="loop-thesis-label">Central idea</span>
-    <p>The model proposes the next action. The runtime deterministically decides whether another sampling request is needed.</p>
-  </section>
+<p class="document-label">TECHNICAL NOTE</p>
 
-  <section class="loop-visual" aria-labelledby="loop-visual-title">
-    <div class="loop-section-heading">
-      <div>
-        <p class="loop-kicker">INTERACTIVE TRACE</p>
-        <h2 id="loop-visual-title">Follow one execution path</h2>
-      </div>
-      <div class="route-controls" aria-label="Select an execution path">
-        <button type="button" data-route-button="normal" aria-pressed="true">Normal finish</button>
-        <button type="button" data-route-button="tool" aria-pressed="false">Tool feedback</button>
-        <button type="button" data-route-button="input" aria-pressed="false">Pending input</button>
-        <button type="button" data-route-button="goal" aria-pressed="false">Active goal</button>
-      </div>
-    </div>
+# How the Codex Agent Loop Works
 
-    <div class="loop-columns">
-      <section class="loop-lane lane-blue" aria-labelledby="input-sample-title">
-        <div class="lane-heading">
-          <p>PHASE 1</p>
-          <h3 id="input-sample-title">Input &amp; sample</h3>
-        </div>
-        <p class="lane-summary">Build one inference request, then consume its streamed response.</p>
+<p class="document-summary">Codex is controlled by two related loops: an inner loop that may sample the model several times during one turn, and an optional outer Goal loop that can start another turn after the thread becomes idle.</p>
 
-        <div class="flow-node route-item is-active" data-routes="normal tool input goal">
-          <span class="node-icon">USER</span>
-          <div><strong>User submits a task</strong><small>The request starts a regular turn when the thread is idle, or steers an active turn.</small></div>
-        </div>
-        <div class="flow-connector route-item is-active" data-routes="normal tool input goal"><span>1</span></div>
-        <div class="flow-node route-item is-active" data-routes="normal tool input goal">
-          <span class="node-icon">CTX</span>
-          <div><strong>Build model input</strong><small>Conversation history, instructions, tool definitions, and current context.</small></div>
-        </div>
-        <div class="flow-connector route-item is-active" data-routes="normal tool input goal"><span>2</span></div>
-        <div class="flow-node route-item is-active" data-routes="normal tool input goal">
-          <span class="node-icon">LLM</span>
-          <div><strong>Sample the model</strong><small>Codex sends one inference request and consumes streamed events.</small></div>
-        </div>
-        <div class="flow-connector route-item is-active" data-routes="normal tool input goal"><span>3</span></div>
-        <div class="flow-node route-item is-active" data-routes="normal tool input goal">
-          <span class="node-icon">SSE</span>
-          <div><strong>Receive response items</strong><small>Messages, reasoning, tool calls, and a terminal <code>response.completed</code> event.</small></div>
-        </div>
+<dl class="document-meta">
+  <div><dt>Scope</dt><dd>Codex core turn orchestration and Goal continuation</dd></div>
+  <div><dt>Source snapshot</dt><dd>Local <code>codex-main</code> checkout, checked 9 September 2026</dd></div>
+  <div><dt>Key distinction</dt><dd>A sampling response is not the same thing as a completed turn</dd></div>
+</dl>
 
-        <div class="lane-fact">
-          <strong><code>response.completed</code> is required</strong>
-          <span>If the stream closes first, the sampling request fails. <code>end_turn</code> is optional.</span>
-        </div>
-      </section>
+## Executive summary
 
-      <section class="loop-lane lane-teal" aria-labelledby="action-loop-title">
-        <div class="lane-heading">
-          <p>PHASE 2</p>
-          <h3 id="action-loop-title">Action loop</h3>
-        </div>
-        <p class="lane-summary">Tool feedback and newly queued input can force another model sample.</p>
+A user request starts a **turn**. During that turn, Codex builds model input from the conversation, instructions, available tools, and current context. It sends a model inference request and consumes the streamed response.
 
-        <div class="flow-node route-item" data-routes="tool">
-          <span class="node-icon">TOOL</span>
-          <div><strong>Route any tool call</strong><small><code>ToolRouter</code> can dispatch shell, patch, MCP, agent, Goal, and other registered tools.</small></div>
-        </div>
-        <div class="flow-connector route-item" data-routes="tool"><span>4</span></div>
-        <div class="flow-node route-item" data-routes="tool">
-          <span class="node-icon">OUT</span>
-          <div><strong>Record the result</strong><small>The tool output is appended to conversation history before the next sample.</small></div>
-        </div>
+If the model emits a tool call, Codex executes it through the generic `ToolRouter`, records the result in conversation history, and samples the model again. New user steering, client-injected context, or an inter-agent mailbox item can also keep the turn running.
 
-        <div class="pending-node route-item" data-routes="input">
-          <span class="node-icon">IN</span>
-          <div><strong>Pending input</strong><small>User steering, injected client context, or an inter-agent mailbox item.</small></div>
-        </div>
+The turn can finish only when:
 
-        <div class="flow-connector route-item is-active" data-routes="normal tool input goal"><span>5</span></div>
-        <div class="gate-node route-item is-active" data-routes="normal tool input goal">
-          <strong>Continue this turn?</strong>
-          <code>model_needs_follow_up<br>OR has_pending_input</code>
-        </div>
+1. the sampling stream has reached `response.completed`;
+2. `model_needs_follow_up` is false;
+3. `has_pending_input` is false; and
+4. configured Stop hooks do not request continuation.
 
-        <div class="loopback route-item" data-routes="tool input">
-          <span>YES</span>
-          <strong>Append feedback → sample again</strong>
-        </div>
+After the turn finishes, a separate optional Goal lifecycle may start another turn. It does so only when a persisted Goal exists with status `Active`.
 
-        <div class="flow-connector route-item" data-routes="normal goal"><span>6</span></div>
-        <div class="flow-node route-item" data-routes="normal goal">
-          <span class="node-icon">HOOK</span>
-          <div><strong>Run stop hooks</strong><small>A blocking hook can inject continuation feedback and send the loop back to sampling.</small></div>
-        </div>
-        <div class="flow-connector route-item" data-routes="normal goal"><span>7</span></div>
-        <div class="flow-node route-item" data-routes="normal goal">
-          <span class="node-icon">END</span>
-          <div><strong>Turn ends</strong><small>No model follow-up, no pending input, and no hook-requested continuation remain.</small></div>
-        </div>
-      </section>
+## Complete control flow
 
-      <section class="loop-lane lane-purple" aria-labelledby="goal-title">
-        <div class="lane-heading">
-          <p>PHASE 3</p>
-          <h3 id="goal-title">Goal continuation</h3>
-        </div>
-        <p class="lane-summary">An optional outer loop can start a new turn after Codex becomes idle.</p>
+<div class="diagram-note">Read from top to bottom. Dashed or branching behavior is represented by labeled edges rather than animation.</div>
 
-        <div class="flow-node route-item" data-routes="normal goal">
-          <span class="node-icon">GOAL</span>
-          <div><strong>Read persisted Goal status</strong><small>The Goal extension checks only while the thread is idle.</small></div>
-        </div>
+```mermaid
+flowchart TD
+    USER["User submits task"] --> START["Start turn"]
+    START --> BUILD["Build model input from history,<br/>instructions, tools and goal context"]
 
-        <div class="flow-connector route-item" data-routes="goal"><span>8</span></div>
-        <div class="flow-node route-item" data-routes="goal">
-          <span class="node-icon">OBJ</span>
-          <div><strong>Render <code>continuation.md</code></strong><small>The current <code>Goal.objective</code> is placed inside an <code>&lt;objective&gt;</code> block.</small></div>
-        </div>
-        <div class="flow-connector route-item" data-routes="goal"><span>9</span></div>
-        <div class="flow-node route-item" data-routes="goal">
-          <span class="node-icon">NEXT</span>
-          <div><strong>Start a new turn</strong><small><code>start_turn_if_idle()</code> submits the hidden user-role context fragment.</small></div>
-        </div>
-        <div class="loopback route-item" data-routes="goal">
-          <span>ACTIVE</span>
-          <strong>New turn → model sample</strong>
-        </div>
+    subgraph SAMPLE["One sampling cycle"]
+        BUILD --> REQUEST["Send model inference request"]
+        REQUEST --> STREAM["Receive streamed response events"]
+        STREAM --> ITEM{"Output item type?"}
 
-        <div class="idle-path route-item" data-routes="normal">
-          <span class="node-icon">IDLE</span>
-          <div><strong>Stay idle</strong><small>No Goal, or a Complete, Blocked, Paused, or Limited Goal, does not restart work.</small></div>
-        </div>
+        ITEM -- "Assistant text / reasoning" --> COLLECT["Record output item"]
+        ITEM -- "Valid tool call" --> SETFOLLOW["Set model_needs_follow_up = true"]
+        ITEM -- "Invalid tool request" --> FEEDBACK["Record correction feedback"]
+        FEEDBACK --> SETFOLLOW
 
-        <div class="lane-fact">
-          <strong>Goal is optional</strong>
-          <span>Ordinary turns stop using the inner runtime gate. A Goal adds cross-turn persistence; it is not required for tool use.</span>
-        </div>
-      </section>
-    </div>
+        SETFOLLOW --> ROUTER{"ToolRouter selects handler"}
+        ROUTER --> ORDINARY["Shell / patch / MCP / browser / agent / other"]
+        ROUTER --> GOALTOOL["Goal tool"]
 
-    <p class="route-caption" aria-live="polite">No follow-up and no pending input: stop hooks run, the turn ends, and Codex remains idle unless an Active Goal restarts it.</p>
-  </section>
+        GOALTOOL --> GOALACTION{"Goal operation?"}
+        GOALACTION -- create_goal --> ACTIVE["Persist Active goal"]
+        GOALACTION -- update_goal --> STATUSUPDATE["Persist Complete or Blocked"]
 
-  <section class="loop-explanation">
-    <p class="loop-kicker">THE TWO LOOPS</p>
-    <h2>Keep “sample again” separate from “start another turn”</h2>
-    <div class="concept-grid">
-      <article>
-        <span class="concept-number">01</span>
-        <h3>Inner loop: within one turn</h3>
-        <p>A sampling response can request tools. Codex runs them, records their results, and sends the enlarged history back to the model. This repeats inside the same turn while either continuation flag is true.</p>
-        <pre><code>needs_follow_up =
-  model_needs_follow_up
-  || has_pending_input</code></pre>
-      </article>
-      <article>
-        <span class="concept-number">02</span>
-        <h3>Outer loop: across turns</h3>
-        <p>After a turn finishes, the optional Goal extension can inspect persisted state. Only an Active Goal renders the continuation prompt and attempts to start another turn.</p>
-        <pre><code>if goal.status == Active:
-  inject(&lt;objective&gt;...)
-  start_turn_if_idle()</code></pre>
-      </article>
-    </div>
-  </section>
+        ORDINARY --> QUEUETOOL["Queue tool execution"]
+        ACTIVE --> QUEUETOOL
+        STATUSUPDATE --> QUEUETOOL
+        QUEUETOOL --> COLLECT
 
-  <section class="loop-explanation">
-    <p class="loop-kicker">CONTINUATION CONDITIONS</p>
-    <h2>What makes the model run again?</h2>
-    <div class="condition-table" role="table" aria-label="Conditions that continue the current turn">
-      <div class="condition-row condition-head" role="row">
-        <span role="columnheader">Signal</span><span role="columnheader">Where it comes from</span><span role="columnheader">Effect</span>
-      </div>
-      <div class="condition-row" role="row">
-        <strong role="cell">Valid tool call</strong><span role="cell"><code>handle_output_item_done</code> schedules tool execution.</span><span role="cell">Sets <code>model_needs_follow_up = true</code>.</span>
-      </div>
-      <div class="condition-row" role="row">
-        <strong role="cell">Rejected or invalid tool request</strong><span role="cell">Codex records feedback for the model.</span><span role="cell">Also forces a follow-up sample.</span>
-      </div>
-      <div class="condition-row" role="row">
-        <strong role="cell"><code>end_turn: false</code></strong><span role="cell">Optional field on <code>response.completed</code>.</span><span role="cell">Explicitly requests another sample.</span>
-      </div>
-      <div class="condition-row" role="row">
-        <strong role="cell">Pending input</strong><span role="cell">Turn queue or accepted agent mailbox delivery.</span><span role="cell">Sets <code>has_pending_input = true</code>.</span>
-      </div>
-    </div>
-    <div class="answer-note">
-      <strong>A final response is not detected by a magic phrase.</strong>
-      <p>The model does not need to say “this is final.” Once the stream completes, Codex checks concrete runtime state. An absent or true <code>end_turn</code> does not override a tool call, queued input, or blocking stop hook.</p>
-    </div>
-  </section>
+        COLLECT --> TERMINAL{"Terminal stream event?"}
+        TERMINAL -- "More events" --> ITEM
+        TERMINAL -- "Stream closed without response.completed" --> ERROR["Sampling error—not a final response"]
+        ERROR --> RETRY{"Retry allowed?"}
+        RETRY -- Yes --> REQUEST
+        RETRY -- No --> ABORT["End turn with error"]
 
-  <section class="loop-explanation goal-detail">
-    <p class="loop-kicker">GOALS &amp; COMPLETION</p>
-    <h2>How Codex decides a Goal is complete</h2>
-    <div class="goal-detail-grid">
-      <div>
-        <h3>The prompt asks for an evidence audit</h3>
-        <p>The current <code>continuation.md</code> tells the model to derive concrete requirements, inspect authoritative evidence, and treat uncertain or missing evidence as incomplete.</p>
-      </div>
-      <div>
-        <h3>The model calls <code>update_goal</code></h3>
-        <p>The semantic judgment is model-led and evidence-guided. The runtime validates and persists the requested Goal status; it does not independently prove that an arbitrary objective is complete.</p>
-      </div>
-      <div>
-        <h3><code>&lt;objective&gt;</code> is the Goal objective</h3>
-        <p>The template inserts <code>Goal.objective</code> into hidden user-role context. The Goal itself also carries status and optional budget/accounting data.</p>
-      </div>
-    </div>
-  </section>
+        TERMINAL -- "response.completed" --> ENDTURN{"Optional end_turn value"}
+        ENDTURN -- "false" --> FORCE["Set model_needs_follow_up = true"]
+        ENDTURN -- "true or absent" --> KEEP["Keep accumulated follow-up value"]
 
-  <section class="source-map">
-    <p class="loop-kicker">SOURCE MAP</p>
-    <h2>Where the behavior is defined</h2>
-    <p class="source-intro">This guide was checked against the local Codex source snapshot on 9 September 2026. Links below follow the corresponding files on the Codex main branch.</p>
-    <ul>
-      <li><a href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/turn.rs">core/src/session/turn.rs</a><span>Sampling loop, combined continuation gate, stop hooks, <code>response.completed</code>, and <code>end_turn</code>.</span></li>
-      <li><a href="https://github.com/openai/codex/blob/main/codex-rs/core/src/stream_events_utils.rs">core/src/stream_events_utils.rs</a><span>Tool-call detection, execution scheduling, and <code>needs_follow_up</code>.</span></li>
-      <li><a href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/input_queue.rs">core/src/session/input_queue.rs</a><span>Pending turn input and mailbox-delivery checks.</span></li>
-      <li><a href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/router.rs">core/src/tools/router.rs</a><span>Generic routing for registered tools.</span></li>
-      <li><a href="https://github.com/openai/codex/blob/main/codex-rs/ext/goal/src/runtime.rs">ext/goal/src/runtime.rs</a><span>Active Goal check and <code>start_turn_if_idle()</code>.</span></li>
-      <li><a href="https://github.com/openai/codex/blob/main/codex-rs/ext/goal/src/steering.rs">ext/goal/src/steering.rs</a><span>Rendering Goal continuation as internal user context.</span></li>
-      <li><a href="https://github.com/openai/codex/blob/main/codex-rs/ext/goal/templates/goals/continuation.md">ext/goal/templates/goals/continuation.md</a><span>Objective, budget, progress, completion-audit, and blocked-audit instructions.</span></li>
-    </ul>
-  </section>
+        FORCE --> DRAINTOOLS["Wait for queued tools and<br/>record results in history"]
+        KEEP --> DRAINTOOLS
+    end
+
+    STEER["User steering"] --> INPUTQUEUE["Pending-input queue"]
+    CLIENT["Client-injected context"] --> INPUTQUEUE
+    MAIL["Inter-agent mailbox"] --> INPUTQUEUE
+
+    INPUTQUEUE --> DELIVERY{"Delivery allowed<br/>for current turn?"}
+    DELIVERY -- No --> LATER["Keep input for a later turn"]
+    DELIVERY -- Yes --> PENDING["has_pending_input = true"]
+
+    DRAINTOOLS --> CHECKPENDING["Check pending-input queue"]
+    PENDING --> CHECKPENDING
+
+    CHECKPENDING --> GATE{"model_needs_follow_up<br/>OR has_pending_input?"}
+    GATE -- Yes --> DRAININPUT["Drain pending input into history"]
+    DRAININPUT --> BUILD
+
+    GATE -- No --> STOPHOOK["Run configured Stop hooks"]
+    STOPHOOK --> BLOCK{"Hook requests continuation?"}
+    BLOCK -- Yes --> HOOKPROMPT["Record hook continuation prompt"]
+    HOOKPROMPT --> BUILD
+    BLOCK -- No --> TURNEND["End turn and account goal progress"]
+
+    subgraph OUTER["Thread and Goal lifecycle"]
+        TURNEND --> IDLE["Thread becomes idle"]
+        IDLE --> TRIGGER{"Trigger-turn input waiting?"}
+        TRIGGER -- Yes --> START
+        TRIGGER -- No --> GOALSTATUS{"Persisted goal status?"}
+
+        GOALSTATUS -- Active --> CONTEXT["Render continuation.md with<br/>persisted &lt;objective&gt;"]
+        CONTEXT --> AUTOSTART["start_turn_if_idle()"]
+        AUTOSTART --> START
+
+        GOALSTATUS -- "Complete / Blocked / Paused / Limited / No goal" --> STOP["Stop automatic work"]
+        STOP --> WAIT["Wait for next user task"]
+        WAIT --> USER
+    end
+```
+
+## 1. Turns and sampling cycles
+
+These terms describe different boundaries:
+
+| Term | Meaning |
+|---|---|
+| **Thread** | The durable conversation and its accumulated history. |
+| **Turn** | Work initiated by user input or internal continuation input. One turn may contain several sampling cycles. |
+| **Sampling cycle** | One model inference request and its streamed response events, ending successfully at `response.completed`. |
+| **Tool call** | A model output item that Codex routes to a registered tool implementation. |
+
+`RegularTask::run` invokes `run_turn`. Inside `run_turn`, Codex repeatedly constructs model input and calls the sampling runtime until the continuation gate becomes false or an error ends the turn.
+
+The model input is reconstructed from recorded conversation history for every sampling cycle. This is why a tool result can influence the model's next response without starting a new user turn.
+
+## 2. What a sampling response contains
+
+The Responses stream may deliver assistant messages, reasoning items, tool calls, usage information, and other events. Codex processes completed output items as they arrive.
+
+A successful sampling cycle requires the terminal `response.completed` event. If the stream closes before that event, Codex treats the stream as an error rather than as a final answer.
+
+`response.completed` may include an optional `end_turn` value:
+
+- `end_turn: false` explicitly sets `model_needs_follow_up = true`;
+- `end_turn: true` does not force the turn to end; and
+- an absent `end_turn` also does not independently decide completion.
+
+The accumulated runtime state still controls whether Codex samples again.
+
+## 3. Tool execution and feedback
+
+`ToolRouter` is generic. It does not lead only to Goal operations. It can route shell commands, file patches, MCP calls, browser or application tools, agent operations, Goal tools, and any other tool registered for the current model request.
+
+When `handle_output_item_done` recognizes a valid tool call, it:
+
+1. records the tool-call item;
+2. schedules the tool runtime;
+3. sets `needs_follow_up = true`; and
+4. later appends the tool result to conversation history.
+
+If a tool request should be rejected or corrected, Codex records feedback for the model and still sets `needs_follow_up = true`. The model therefore gets a chance to recover in a later sampling cycle.
+
+## 4. The deterministic continuation gate
+
+After sampling and queued tool work finish, `run_turn` calculates:
+
+```text
+needs_follow_up = model_needs_follow_up || has_pending_input
+```
+
+`model_needs_follow_up` becomes true when the sampling cycle requires more model work, including:
+
+- a recognized tool call;
+- correction feedback for an invalid or rejected tool request; or
+- `end_turn: false` on `response.completed`.
+
+`has_pending_input` becomes true only when delivery is allowed for the current turn and Codex finds either:
+
+- an item in the turn's pending-input queue; or
+- an accepted item in the inter-agent mailbox.
+
+User steering and client-injected context enter through the pending-input flow. Input that cannot be delivered to the current turn remains available for a later turn.
+
+## 5. Stop hooks and final responses
+
+If the continuation gate is false, Codex runs the configured Stop hooks. A Stop hook may return continuation content. Codex records that content as a prompt and resumes the sampling loop.
+
+Otherwise, the turn ends.
+
+There is no deterministic text pattern such as “this is my final answer.” The model does not need to label an assistant message as final. Finality follows from runtime state:
+
+```text
+response.completed received
+AND model_needs_follow_up == false
+AND has_pending_input == false
+AND Stop hooks allow completion
+```
+
+An assistant message without a tool call can therefore be the final response, but only if the other conditions also hold.
+
+## 6. The optional Goal lifecycle
+
+Goal persistence is separate from the inner turn loop. Codex does not always use the Goal tool, and a normal task does not need a Goal.
+
+The Goal extension acts when the thread is idle:
+
+1. it loads the persisted Goal;
+2. it returns without continuing if no Goal exists;
+3. it returns unless the status is `Active`;
+4. it renders `continuation.md` using the persisted `Goal.objective`; and
+5. it submits the resulting internal context with `start_turn_if_idle()`.
+
+The template places the objective in a hidden user-role context fragment:
+
+```xml
+<objective>
+Goal.objective
+</objective>
+```
+
+The objective is one field of the Goal, not the whole Goal. Persisted Goal state also includes status and accounting information such as optional budgets.
+
+## 7. How Goal completion is checked
+
+The current `continuation.md` asks the model to perform an evidence-based completion audit. It tells the model to derive requirements from the objective, inspect authoritative current state, and treat missing or indirect evidence as incomplete.
+
+When the model concludes that every requirement is satisfied, it calls `update_goal` with status `complete`. If the strict repeated-blocker conditions are satisfied, it may use status `blocked`.
+
+This is a **model-led semantic judgment guided by explicit instructions and evidence**. The Goal runtime validates and persists the requested state transition; it is not a separate general-purpose verifier that can independently prove an arbitrary objective complete.
+
+## 8. Error and retry boundaries
+
+Not every failed sampling request immediately ends the turn. Retry policy may repeat the inference request for recoverable failures. Other conditions can trigger context compaction before another sampling cycle. Cancellation, unrecoverable stream errors, invalid image requests, or exhausted retry policy can end the turn with an error.
+
+These paths are operational details around the same core invariant: Codex only treats a sampling response as successfully completed after receiving `response.completed`.
+
+## Source map
+
+The explanation above is grounded in these implementation files:
+
+- [`core/src/session/turn.rs`](https://github.com/openai/codex/blob/main/codex-rs/core/src/session/turn.rs) — sampling loop, combined continuation gate, Stop hooks, stream completion, and tool-result draining.
+- [`core/src/tasks/regular.rs`](https://github.com/openai/codex/blob/main/codex-rs/core/src/tasks/regular.rs) — regular turn execution and pending-input handling around `run_turn`.
+- [`core/src/stream_events_utils.rs`](https://github.com/openai/codex/blob/main/codex-rs/core/src/stream_events_utils.rs) — completed output-item handling, tool scheduling, and follow-up state.
+- [`core/src/session/input_queue.rs`](https://github.com/openai/codex/blob/main/codex-rs/core/src/session/input_queue.rs) — pending turn input and mailbox-delivery checks.
+- [`core/src/tools/router.rs`](https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/router.rs) — generic tool-call parsing and dispatch.
+- [`ext/goal/src/runtime.rs`](https://github.com/openai/codex/blob/main/codex-rs/ext/goal/src/runtime.rs) — Active Goal lookup and `start_turn_if_idle()`.
+- [`ext/goal/src/steering.rs`](https://github.com/openai/codex/blob/main/codex-rs/ext/goal/src/steering.rs) — conversion of Goal templates into internal user context.
+- [`ext/goal/templates/goals/continuation.md`](https://github.com/openai/codex/blob/main/codex-rs/ext/goal/templates/goals/continuation.md) — persisted objective, budget, progress, completion-audit, and blocked-audit instructions.
+
 </article>
 
 <style>
-  .loop-page {
-    --loop-ink: #172033;
-    --loop-muted: #647084;
-    --loop-line: #dbe2eb;
-    --loop-paper: #fbfcfe;
-    --loop-blue: #2f66ed;
-    --loop-blue-soft: #eaf1ff;
-    --loop-teal: #119aa7;
-    --loop-teal-soft: #e7f7f7;
-    --loop-purple: #7540de;
-    --loop-purple-soft: #f1eafe;
-    --loop-coral: #f0805a;
-    color: var(--loop-ink);
+  .agent-loop-document {
+    max-width: 780px;
+    margin: 0 auto;
+    color: #202124;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.02rem;
   }
 
-  .loop-page h1,
-  .loop-page h2,
-  .loop-page h3,
-  .loop-page p { margin-top: 0; }
-
-  .loop-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 2rem;
-    margin: 0 0 1.25rem;
-    padding: 2.4rem;
-    overflow: hidden;
-    border: 1px solid var(--loop-line);
-    border-radius: 24px;
-    background:
-      radial-gradient(circle at 92% 14%, rgba(117, 64, 222, .16), transparent 32%),
-      radial-gradient(circle at 70% 88%, rgba(17, 154, 167, .13), transparent 28%),
-      linear-gradient(135deg, #f9fbff, #ffffff);
+  .agent-loop-document h1,
+  .agent-loop-document h2,
+  .agent-loop-document h3,
+  .agent-loop-document table,
+  .agent-loop-document pre,
+  .agent-loop-document .document-label,
+  .agent-loop-document .document-meta,
+  .agent-loop-document .diagram-note {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   }
 
-  .loop-eyebrow,
-  .loop-kicker {
-    margin-bottom: .55rem;
-    color: var(--loop-blue);
+  .agent-loop-document h1 {
+    margin: .2rem 0 1rem;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    letter-spacing: -.035em;
+  }
+
+  .agent-loop-document h2 {
+    margin-top: 3rem;
+    padding-bottom: .45rem;
+    border-bottom: 1px solid #d7d7d7;
+    font-size: 1.55rem;
+    letter-spacing: -.015em;
+  }
+
+  .agent-loop-document h3 { font-size: 1.15rem; }
+
+  .agent-loop-document p,
+  .agent-loop-document li { max-width: 72ch; }
+
+  .document-label {
+    margin: 0;
+    color: #686868;
     font-size: .76rem;
-    font-weight: 800;
-    letter-spacing: .12em;
-  }
-
-  .loop-hero h1 {
-    max-width: 620px;
-    margin-bottom: .75rem;
-    font-size: clamp(2.15rem, 5.2vw, 4.15rem);
-    letter-spacing: -.045em;
-  }
-
-  .loop-lede {
-    max-width: 640px;
-    margin-bottom: 0;
-    color: var(--loop-muted);
-    font-size: 1.05rem;
-  }
-
-  .loop-hero-mark {
-    display: grid;
-    place-items: center;
-    width: 154px;
-    aspect-ratio: 1;
-    border: 2px solid var(--loop-ink);
-    border-radius: 50%;
-    background: rgba(255, 255, 255, .76);
-    box-shadow: 14px 14px 0 var(--loop-blue-soft);
-    font-size: .72rem;
-    font-weight: 800;
-    letter-spacing: .08em;
-  }
-
-  .loop-hero-mark b {
-    margin: -.9rem 0;
-    color: var(--loop-purple);
-    font-size: 3.1rem;
-    line-height: 1;
-  }
-
-  .loop-thesis {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2.5rem;
-    padding: 1rem 1.25rem;
-    border-radius: 14px;
-    background: var(--loop-ink);
-    color: #fff;
-  }
-
-  .loop-thesis p { margin: 0; }
-
-  .loop-thesis-label {
-    flex: 0 0 auto;
-    padding: .35rem .65rem;
-    border-radius: 999px;
-    background: var(--loop-coral);
-    color: #172033;
-    font-size: .75rem;
-    font-weight: 800;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-  }
-
-  .loop-visual,
-  .loop-explanation,
-  .source-map { margin-top: 3.5rem; }
-
-  .loop-section-heading {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .loop-section-heading h2,
-  .loop-explanation h2,
-  .source-map h2 {
-    margin-bottom: 0;
-    font-size: clamp(1.55rem, 3vw, 2.25rem);
-    letter-spacing: -.025em;
-  }
-
-  .route-controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: .45rem;
-  }
-
-  .route-controls button {
-    appearance: none;
-    padding: .55rem .78rem;
-    border: 1px solid var(--loop-line);
-    border-radius: 999px;
-    background: #fff;
-    color: var(--loop-ink);
-    cursor: pointer;
-    font: inherit;
-    font-size: .78rem;
     font-weight: 700;
+    letter-spacing: .14em;
   }
 
-  .route-controls button:hover { border-color: var(--loop-blue); }
-
-  .route-controls button:focus-visible {
-    outline: 3px solid rgba(47, 102, 237, .25);
-    outline-offset: 2px;
+  .document-summary {
+    margin-bottom: 1.5rem;
+    color: #4f4f4f;
+    font-size: 1.16rem;
+    line-height: 1.65;
   }
 
-  .route-controls button[aria-pressed="true"] {
-    border-color: var(--loop-ink);
-    background: var(--loop-ink);
-    color: #fff;
+  .document-meta {
+    margin: 0 0 2.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid #cfcfcf;
+    border-bottom: 1px solid #cfcfcf;
+    font-size: .82rem;
   }
 
-  .loop-columns {
+  .document-meta div {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: .8rem;
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 1rem;
+    padding: .2rem 0;
   }
 
-  .loop-lane {
-    position: relative;
-    min-width: 0;
-    padding: .8rem;
-    border: 1.5px solid var(--loop-ink);
-    border-radius: 18px;
+  .document-meta dt { color: #666; font-weight: 700; }
+  .document-meta dd { margin: 0; }
+
+  .diagram-note {
+    margin-bottom: .75rem;
+    color: #666;
+    font-size: .8rem;
+  }
+
+  .agent-loop-document .mermaid-document {
+    margin: 1rem 0 2rem;
+    padding: 1rem;
+    overflow-x: auto;
+    border: 1px solid #d7d7d7;
     background: #fff;
   }
 
-  .lane-heading {
-    margin: -.8rem -.8rem .75rem;
-    padding: 1rem;
-    border-radius: 16px 16px 12px 12px;
-    color: #fff;
-    text-align: center;
-  }
-
-  .lane-blue .lane-heading { background: linear-gradient(135deg, #2457dc, #3f7af5); }
-  .lane-teal .lane-heading { background: linear-gradient(135deg, #0b8491, #19a9b5); }
-  .lane-purple .lane-heading { background: linear-gradient(135deg, #6631ce, #8955e8); }
-
-  .lane-heading p {
-    margin-bottom: .15rem;
-    font-size: .65rem;
-    font-weight: 800;
-    letter-spacing: .12em;
-    opacity: .8;
-  }
-
-  .lane-heading h3 { margin: 0; font-size: 1.08rem; }
-
-  .lane-summary {
-    min-height: 4.2rem;
-    margin-bottom: 1rem;
-    padding: .75rem;
-    border-radius: 11px;
-    background: var(--loop-paper);
-    color: var(--loop-muted);
-    font-size: .78rem;
-    text-align: center;
-  }
-
-  .flow-node,
-  .pending-node,
-  .idle-path {
-    display: grid;
-    grid-template-columns: 50px minmax(0, 1fr);
-    align-items: center;
-    gap: .65rem;
-    padding: .62rem;
-    border-radius: 12px;
-  }
-
-  .node-icon {
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    border: 2px solid var(--loop-ink);
-    border-radius: 14px;
-    font-size: .63rem;
-    font-weight: 900;
-    letter-spacing: .04em;
-  }
-
-  .lane-blue .node-icon { background: var(--loop-blue-soft); }
-  .lane-teal .node-icon { background: var(--loop-teal-soft); }
-  .lane-purple .node-icon { background: var(--loop-purple-soft); }
-
-  .flow-node strong,
-  .pending-node strong,
-  .idle-path strong {
+  .agent-loop-document .mermaid-document svg {
     display: block;
-    font-size: .8rem;
-    line-height: 1.35;
+    min-width: 760px;
+    height: auto;
+    margin: 0 auto;
   }
 
-  .flow-node small,
-  .pending-node small,
-  .idle-path small {
-    display: block;
-    margin-top: .2rem;
-    color: var(--loop-muted);
-    font-size: .67rem;
-    line-height: 1.45;
-  }
-
-  .flow-node code,
-  .pending-node code,
-  .idle-path code { font-size: .62rem; }
-
-  .flow-connector {
-    position: relative;
-    width: 2px;
-    height: 37px;
-    margin: 2px auto;
-    border-left: 2px dashed var(--loop-ink);
-  }
-
-  .flow-connector::after {
-    content: "";
-    position: absolute;
-    bottom: -1px;
-    left: -5px;
-    width: 8px;
-    height: 8px;
-    border-right: 2px solid var(--loop-ink);
-    border-bottom: 2px solid var(--loop-ink);
-    transform: rotate(45deg);
-  }
-
-  .flow-connector span {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    color: #fff;
-    font-size: .65rem;
-    font-weight: 800;
-  }
-
-  .lane-blue .flow-connector span { background: var(--loop-blue); }
-  .lane-teal .flow-connector span { background: var(--loop-teal); }
-  .lane-purple .flow-connector span { background: var(--loop-purple); }
-
-  .lane-fact {
-    margin-top: 1rem;
-    padding: .8rem;
-    border-radius: 11px;
-    background: var(--loop-paper);
-    font-size: .7rem;
-  }
-
-  .lane-fact strong,
-  .lane-fact span { display: block; }
-  .lane-fact span { margin-top: .25rem; color: var(--loop-muted); }
-
-  .gate-node {
-    padding: 1.25rem .55rem;
-    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-    background: var(--loop-teal-soft);
-    text-align: center;
-  }
-
-  .gate-node strong { display: block; font-size: .78rem; }
-  .gate-node code { font-size: .62rem; line-height: 1.5; }
-
-  .pending-node {
-    margin-top: .7rem;
-    border: 1px dashed var(--loop-teal);
-    background: var(--loop-teal-soft);
-  }
-
-  .loopback {
-    margin: .85rem 0;
-    padding: .65rem;
-    border: 2px dashed currentColor;
-    border-radius: 999px;
-    color: var(--loop-teal);
-    font-size: .69rem;
-    text-align: center;
-  }
-
-  .lane-purple .loopback { color: var(--loop-purple); }
-
-  .loopback span {
-    margin-right: .35rem;
-    font-size: .58rem;
-    font-weight: 900;
-    letter-spacing: .08em;
-  }
-
-  .idle-path {
-    margin-top: 1rem;
-    border: 1px dashed var(--loop-purple);
-    background: var(--loop-purple-soft);
-  }
-
-  .route-item {
-    opacity: .18;
-    filter: grayscale(.35);
-    transition: opacity .16s ease, filter .16s ease, transform .16s ease;
-  }
-
-  .route-item.is-active {
-    opacity: 1;
-    filter: none;
-  }
-
-  .flow-node.route-item.is-active,
-  .pending-node.route-item.is-active,
-  .idle-path.route-item.is-active { transform: translateY(-1px); }
-
-  .route-caption {
-    min-height: 2.8rem;
-    margin: 1rem auto 0;
-    color: var(--loop-muted);
-    font-size: .82rem;
-    text-align: center;
-  }
-
-  .concept-grid,
-  .goal-detail-grid {
-    display: grid;
-    gap: 1rem;
-    margin-top: 1.2rem;
-  }
-
-  .concept-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .goal-detail-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-
-  .concept-grid article,
-  .goal-detail-grid > div {
-    padding: 1.25rem;
-    border: 1px solid var(--loop-line);
-    border-radius: 16px;
-    background: var(--loop-paper);
-  }
-
-  .concept-number {
-    color: var(--loop-blue);
-    font-size: .75rem;
-    font-weight: 900;
-    letter-spacing: .1em;
-  }
-
-  .concept-grid h3,
-  .goal-detail-grid h3 { margin: .5rem 0; font-size: 1rem; }
-
-  .concept-grid p,
-  .goal-detail-grid p {
-    margin-bottom: 0;
-    color: var(--loop-muted);
+  .agent-loop-document table {
+    width: 100%;
+    margin: 1.25rem 0 2rem;
+    border-collapse: collapse;
     font-size: .88rem;
   }
 
-  .concept-grid pre {
-    margin: 1rem 0 0;
-    padding: .8rem;
-    font-size: .72rem;
+  .agent-loop-document th,
+  .agent-loop-document td {
+    padding: .65rem .75rem;
+    border: 1px solid #d7d7d7;
+    text-align: left;
+    vertical-align: top;
   }
 
-  .condition-table {
-    margin-top: 1.2rem;
-    overflow: hidden;
-    border: 1px solid var(--loop-line);
-    border-radius: 16px;
+  .agent-loop-document th { background: #f2f2f2; }
+
+  .agent-loop-document pre {
+    border: 1px solid #d7d7d7;
+    background: #f6f6f6;
+    color: #202124;
   }
 
-  .condition-row {
-    display: grid;
-    grid-template-columns: .9fr 1.25fr 1fr;
-    gap: 1rem;
-    padding: .9rem 1rem;
-    border-top: 1px solid var(--loop-line);
-    font-size: .82rem;
+  .agent-loop-document code { font-size: .9em; }
+
+  @media (max-width: 620px) {
+    .document-meta div { grid-template-columns: 1fr; gap: 0; padding: .4rem 0; }
+    .agent-loop-document { font-size: 1rem; }
   }
 
-  .condition-row:first-child { border-top: 0; }
-  .condition-row span { color: var(--loop-muted); }
-  .condition-head { background: var(--loop-ink); color: #fff; font-weight: 800; }
-  .condition-head span { color: #fff; }
-
-  .answer-note {
-    margin-top: 1rem;
-    padding: 1rem 1.2rem;
-    border-left: 5px solid var(--loop-coral);
-    border-radius: 0 12px 12px 0;
-    background: #fff4ef;
-  }
-
-  .answer-note p { margin: .3rem 0 0; color: #704838; font-size: .88rem; }
-
-  .source-intro { max-width: 680px; color: var(--loop-muted); }
-
-  .source-map ul {
-    margin: 1.25rem 0 0;
-    padding: 0;
-    list-style: none;
-    border-top: 1px solid var(--loop-line);
-  }
-
-  .source-map li {
-    display: grid;
-    grid-template-columns: minmax(210px, .85fr) minmax(0, 1.5fr);
-    gap: 1rem;
-    padding: .8rem 0;
-    border-bottom: 1px solid var(--loop-line);
-    font-size: .82rem;
-  }
-
-  .source-map li a { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; }
-  .source-map li span { color: var(--loop-muted); }
-
-  @media (max-width: 760px) {
-    .loop-hero { grid-template-columns: 1fr; padding: 1.5rem; }
-    .loop-hero-mark { display: none; }
-    .loop-section-heading { align-items: flex-start; flex-direction: column; }
-    .route-controls { justify-content: flex-start; }
-    .loop-columns { grid-template-columns: 1fr; }
-    .lane-summary { min-height: 0; }
-    .concept-grid,
-    .goal-detail-grid { grid-template-columns: 1fr; }
-    .condition-row { grid-template-columns: 1fr; gap: .25rem; }
-    .condition-head { display: none; }
-    .source-map li { grid-template-columns: 1fr; gap: .2rem; }
-    .loop-thesis { align-items: flex-start; flex-direction: column; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .route-item { transition: none; }
+  @media print {
+    .agent-loop-document { max-width: none; color: #000; }
+    .agent-loop-document .mermaid-document { overflow: visible; border: 0; padding: 0; }
+    .agent-loop-document .mermaid-document svg { min-width: 0; max-width: 100%; }
   }
 </style>
 
-<script>
-  (() => {
-    const root = document.querySelector('.loop-page');
-    if (!root) return;
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
 
-    const buttons = Array.from(root.querySelectorAll('[data-route-button]'));
-    const items = Array.from(root.querySelectorAll('[data-routes]'));
-    const caption = root.querySelector('.route-caption');
-    const captions = {
-      normal: 'No follow-up and no pending input: stop hooks run, the turn ends, and Codex remains idle unless an Active Goal restarts it.',
-      tool: 'A tool call sets model_needs_follow_up. Codex records the tool result, adds it to history, and samples the model again in the same turn.',
-      input: 'Queued user steering, injected context, or accepted agent-mailbox input sets has_pending_input and continues the current turn.',
-      goal: 'After turn end, an Active Goal injects Goal.objective through continuation.md and starts a new turn while the thread is idle.'
-    };
-
-    function selectRoute(route) {
-      buttons.forEach((button) => {
-        button.setAttribute('aria-pressed', String(button.dataset.routeButton === route));
-      });
-      items.forEach((item) => {
-        const routes = item.dataset.routes.split(' ');
-        item.classList.toggle('is-active', routes.includes(route));
-      });
-      caption.textContent = captions[route];
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: "base",
+    flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: false },
+    themeVariables: {
+      fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif",
+      primaryColor: "#ffffff",
+      primaryTextColor: "#202124",
+      primaryBorderColor: "#202124",
+      lineColor: "#555555",
+      secondaryColor: "#f2f2f2",
+      tertiaryColor: "#fafafa",
+      clusterBkg: "#fafafa",
+      clusterBorder: "#9a9a9a",
+      edgeLabelBackground: "#ffffff"
     }
+  });
 
-    buttons.forEach((button) => {
-      button.addEventListener('click', () => selectRoute(button.dataset.routeButton));
-    });
-
-    selectRoute('normal');
-  })();
+  const blocks = document.querySelectorAll('pre code.language-mermaid');
+  blocks.forEach((code) => {
+    const container = document.createElement('div');
+    container.className = 'mermaid mermaid-document';
+    container.textContent = code.textContent;
+    code.parentElement.replaceWith(container);
+  });
+  await mermaid.run({ querySelector: '.mermaid-document' });
 </script>
