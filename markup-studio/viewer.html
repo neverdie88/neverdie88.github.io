@@ -63,6 +63,23 @@
         font-size: 13px;
       }
 
+      .editor-notices {
+        max-width: 1100px;
+        margin: 0 auto;
+        color: var(--muted);
+        font: 13px/1.5 system-ui, sans-serif;
+        overflow-wrap: anywhere;
+      }
+
+      .editor-notices > div {
+        padding: 0 24px 10px;
+      }
+
+      .editor-notices > [hidden],
+      .editor-notices > :empty {
+        display: none;
+      }
+
       .file-change-notice {
         max-width: 1052px;
         margin: 0 auto 12px;
@@ -161,6 +178,29 @@
         width: 16px;
         height: 16px;
       }
+
+      .undo-redo-tools { display: inline-flex; gap: 8px; }
+
+      .save-history-option {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
+      .toolbar .save-history-option input {
+        flex: none;
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        padding: 0;
+        accent-color: var(--accent);
+      }
+
+      .save-history-option:has(input:disabled) { opacity: 0.55; cursor: default; }
+      .save-history-option[hidden] { display: none; }
 
       .toolbar-insert-group {
         display: flex;
@@ -494,16 +534,6 @@
         box-shadow: 0 18px 40px var(--shadow);
         min-height: calc(100vh - 120px);
         min-width: 0;
-      }
-
-      .status {
-        color: var(--muted);
-        margin-bottom: 18px;
-        font-size: 14px;
-      }
-
-      .status:empty {
-        display: none;
       }
 
       #content {
@@ -1216,6 +1246,41 @@
         background: rgba(9, 30, 66, 0.42);
       }
 
+      .sidecar-dialog {
+        box-sizing: border-box;
+        width: min(850px, calc(100vw - 32px));
+        max-height: calc(100dvh - 48px);
+        padding: 22px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        color: var(--ink);
+        overflow: auto;
+      }
+
+      .sidecar-dialog::backdrop { background: rgba(9, 30, 66, 0.42); }
+      .sidecar-dialog h2 { margin-top: 0; }
+      .sidecar-dialog label { display: block; margin: 12px 0; }
+      .sidecar-dialog textarea,
+      .sidecar-dialog select { box-sizing: border-box; width: 100%; margin-top: 6px; font: inherit; }
+      .sidecar-dialog textarea { min-height: 66px; resize: vertical; }
+      .sidecar-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+      .sidecar-dialog button { padding: 7px 11px; cursor: pointer; }
+      .sidecar-dialog button:disabled { cursor: default; opacity: 0.5; }
+      .sidecar-dialog pre { max-height: 250px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .metadata-link {
+        margin-top: 18px;
+        padding: 4px 0;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: 13px;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+      .metadata-link:disabled { opacity: 0.55; cursor: default; }
+
       .diagram-source-form {
         display: grid;
         grid-template-rows: auto minmax(280px, 62vh) auto;
@@ -1479,6 +1544,13 @@
         <button id="refreshButton" class="secondary" title="Read the latest file without overwriting your draft" hidden disabled>Refresh</button>
         <button id="saveButton" title="Save (Command+S or Ctrl+S)" disabled>Save</button>
         <button id="saveAsButton" class="secondary" hidden disabled>Save as…</button>
+        <span class="undo-redo-tools" role="group" aria-label="Undo and redo">
+          <button id="undoButton" class="secondary command-with-icon" type="button" title="Undo (Command+Z or Ctrl+Z)" disabled><i data-lucide="undo-2" aria-hidden="true"></i><span>Undo</span></button>
+          <button id="redoButton" class="secondary command-with-icon" type="button" title="Redo (Command+Shift+Z or Ctrl+Y)" disabled><i data-lucide="redo-2" aria-hidden="true"></i><span>Redo</span></button>
+        </span>
+        <label id="saveHistoryOption" for="saveHistoryInput" class="save-history-option" title="Save an .edit-history.json companion with your document. Choose its location when enabling. Includes original and deleted text." hidden>
+          <input id="saveHistoryInput" type="checkbox" aria-label="Save edit history" disabled>Save edit history
+        </label>
         <div class="toolbar-insert-group" aria-label="Insert content">
           <button id="addMermaidButton" class="secondary command-with-icon" title="Add Mermaid diagram" disabled>
             <i data-lucide="workflow" aria-hidden="true"></i><span><span class="command-verb">Add </span>Mermaid</span>
@@ -1493,6 +1565,11 @@
             <i data-lucide="chevrons-up-down" aria-hidden="true"></i><span><span class="command-verb">Add </span>expand</span>
           </button>
         </div>
+      </div>
+
+      <div class="editor-notices">
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+        <div class="sidecar-notice" id="sidecarNotice" role="status" aria-live="polite" hidden></div>
       </div>
 
       <section class="file-change-notice" id="fileChangeNotice" role="status" aria-live="polite" hidden>
@@ -1516,10 +1593,6 @@
           <option value="blockquote">Quote</option>
           <option value="pre">Code block</option>
         </select>
-        <span class="format-tools-group" aria-label="History">
-          <button type="button" data-editor-command="undo" aria-label="Undo" data-tooltip="Undo" disabled><i data-lucide="undo-2"></i></button>
-          <button type="button" data-editor-command="redo" aria-label="Redo" data-tooltip="Redo" disabled><i data-lucide="redo-2"></i></button>
-        </span>
         <span class="format-tools-group" aria-label="Text emphasis">
           <button type="button" data-editor-command="bold" aria-label="Bold" data-tooltip="Bold" disabled><i data-lucide="bold"></i></button>
           <button type="button" data-editor-command="italic" aria-label="Italic" data-tooltip="Italic" disabled><i data-lucide="italic"></i></button>
@@ -1584,6 +1657,31 @@
       </div>
     </dialog>
 
+    <dialog class="sidecar-dialog" id="sidecarDialog" aria-labelledby="sidecarTitle">
+      <h2 id="sidecarTitle">Document metadata</h2>
+      <p>Changes are tracked automatically in this tab. Check <strong>Save edit history</strong> to keep a <code>filename.edit-history.json</code> companion updated with document saves, or save metadata here. History includes original and deleted text.</p>
+      <p id="sidecarInfo" role="status" aria-live="polite"></p>
+      <label for="sidecarNote">Note for the next checkpoint (optional)
+        <textarea id="sidecarNote" placeholder="What changed or why?" disabled></textarea>
+      </label>
+      <div class="sidecar-actions">
+        <button type="button" id="sidecarSave" disabled>Save metadata as…</button>
+        <button type="button" id="sidecarSaveAs" hidden disabled>Save metadata as…</button>
+        <button type="button" id="sidecarLoad">Load metadata…</button>
+      </div>
+      <input id="sidecarFileInput" type="file" accept=".json,application/json" aria-label="Load metadata file" hidden>
+      <label for="sidecarRevisions">Recorded checkpoints
+        <select id="sidecarRevisions" aria-label="Recorded checkpoints"></select>
+      </label>
+      <div class="sidecar-actions">
+        <button type="button" id="sidecarRestore" disabled>Restore selected to draft</button>
+        <button type="button" id="sidecarRestart" disabled>Start new review</button>
+      </div>
+      <details><summary>Changes from the review baseline</summary><pre id="sidecarPreview"></pre></details>
+      <p>Saving keeps the review baseline. Checkpoints record saves and explicit metadata exports, not every keystroke. Restoring changes only the draft. Imported history is verified against the document before use.</p>
+      <div class="sidecar-actions"><button type="button" id="sidecarClose">Close</button></div>
+    </dialog>
+
     <div class="table-column-popover" id="tableColumnPopover" role="dialog" aria-labelledby="tableColumnPopoverTitle" hidden>
       <div class="table-column-popover-header">
         <strong id="tableColumnPopoverTitle">Column options</strong>
@@ -1615,8 +1713,8 @@
     <main>
       <div class="viewer-layout" id="viewerLayout">
         <div class="panel">
-          <div class="status" id="status"></div>
           <div id="content"></div>
+          <button id="sidecarMetadataButton" class="metadata-link" type="button" aria-haspopup="dialog" hidden disabled>Metadata…</button>
         </div>
         <aside class="toc-panel">
           <div class="toc-header">
@@ -1632,6 +1730,7 @@
 
     <script type="module">
       import { createSelectionMenu } from "./selection_menu.mjs";
+      import { createSidecarController } from "./sidecar_controller.mjs";
       import {
         browserFileCapabilities, documentFileAccept, downloadBrowserFile,
         isLocalDocumentLink, isStaticMode, pickBrowserFile, readBrowserFile, saveBrowserFile, saveBrowserFileAs,
@@ -1699,6 +1798,8 @@
       const addTableButton = document.getElementById("addTableButton");
       const addExpandButton = document.getElementById("addExpandButton");
       const saveButton = document.getElementById("saveButton");
+      const undoButton = document.getElementById("undoButton");
+      const redoButton = document.getElementById("redoButton");
       const diagramSourceDialog = document.getElementById("diagramSourceDialog");
       const diagramSourceTitle = document.getElementById("diagramSourceTitle");
       const diagramSourceInput = document.getElementById("diagramSourceInput");
@@ -1745,10 +1846,13 @@
       let selectedCell = null;
       let activeEditable = null;
       let savedEditorRange = null;
+      const nativeHistory = { undo: false, redo: false, touched: false, atStart: true };
+      let renderedSourceSnapshot = null;
       let sourceEditorBlock = null;
       let pendingDiagramLanguage = "";
       let diagramInsertRange = null;
       let selectionMenu = null;
+      let sidecarController = null;
       let tocRefreshTimer = null;
       let activeTableColumn = null;
       let expandMacroSequence = 0;
@@ -2024,13 +2128,14 @@
         }
       }
 
-      async function displayDocument(markdown, path, { immediate = false } = {}) {
+      async function displayDocument(markdown, path, { immediate = false, preserveReview = false } = {}) {
         selectionMenu?.close();
         updateUrlForPath(path);
         currentPath = path;
         pathInput.value = path;
         currentMarkdown = markdown;
         savedMarkdown = markdown;
+        if (!preserveReview) await sidecarController?.opened(staticMode ? browserDocument : null);
         observedBrowserFile = null;
         fileReadError = "";
         addMermaidButton.disabled = false;
@@ -2051,6 +2156,8 @@
       }
 
       function updateFileControls() {
+        sidecarController?.update();
+        updateUndoRedoState();
         loadButton.disabled = documentBusy;
         pathInput.disabled = documentBusy;
         addExpandButton.disabled = documentBusy || !currentPath || diagramSourceDialog.open;
@@ -2195,6 +2302,7 @@
           status.textContent = hasUnsavedChanges()
             ? "File overwritten with the confirmed draft. Newer edits are still unsaved."
             : "File overwritten with your draft.";
+          await sidecarController?.saved(sourceToSave, "overwrite", browserDocument);
         } catch (error) {
           if (error.name === "FileChangedError") observeBrowserFile(error.latestDocument);
           status.textContent = error.name === "AbortError"
@@ -2246,6 +2354,7 @@
             browserDocument = { name: latest.name, source: savedMarkdown, handle: latest.handle };
             currentPath = latest.name;
             pathInput.value = currentPath;
+            await sidecarController?.rebound(browserDocument);
           }
           observeBrowserFile(latest);
           // The user can open a diagram editor while the asynchronous file
@@ -2284,9 +2393,10 @@
             updateDirtyState();
             status.textContent = "Your document matches the latest file. No unsaved changes.";
           } else {
-            await displayDocument(latest.source, latest.contextPath || latest.name, { immediate: true });
+            await displayDocument(latest.source, latest.contextPath || latest.name, { immediate: true, preserveReview: true });
             status.textContent = "Refreshed from the latest file.";
           }
+          await sidecarController?.external(latest.source, browserDocument);
         } catch (error) {
           if (error.name === "AbortError") {
             status.textContent = "Refresh cancelled. Your document and draft are unchanged.";
@@ -2310,9 +2420,11 @@
             return;
           }
           selectionMenu?.close();
+          const previousDocument = browserDocument;
           browserDocument = withBrowserContextPath(browserDocument, path);
           currentPath = browserDocument.contextPath || browserDocument.name;
           pathInput.value = currentPath;
+          sidecarController?.contextChanged(previousDocument, browserDocument);
           updateFileControls();
           status.textContent = path ? "Absolute path retained for agent context. Document contents and save destination are unchanged." : "Context path cleared. Copied context will use the filename.";
         } catch (error) {
@@ -2342,6 +2454,7 @@
           // Ask after reading/picking so cancelling or an unreadable file never
           // discards the previous draft; this also sees edits made while reading.
           if (hasUnsavedChanges() && !window.confirm("Discard unsaved changes and open this file?")) return;
+          if (sidecarController && !sidecarController.confirmLeave()) return;
           opened = await retainBrowserContextPath(opened, previousDocument);
           let pathWarning = "";
           if (pendingContextPath) {
@@ -2443,6 +2556,7 @@
         enhanceTables(container);
         enableRenderedEditing(container);
         buildTableOfContents(container);
+        resetEditorHistory(markdown);
         const mermaidDiagrams = Array.from(content.querySelectorAll(".mermaid"));
         const plantUmlDiagrams = Array.from(content.querySelectorAll(".plantuml"));
         const diagrams = [...mermaidDiagrams, ...plantUmlDiagrams];
@@ -2522,6 +2636,58 @@
           formatButtons.forEach((button) => button.classList.remove("active"));
           blockStyleSelect.value = "p";
           textColorInput.value = "#1e1a16";
+        }
+        updateUndoRedoState();
+      }
+
+      function canUseEditorHistory() {
+        return Boolean(currentPath && !documentBusy && !diagramSourceDialog.open && !sidecarController?.isOpen() &&
+          activeEditable?.isConnected && savedEditorRange && typeof document.execCommand === "function");
+      }
+
+      function resetEditorHistory(source) {
+        const root = content.firstElementChild;
+        // Keep the exact raw source as well as its rendered representation, so
+        // undoing back to the loaded document does not convert Markdown to HTML.
+        renderedSourceSnapshot = root ? { source, html: serializeRenderedContent(root) } : null;
+        nativeHistory.undo = nativeHistory.redo = nativeHistory.touched = false;
+        nativeHistory.atStart = true;
+        updateUndoRedoState();
+      }
+
+      function updateUndoRedoState() {
+        const enabled = canUseEditorHistory();
+        // Query the document's editing history only while its editor owns focus,
+        // never the path field, a dialog textarea, or another input's undo stack.
+        if (enabled && closestEditableBoundary(document.activeElement)) {
+          for (const command of ["undo", "redo"]) {
+            try {
+              nativeHistory[command] = nativeHistory.touched && (command !== "undo" || !nativeHistory.atStart) &&
+                (typeof document.queryCommandEnabled !== "function" || document.queryCommandEnabled(command));
+            } catch { nativeHistory[command] = false; }
+          }
+        }
+        undoButton.disabled = !enabled || !nativeHistory.undo;
+        redoButton.disabled = !enabled || !nativeHistory.redo;
+      }
+
+      function applyEditorHistory(command) {
+        if (!["undo", "redo"].includes(command) || !canUseEditorHistory()) return false;
+        if (!restoreEditorSelection()) return false;
+        updateUndoRedoState();
+        if (!nativeHistory[command]) return false;
+        try {
+          if (!document.execCommand(command, false, null)) {
+            updateUndoRedoState();
+            return false;
+          }
+          finishEditorCommand();
+          nativeHistory.atStart = command === "undo" && currentMarkdown === renderedSourceSnapshot?.source;
+          updateUndoRedoState();
+          return true;
+        } catch {
+          updateUndoRedoState();
+          return false;
         }
       }
 
@@ -2608,8 +2774,13 @@
       }
 
       function finishEditorCommand() {
-        rememberEditorSelection();
+        const previous = currentMarkdown;
         markRenderedDomChanged();
+        if (currentMarkdown !== previous) {
+          nativeHistory.touched = true;
+          nativeHistory.atStart = false;
+        }
+        rememberEditorSelection();
         scheduleEditorNavigationRefresh();
       }
 
@@ -2691,6 +2862,9 @@
       function enableRenderedEditing(container) {
         activeEditable = null;
         savedEditorRange = null;
+        renderedSourceSnapshot = null;
+        nativeHistory.undo = nativeHistory.redo = nativeHistory.touched = false;
+        nativeHistory.atStart = true;
         setFormatToolsEnabled(false);
 
         container.contentEditable = "true";
@@ -2721,7 +2895,8 @@
 
       function syncMarkdownFromRenderedDom() {
         const root = content.firstElementChild;
-        currentMarkdown = root ? serializeRenderedContent(root) : "";
+        const serialized = root ? serializeRenderedContent(root) : "";
+        currentMarkdown = renderedSourceSnapshot?.html === serialized ? renderedSourceSnapshot.source : serialized;
       }
 
       function diagramSourceForBlock(block) {
@@ -3307,6 +3482,7 @@
             const result = await saveFile(browserDocument, sourceToSave, window);
             if (result.kind === "downloaded") {
               status.textContent = "This browser cannot choose a save location, so a download was started. The opened file is unchanged; unsaved edits remain a draft.";
+              await sidecarController?.downloaded(sourceToSave, browserDocument);
               return;
             }
             if (saveAs) selectionMenu?.close();
@@ -3326,6 +3502,7 @@
           // If editing continued during a write, the newer text stays dirty.
           savedMarkdown = sourceToSave;
           updateDirtyState();
+          if (staticMode) await sidecarController?.saved(sourceToSave, saveAs ? "save_as" : "save", browserDocument);
         } catch (error) {
           if (staticMode && error.name === "FileChangedError") observeBrowserFile(error.latestDocument);
           status.textContent = error.name === "AbortError"
@@ -5741,6 +5918,15 @@
       });
 
       document.addEventListener("keydown", (event) => {
+        const key = event.key.toLowerCase();
+        if (!event.isComposing && !event.altKey && (event.metaKey || event.ctrlKey) &&
+          closestEditableBoundary(event.target) && (key === "z" || key === "y" && event.ctrlKey)) {
+          // Scope native shortcuts to this rendered document. Inputs and modal
+          // editors keep their own shortcuts; older documents are not undoable.
+          event.preventDefault();
+          applyEditorHistory(key === "y" || event.shiftKey ? "redo" : "undo");
+          return;
+        }
         if (event.key === "Escape" && !tableColumnPopover.hidden) {
           event.preventDefault();
           closeTableColumnPopover();
@@ -5755,6 +5941,7 @@
           return;
         }
         event.preventDefault();
+        if (sidecarController?.isOpen()) return;
         if (diagramSourceDialog.open) {
           applyDiagramSource({ saveAfter: !staticMode }).then((applied) => {
             if (staticMode && applied) status.textContent = event.shiftKey
@@ -5771,6 +5958,15 @@
           event.preventDefault();
         }
       });
+
+      for (const [button, command] of [[undoButton, "undo"], [redoButton, "redo"]]) {
+        button.addEventListener("mousedown", (event) => event.preventDefault());
+        button.addEventListener("click", () => {
+          if (!button.disabled) applyEditorHistory(command);
+        });
+      }
+      document.getElementById("sidecarDialog").addEventListener("close", updateUndoRedoState);
+      document.addEventListener("focusin", updateUndoRedoState);
 
       formatTools.addEventListener("click", (event) => {
         const button = event.target.closest("button");
@@ -5832,9 +6028,18 @@
         }
       });
 
+      content.addEventListener("beforeinput", (event) => {
+        if (!closestEditableBoundary(event.target)) return;
+        if (event.inputType === "historyUndo" && nativeHistory.atStart ||
+          event.inputType === "historyRedo" && !nativeHistory.touched) event.preventDefault();
+      });
+
       content.addEventListener("input", (event) => {
         if (closestEditableBoundary(event.target)) {
+          nativeHistory.touched = true;
+          nativeHistory.atStart = false;
           markRenderedDomChanged();
+          nativeHistory.atStart = event.inputType === "historyUndo" && currentMarkdown === renderedSourceSnapshot?.source;
           rememberEditorSelection();
           scheduleEditorNavigationRefresh();
         }
@@ -5887,7 +6092,7 @@
       window.addEventListener("resize", updateActiveTocLink);
       window.addEventListener("resize", closeTableColumnPopover);
       window.addEventListener("beforeunload", (event) => {
-        if (!hasUnsavedChanges()) {
+        if (!hasUnsavedChanges() && !sidecarController?.hasUnsavedMetadata()) {
           return;
         }
         event.preventDefault();
@@ -5919,6 +6124,25 @@
           pendingLanguage: pendingDiagramLanguage,
         }),
         onStatus: (message) => { status.textContent = message; },
+      });
+
+      sidecarController = createSidecarController({
+        host: window,
+        getState: () => ({ staticMode, opened: browserDocument, current: currentMarkdown, saved: savedMarkdown,
+          busy: documentBusy, diagramOpen: diagramSourceDialog.open }),
+        setBusy(value) { documentBusy = value; updateFileControls(); },
+        restoreDraft(source) {
+          const previous = currentMarkdown;
+          try {
+            renderMarkdown(source, currentPath);
+            currentMarkdown = source;
+            updateDirtyState();
+          } catch (error) {
+            currentMarkdown = previous;
+            renderMarkdown(previous, currentPath);
+            throw error;
+          }
+        },
       });
 
       if (staticMode) {

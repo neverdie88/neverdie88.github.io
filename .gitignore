@@ -13,3 +13,7 @@ vendor/bundle/
 
 # macOS
 .DS_Store
+
+# Markup Studio history can contain original and deleted document text.
+/markup-studio/**/*.edit-history.json
+/markup-studio/**/*.meta.json
