@@ -1,0 +1,12 @@
+{
+  "encoder": {
+    "file": "encoder.onnx",
+    "bytes": 52861122,
+    "sha256": "1513e83ae281ef06cdb8f08451b59f06c56536f13bd3418b4fd13227543dc4ff"
+  },
+  "decoder": {
+    "file": "decoder.onnx",
+    "bytes": 47307771,
+    "sha256": "8652b5c2e3129775ca9109eb180c16c3615413ce38005adc8ce5966c3c76737c"
+  }
+}

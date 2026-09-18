@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sheet practice browser checks</title>
+<style>body{margin:0;font:15px system-ui;background:#eee}header{padding:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}button{padding:10px}iframe{width:100%;height:calc(100vh - 110px);border:0}#status{margin:0 12px 8px}</style></head><body>
+<header><button id="partial" disabled>Test partial chord</button><button id="finish" disabled>Test chord completion</button><button id="narrow">Narrow view</button><span>Synthetic microphone; no device access.</span></header>
+<p id="status" role="status">Loading…</p><iframe id="app" title="Production app with a synthetic microphone" src="../pitch-visualizer/"></iframe>
+<script>
+const frame=document.getElementById('app'),status=document.getElementById('status');
+let frequency=0, win;
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const waitFor=async(test,message)=>{const start=performance.now();while(!test()){if(performance.now()-start>15000)throw Error(message);await sleep(40);}};
+const current=()=>frame.contentDocument.querySelector('[data-practice-event]');
+const index=()=>Number(current()?.dataset.eventIndex);
+const check=(condition,message)=>{if(!condition)throw Error(message);};
+frame.addEventListener('load',()=>{
+  win=frame.contentWindow;
+  const track={stop(){frequency=0;},addEventListener(){}};
+  win.navigator.mediaDevices.getUserMedia=async()=>({getTracks:()=>[track],getAudioTracks:()=>[track]});
+  win.AudioContext=class{
+    state='running';sampleRate=48000;
+    createMediaStreamSource(){return{connect(){},disconnect(){}};}
+    createAnalyser(){return{disconnect(){},getFloatTimeDomainData(samples){for(let i=0;i<samples.length;i++)samples[i]=frequency ? .3*Math.sin(2*Math.PI*frequency*i/48000) : 0;}};}
+    close(){this.state='closed';}async resume(){this.state='running';}
+  };
+  document.getElementById('partial').disabled=false;status.textContent='Ready. Run the partial chord check.';
+  win.addEventListener('error',event=>{status.textContent='ERROR: '+event.message;});
+});
+document.getElementById('partial').onclick=async()=>{
+  document.getElementById('partial').disabled=true;
+  try{
+    status.textContent='Loading the real sample and playing A4, B4, then E5…';
+    const doc=frame.contentDocument;doc.getElementById('vp-score-sample').click();
+    await waitFor(()=>current()&&index()===0,'Sample did not load');
+    check(!doc.getElementById('vp-play-mode'),'Old mode selector remains');
+    doc.getElementById('vp-follow-toggle').click();
+    await waitFor(()=>doc.getElementById('vp-follow-toggle').textContent==='Pause practice','Practice did not start');
+    frequency=440;await waitFor(()=>index()===1,'A4 did not advance');
+    frequency=440*2**(2/12);await waitFor(()=>index()===2,'B4 did not advance');
+    frequency=440*2**(7/12);
+    await waitFor(()=>current()?.querySelector('[data-target-midi="76"][data-matched="true"]'),'E5 did not fade');
+    await sleep(400);check(index()===2,'A held chord tone advanced the whole chord');frequency=0;
+    check(current().querySelector('[data-target-midi="72"][data-matched="false"]'),'C5 must still be pending');
+    check(!doc.querySelector('[data-event-id="current"]'),'Played notehead must not be shown');
+    check(doc.querySelector('[data-pitch-trace]'),'Pitch trace is missing');
+    doc.getElementById('vp-follow-panel').scrollIntoView({block:'start'});
+    status.textContent='PASS: A4 and B4 disappeared; E5 is faded; C5 remains; trace is visible. Chord stays in the middle.';
+    document.getElementById('finish').disabled=false;
+  }catch(error){status.textContent='FAIL: '+error.message;frequency=0;}
+  finally{document.getElementById('partial').disabled=false;}
+};
+document.getElementById('finish').onclick=async()=>{
+  try{
+    frequency=440*2**(3/12);await waitFor(()=>index()===3,'C5 did not complete the chord');frequency=0;await sleep(320);
+    check(!frame.contentDocument.querySelector('[data-event-index="2"]'),'Completed chord is still visible');
+    const svg=frame.contentDocument.getElementById('vp-staff');
+    check(Math.abs(Number(current().dataset.eventX)-svg.viewBox.baseVal.width/2)<1,'Next note is not centered');
+    status.textContent='PASS: both chord notes matched; chord disappeared; D5 shifted into the middle.';
+    document.getElementById('finish').disabled=true;
+  }catch(error){status.textContent='FAIL: '+error.message;frequency=0;}
+};
+document.getElementById('narrow').onclick=()=>{frame.style.width=frame.style.width==='390px'?'100%':'390px';};
+</script></body></html>
