@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:,">
-<title>Pitch visualizer</title>
+<title>Sheet Music Practice</title>
+<link rel="stylesheet" href="./sheet-photo.css?v=5d1abe8b78a1">
 <style>:root {
   color-scheme: light dark;
   background-color: var(--background) !important;
@@ -743,8 +744,8 @@ svg {
 </head>
 <body>
 <main class="vp-page">
-<header class="vp-heading"><h1>Pitch visualizer</h1><p>Follow your pitch across the music staff.</p></header>
-<div id="violin-pitch">
+<header class="vp-heading"><h1>Sheet Music Practice</h1><p>Scan your sheet music. Play along. Stay in tune.</p></header>
+<div id="violin-pitch" data-mode="free">
   <style>
     #violin-pitch { display: grid; gap: 24px; }
     #violin-pitch [hidden] { display: none !important; }
@@ -768,14 +769,18 @@ svg {
     #violin-pitch .vp-detail { margin: 0; min-height: 1.5em; }
   </style>
 
-  <div class="viz-controls">
+  <div class="vp-mode-switch" role="group" aria-label="Practice mode">
+    <button class="btn" id="vp-mode-free" type="button" aria-pressed="true">Free play</button>
+    <button class="btn" id="vp-mode-sheet" type="button" aria-pressed="false">Follow sheet</button>
+  </div>
+  <div class="viz-controls" id="vp-notation-controls">
     <label class="form-label" for="vp-clef">Staff
       <select class="form-select" id="vp-clef">
         <option value="treble">G staff (treble)</option>
         <option value="bass">F staff (bass)</option>
       </select>
     </label>
-    <label class="form-label" for="vp-key">Key
+    <label class="form-label" for="vp-key">Scale
       <select class="form-select" id="vp-key"></select>
     </label>
   </div>
@@ -788,20 +793,170 @@ svg {
   <p id="vp-calibration-error" class="text-destructive vp-detail" role="alert" hidden></p>
   <p id="vp-error" class="text-destructive vp-detail" role="alert" hidden></p>
 
-  <div class="vp-section">
-    <div class="vp-readout vp-measure">
-      <h1 id="vp-note">—</h1>
+  <section id="vp-sheet-input" class="vp-sheet-input" aria-label="Add sheet music" hidden>
+    <div class="viz-controls">
+      <button class="btn" id="vp-sheet-upload" type="button">Upload sheet photo</button>
+      <button class="btn" id="vp-sheet-camera" type="button">Take photo</button>
+      <button class="btn" id="vp-score-open" type="button">Open MusicXML</button>
+      <button class="btn" id="vp-score-sample" type="button">Load sample sheet</button>
+      <button class="btn" id="vp-score-new" type="button">New sheet</button>
+    </div>
+    <p class="text-small text-muted">Turn printed sheet music into a score, save it, and play along. Photos stay on this device. First conversion downloads about 100 MB.</p>
+    <input id="vp-score-file" type="file" accept=".musicxml,.xml,application/vnd.recordare.musicxml+xml" aria-label="Choose a MusicXML score" hidden>
+    <input id="vp-sheet-file" type="file" accept="image/*" aria-label="Choose a sheet-music photo" hidden>
+    <input id="vp-sheet-capture-file" type="file" accept="image/*" capture="environment" aria-label="Take a sheet-music photo" hidden>
+    <p id="vp-sheet-status" class="text-small" role="status" aria-live="polite" hidden></p>
+    <p id="vp-sheet-error" class="text-destructive" role="alert" hidden></p>
+  </section>
+
+  <section id="vp-recognition" class="vp-section" aria-label="Photo recognition" hidden>
+    <div class="vp-sheet-tools">
+      <label for="vp-recognition-line">Recognize</label>
+      <select id="vp-recognition-line"><option value="all">All lines, top to bottom</option></select>
+      <button id="vp-recognize" class="btn" type="button">Convert photo again</button>
+      <button id="vp-recognition-cancel" class="btn btn-ghost" type="button" hidden>Cancel conversion</button>
+    </div>
+    <p class="text-small text-muted">Best with flat, well-lit, printed music for one instrument. For piano or ensemble music, choose one staff line. <a href="./recognition.html" target="_blank" rel="noopener">About recognition</a></p>
+  </section>
+  <p id="vp-score-status" class="text-small" role="status" aria-live="polite" hidden></p>
+  <p id="vp-score-error" class="text-destructive" role="alert" hidden></p>
+
+  <div id="vp-practice" class="vp-practice">
+    <section id="vp-digital-panel" class="vp-digital-panel" aria-label="Digital sheet music" hidden>
+      <div class="vp-sheet-heading">
+        <h2 id="vp-score-title">Your score</h2>
+        <div class="vp-sheet-tools">
+          <button id="vp-score-save" class="btn" type="button">Save MusicXML</button>
+          <button id="vp-score-print" class="btn" type="button">Print / Save PDF</button>
+          <button id="vp-score-view" class="btn" type="button" aria-expanded="false" aria-controls="vp-score-scroll">View full sheet</button>
+          <button id="vp-score-edit" class="btn" type="button">Edit sheet</button>
+          <button id="vp-score-remove" class="btn btn-ghost" type="button">Close score</button>
+        </div>
+      </div>
+      <p id="vp-score-warnings" class="text-small text-muted" hidden></p>
+      <div class="vp-sheet-tools">
+        <label for="vp-score-part">Practice part</label>
+        <select id="vp-score-part"></select>
+      </div>
+      <div id="vp-follow-panel" class="vp-follow-panel">
+        <div class="vp-sheet-tools">
+          <button id="vp-follow-toggle" class="btn btn-primary" type="button">Start practice</button>
+          <button id="vp-follow-restart" class="btn" type="button">Restart</button>
+          <button id="vp-follow-skip" class="btn btn-ghost" type="button">Skip</button>
+          <span id="vp-follow-progress" class="text-small"></span>
+        </div>
+        <p id="vp-follow-feedback" class="text-small" role="status" aria-live="polite">Play the note or chord in the middle.</p>
+        <p class="text-small text-muted">Play chords together on piano, or play their notes one at a time. Hold briefly; matched notes fade and the next group moves into the middle. Release repeated notes or chords before playing again.</p>
+        <p id="vp-chord-status" class="text-small" role="status" hidden></p>
+        <button id="vp-chord-retry" class="btn" type="button" hidden>Retry chord listening</button>
+      </div>
+      <div id="vp-score-scroll" class="vp-score-scroll" tabindex="0" role="region" aria-label="Full sheet music" hidden><div id="vp-score-render"></div></div>
+    </section>
+
+    <section id="vp-sheet-panel" class="vp-sheet-panel" aria-label="Sheet-music photo" hidden>
+      <div class="vp-sheet-heading">
+        <h2>Sheet music</h2>
+        <button class="btn btn-ghost" id="vp-sheet-remove" type="button">Remove</button>
+      </div>
+      <div class="vp-sheet-tools" aria-label="Photo controls">
+        <button class="btn" id="vp-sheet-zoom-out" type="button" aria-label="Zoom out">−</button>
+        <button class="btn" id="vp-sheet-fit" type="button" title="Fit photo to width">Fit width</button>
+        <button class="btn" id="vp-sheet-zoom-in" type="button" aria-label="Zoom in">+</button>
+        <span id="vp-sheet-zoom" class="text-small vp-measure" aria-live="polite">100%</span>
+        <button class="btn" id="vp-sheet-rotate" type="button">Rotate</button>
+      </div>
+      <div id="vp-sheet-viewport" class="vp-sheet-viewport" tabindex="0" role="region" aria-label="Sheet photo. Scroll to read; use the zoom buttons to enlarge.">
+        <img id="vp-sheet-image" alt="Your sheet-music photo" draggable="false">
+      </div>
+      <p id="vp-sheet-name" class="text-small text-muted"></p>
+    </section>
+
+    <div id="vp-live-panel" class="vp-live-panel">
+      <div class="vp-section" id="vp-readout-panel">
+        <div class="vp-readout vp-measure">
+          <h1 id="vp-note">—</h1>
+        </div>
+      </div>
+
+      <div class="vp-section">
+        <div class="vp-section-header">
+          <span id="vp-staff-label">Live pitch</span>
+          <span class="text-small" id="vp-score-caption">C major</span>
+        </div>
+        <svg id="vp-staff" class="vp-chart" height="328" role="img" aria-label="Pitch trace and played notes on a treble-clef staff"></svg>
+      </div>
     </div>
   </div>
 
-  <div class="vp-section">
-    <div class="vp-section-header">
-      <span>Sheet music</span>
-      <span class="text-small" id="vp-score-caption">C major</span>
+  <dialog id="vp-camera-dialog" class="vp-camera-dialog" aria-labelledby="vp-camera-title">
+    <div class="vp-sheet-heading">
+      <h2 id="vp-camera-title">Photograph your sheet</h2>
+      <button class="btn btn-ghost" id="vp-camera-close" type="button" autofocus>Cancel</button>
     </div>
-    <svg id="vp-staff" class="vp-chart" height="328" role="img" aria-label="Pitch trace and played notes on a treble-clef staff"></svg>
-  </div>
+    <p class="text-small">Keep the page flat, well lit, and fully inside the frame.</p>
+    <video id="vp-camera-video" autoplay muted playsinline aria-label="Camera preview"></video>
+    <p id="vp-camera-status" class="text-small" role="status">Waiting for camera permission…</p>
+    <p id="vp-camera-error" class="text-destructive" role="alert" hidden></p>
+    <div class="viz-controls">
+      <button class="btn btn-primary" id="vp-camera-shutter" type="button" disabled>Capture photo</button>
+      <button class="btn" id="vp-camera-native" type="button">Use camera app</button>
+    </div>
+  </dialog>
 
+  <dialog id="vp-editor-dialog" class="vp-editor-dialog" aria-labelledby="vp-editor-heading">
+    <div class="vp-sheet-heading">
+      <h2 id="vp-editor-heading">Compose sheet</h2>
+      <button id="vp-editor-cancel" class="btn btn-ghost" type="button">Cancel</button>
+    </div>
+    <div id="vp-editor-actions" class="vp-editor-actions">
+      <div class="vp-sheet-tools" role="group" aria-label="Composer tools">
+        <button class="btn" type="button" data-composer-tool="select" aria-pressed="true" title="Select or move a note">Select</button>
+        <button class="btn" type="button" data-composer-tool="note" aria-pressed="false">Note</button>
+        <button class="btn" type="button" data-composer-tool="rest" aria-pressed="false">Rest</button>
+        <button class="btn" type="button" data-composer-tool="chord" aria-pressed="false">Chord</button>
+        <button class="btn" type="button" data-composer-tool="erase" aria-pressed="false">Eraser</button>
+        <button class="btn" type="button" data-composer-tool="multi" aria-pressed="false">Select multiple</button>
+        <button id="vp-editor-undo" class="btn" type="button">Undo</button>
+        <button id="vp-editor-redo" class="btn" type="button">Redo</button>
+        <button id="vp-editor-play" class="btn vp-composer-play" type="button">▶ Play preview</button>
+      </div>
+      <div class="vp-sheet-tools vp-composer-palette-row">
+        <div id="vp-editor-palette" class="vp-composer-palette" role="group" aria-label="Note lengths"></div>
+        <label class="form-label" for="vp-editor-input-dots">Dots<select id="vp-editor-input-dots"><option value="0">None</option><option value="1">One</option><option value="2">Two</option></select></label>
+        <label class="form-label" for="vp-editor-accidental">Accidental<select id="vp-editor-accidental"><option value="key">In key</option><option value="0">♮ Natural</option><option value="1">♯ Sharp</option><option value="-1">♭ Flat</option><option value="2">𝄪 Double sharp</option><option value="-2">𝄫 Double flat</option></select></label>
+        <label class="form-label" for="vp-editor-tempo">Preview BPM<input id="vp-editor-tempo" class="form-control" type="number" min="30" max="240" value="120" step="1" aria-label="Preview tempo in beats per minute"></label>
+      </div>
+    </div>
+    <div class="vp-sheet-tools vp-composer-navigation">
+      <span id="vp-editor-part-picker" class="vp-sheet-tools"><label for="vp-editor-part">Part</label><select id="vp-editor-part"></select></span>
+      <span id="vp-editor-lane-picker" class="vp-sheet-tools"><label for="vp-editor-lane">Staff / voice</label><select id="vp-editor-lane"></select></span>
+      <button id="vp-editor-previous" class="btn" type="button" aria-label="Previous measure">←</button>
+      <label for="vp-editor-measure">Measure</label><select id="vp-editor-measure"></select>
+      <button id="vp-editor-next" class="btn" type="button" aria-label="Next measure">→</button>
+      <button id="vp-editor-add-measure" class="btn" type="button">Add measure</button>
+      <label for="vp-editor-zoom">Zoom</label><select id="vp-editor-zoom"><option value="0.6">60%</option><option value="0.8">80%</option><option value="1" selected>100%</option><option value="1.3">130%</option><option value="1.6">160%</option></select>
+    </div>
+    <div class="vp-sheet-tools vp-composer-signatures" aria-label="Staff and scale">
+        <label class="form-label" for="vp-editor-clef">Staff<select class="form-select" id="vp-editor-clef"><option value="treble">G staff (treble)</option><option value="bass">F staff (bass)</option><option value="other" disabled>Original clef</option></select></label>
+        <label class="form-label" for="vp-editor-key">Scale<select class="form-select" id="vp-editor-key"></select></label>
+      <span class="text-small">From the selected measure</span>
+    </div>
+    <div id="vp-editor-canvas-scroll" class="vp-composer-paper" tabindex="0" role="region" aria-label="Editable sheet. Scroll down for more rows.">
+      <svg id="vp-editor-canvas" class="vp-composer-canvas" tabindex="0" role="group" aria-label="Editable staff. Select a note to change its length or accidental. Select multiple to highlight groups; Delete removes them."></svg>
+    </div>
+    <p id="vp-editor-hint" class="text-small">Select a note on the staff, then drag it up or down to change pitch.</p>
+    <p id="vp-editor-meter" class="text-small text-muted" hidden></p>
+    <p id="vp-editor-error" class="text-destructive" role="alert" hidden></p>
+    <span id="vp-editor-play-status" class="sr-only" role="status"></span>
+    <details id="vp-editor-settings" class="vp-editor-options">
+      <summary>Sheet settings · title and time</summary>
+      <label class="form-label" for="vp-editor-title">Title<input id="vp-editor-title" class="form-control" maxlength="200"></label>
+      <div class="vp-editor-settings">
+        <label class="form-label" for="vp-editor-time">Time signature<select class="form-select" id="vp-editor-time"><option>4/4</option><option>3/4</option><option>2/4</option><option>6/8</option><option>9/8</option><option>12/8</option><option>2/2</option></select></label>
+      </div>
+    </details>
+    <div class="vp-sheet-tools vp-editor-footer"><button id="vp-editor-apply" class="btn btn-primary" type="button">Apply changes</button><button id="vp-editor-delete-selected" class="btn" type="button" disabled>Delete selected</button> <button id="vp-editor-clear-selection" class="btn btn-ghost" type="button" disabled title="Clear selection">Clear</button> <span id="vp-editor-selection-status" class="text-small" role="status"></span><span id="vp-editor-dirty" class="text-small text-muted"></span></div>
+  </dialog>
   <span class="sr-only" id="vp-announcement" role="status" aria-live="polite"></span>
 </div>
 <script>
@@ -893,7 +1048,7 @@ svg {
         if (!Number.isFinite(time) || (points.length && time < endTime)) return;
         endTime = time;
         if (points.at(-1)?.time === time) points.pop();
-        points.push({ time, pitch });
+        points.push(Array.isArray(pitch) ? { time, pitch: null, pitches: pitch } : { time, pitch });
         points = points.filter((point) => point.time >= time - windowMs);
       },
       reset() { points = []; endTime = 0; }
@@ -1169,6 +1324,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374 427 376 428 382 434C398 449 419 470 438 491C522 583 572 702 572 815C572 902 548 988 507 1048C492 1070 466 1098 455 1098C441 1098 410 1072 390 1050C316 968 292 843 292 739C292 681 299 616 306 575C308 563 309 561 297 551C233 498 164 437 112 373C43 287 0 194 0 87C0 -87 119 -252 364 -252C387 -252 413 -250 433 -246C444 -244 446 -243 448 -255C460 -322 475 -409 475 -456C475 -604 375 -622 316 -622C262 -622 236 -606 236 -593C236 -586 245 -583 268 -576C299 -567 335 -540 335 -482C335 -427 300 -380 239 -380C172 -380 132 -433 132 -495C132 -560 171 -658 322 -658C389 -658 519 -628 519 -458C519 -401 501 -306 490 -244C488 -232 489 -233 503 -227C604 -187 671 -102 671 11C671 139 577 252 430 252C404 252 404 252 401 270ZM470 943C503 943 530 916 530 861C530 792 497 728 419 650C403 634 379 611 356 591C349 585 345 586 343 599C339 625 337 659 337 691C337 847 409 943 470 943ZM361 262C364 243 364 244 346 238C258 208 201 129 201 44C201 -46 248 -110 316 -133C324 -136 336 -139 343 -139C351 -139 355 -134 355 -128C355 -121 347 -118 340 -115C298 -97 268 -54 268 -8C268 49 307 92 368 109C384 113 386 112 388 101L438 -197C440 -208 439 -208 424 -211C408 -214 388 -216 368 -216C193 -216 80 -119 80 20C80 79 90 158 173 252C233 319 279 356 326 394C336 402 338 401 340 390ZM430 103C428 115 429 118 441 117C522 110 589 42 589 -46C589 -109 551 -160 495 -188C483 -194 481 -194 479 -182Z","width":671},"noteheadBlack":{"path":"M97 -125C186 -125 295 -43 295 42C295 93 255 125 198 125C88 125 0 44 0 -42C0 -94 43 -125 97 -125Z","width":295},"accidentalSharp":{"path":"M237 118C244 121 249 129 249 135V206C249 211 246 214 242 214C240 214 239 214 237 213C237 213 217 205 212 204C205 204 198 209 198 217V339C198 345 192 350 184 350C174 350 168 345 168 339V209C167 199 164 186 155 180C143 173 109 159 92 155C83 155 80 167 80 175V295C80 301 73 306 66 306C56 306 50 301 50 295V160C50 146 44 136 38 133C32 130 12 122 12 122C5 120 0 112 0 106V35C0 29 3 26 8 26C9 26 11 27 12 27C12 27 27 33 34 37C35 37 36 38 37 38C44 38 50 28 50 20V-79C50 -90 45 -99 39 -102C33 -104 12 -113 12 -113C5 -115 0 -123 0 -129V-200C0 -206 3 -209 8 -209C9 -209 11 -208 12 -208C12 -208 26 -202 35 -199C36 -198 37 -198 38 -198C45 -198 50 -209 50 -214V-337C50 -343 56 -348 63 -348C73 -348 80 -343 80 -337V-198C80 -185 85 -178 90 -176L151 -151C152 -151 154 -150 155 -150C163 -150 168 -162 168 -168V-293C168 -299 174 -304 181 -304C192 -304 198 -299 198 -293V-151C198 -143 202 -131 209 -128C216 -125 237 -117 237 -117C244 -114 249 -106 249 -100V-29C249 -24 246 -21 242 -21C240 -21 239 -21 237 -22L211 -32C205 -32 198 -26 198 -14V79C198 86 203 105 211 108ZM168 -45C162 -65 115 -85 92 -85C86 -85 81 -83 80 -80C78 -76 77 -54 77 -30C77 1 78 36 80 44C82 61 128 82 153 82C160 82 166 80 168 76C170 71 172 46 172 19C172 -8 170 -36 168 -45Z","width":249},"accidentalNatural":{"path":"M141 181C139 181 138 180 137 180C137 180 73 157 47 157C41 157 37 158 37 162V329C37 336 31 341 25 341H12C5 341 0 336 0 329V-186C0 -192 3 -195 8 -195C9 -195 11 -194 12 -194C12 -194 14 -194 15 -193C29 -187 85 -163 114 -163C124 -163 131 -166 131 -174V-323C131 -330 136 -335 143 -335H156C162 -335 168 -330 168 -323V179C168 184 164 187 160 187C159 187 157 187 156 186ZM37 39C37 53 98 79 122 79C128 79 131 78 131 74V-29C131 -47 74 -70 49 -70C42 -70 37 -68 37 -64Z","width":168},"accidentalFlat":{"path":"M12 -170C15 -174 18 -175 21 -175C24 -175 27 -173 27 -173C57 -156 81 -129 106 -112C195 -50 226 11 226 57C226 114 182 150 136 153C129 153 122 152 115 150C104 147 92 143 81 136C75 131 64 122 59 122C57 122 56 122 54 123C47 126 43 133 43 140C44 162 50 402 50 422C50 433 41 439 31 439C17 439 1 429 0 411C0 411 4 -160 12 -170ZM47 -81C47 -81 44 -21 44 19C44 35 45 47 46 51C50 63 76 85 90 93C99 98 108 100 116 100C126 100 135 96 141 89C151 78 157 61 157 42C157 24 152 3 140 -18C127 -42 98 -74 68 -93C64 -95 61 -96 58 -96C49 -96 47 -86 47 -81Z","width":226},"fClef":{"path":"M252 262C78 262 0 135 0 39C0 -41 42 -110 123 -110C186 -110 229 -66 229 -4C229 60 182 100 133 100C106 100 96 93 83 93C70 93 67 101 67 111C67 151 127 224 229 224C335 224 381 120 381 -37C381 -140 359 -260 297 -356C237 -449 134 -534 10 -605C1 -610 -5 -615 -5 -623C-5 -629 -1 -635 8 -635C13 -635 19 -633 25 -630C158 -565 286 -489 392 -375C479 -281 531 -159 531 -28C531 146 425 262 252 262ZM629 180C598 180 574 156 574 125C574 94 598 70 629 70C660 70 684 94 684 125C684 156 660 180 629 180ZM630 -71C599 -71 576 -94 576 -125C576 -156 599 -179 630 -179C661 -179 684 -156 684 -125C684 -94 661 -71 630 -71Z","width":689}};
 
 </script>
+<script src="./practice-staff.js"></script>
+<script src="./chord-listener.js"></script>
 <script>
 (function () {
   'use strict';
@@ -1176,8 +1333,24 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
   const P = globalThis.ViolinPitch;
   const find = (id) => root.querySelector('#vp-' + id);
   const ui = Object.fromEntries(['mic', 'error', 'key', 'clef', 'a4', 'calibration-error', 'note', 'staff', 'score-caption', 'announcement'].map((id) => [id, find(id)]));
-  const state = { mode: 'idle', a4: 440, pitch: null, key: P.KEYS[0], clef: 'treble', staffTopStep: 12, staffBottomStep: -5, stream: null, context: null, source: null, analyser: null, frame: 0, request: 0, trail: P.createNoteTrail(), trace: P.createPitchTrace(), recent: [], lastSeen: 0, lastSample: 0, lastNote: '' };
+  const state = { practice: null, shiftStart: null, shiftCount: 0, shiftFrame: 0, mode: 'idle', a4: 440, pitch: null, key: P.KEYS[0], clef: 'treble', staffTopStep: 12, staffBottomStep: -5, stream: null, context: null, source: null, analyser: null, frame: 0, request: 0, trail: P.createNoteTrail(), trace: P.createPitchTrace(), recent: [], lastSeen: 0, lastSample: 0, lastNote: '' };
   const makeDetector = () => P.createDetector({ minHz: P.frequency(P.RANGE.minMidi - 0.5, state.a4), maxHz: P.frequency(P.RANGE.maxMidi + 0.5, state.a4) });
+  const chordTarget = () => (state.practice?.sequence[state.practice.index]?.notes.length || 0) > 1;
+  const clock = () => globalThis.performance?.now() || 0;
+  const chords = ChordListener.create({
+    onStatus(detail) { window.dispatchEvent(new CustomEvent('vp:chord-status', { detail })); },
+    onFrames(frames) {
+      if (state.mode !== 'mic' || !chordTarget()) return;
+      const index = state.practice.index;
+      for (const frame of frames) state.trace.push(frame.pitches, frame.time);
+      window.dispatchEvent(new CustomEvent('vp:chords', { detail: { frames, index } }));
+      drawStaff();
+    }
+  });
+  function syncChords() {
+    if (state.mode === 'mic' && state.practice?.sequence.some(event => event.notes.length > 1)) chords.start();
+    else chords.stop();
+  }
   let detect = makeDetector();
 
   for (const mode of ['major', 'minor']) {
@@ -1201,13 +1374,23 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
     return node;
   }
   function canvas(element, height, title) {
-    const width = Math.max(250, root.clientWidth);
+    const width = Math.max(250, element.clientWidth || root.clientWidth);
     element.setAttribute('viewBox', `0 0 ${width} ${height}`);
     element.replaceChildren(svgElement('title', {}, title));
     return { width, add: (tag, attrs, content) => element.appendChild(svgElement(tag, attrs, content)) };
   }
   function drawStaff() {
-    const gap = root.clientWidth < 480 ? 22 : 28;
+    if (state.practice) {
+      const width = Math.max(250, ui.staff.clientWidth || root.clientWidth);
+      const elapsed = state.shiftStart === null ? 240 : (globalThis.performance?.now() || 0) - state.shiftStart;
+      const fraction = Math.max(0, Math.min(1, elapsed / 240));
+      const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      PracticeStaff.draw({ svg: ui.staff, width, practice: state.practice, trace: state.trace, P, glyphs: globalThis.ViolinMusicGlyphs,
+        fallbackClef: state.clef, offset: reducedMotion ? 0 : state.shiftCount * PracticeStaff.spacing(width) * (1 - fraction) ** 3 });
+      ui['score-caption'].textContent = '';
+      return;
+    }
+    const gap = (ui.staff.clientWidth || root.clientWidth) < 480 ? 22 : 28;
     const clef = P.CLEFS[state.clef];
     const segments = P.traceSegments(state.trace.points, state.key.fifths, state.clef);
     // Add space only when a pitch outside the current extent is present. Keep it
@@ -1304,8 +1487,8 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
   function renderReadout() {
     const p = state.pitch;
     const noteName = p ? P.notation(p.midi, state.key.fifths, state.clef).name : null;
-    ui.note.textContent = noteName || '—';
-    if (p && noteName !== state.lastNote) {
+    ui.note.textContent = state.practice ? '' : noteName || '—';
+    if (!state.practice && p && noteName !== state.lastNote) {
       state.lastNote = noteName;
       ui.announcement.textContent = `${noteName}, ${p.hz.toFixed(1)} hertz`;
     }
@@ -1327,7 +1510,7 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
       if (now - state.lastSeen > 250) state.pitch = null;
     }
     state.trail.update(instant?.midi ?? null, now);
-    state.trace.push(hz ? P.describe(hz, state.a4) : null, now);
+    if (!chordTarget()) state.trace.push(hz ? P.describe(hz, state.a4) : null, now);
   }
 
   function changeTuning() {
@@ -1339,6 +1522,7 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
     if (!valid || a4 === state.a4) return;
     state.a4 = a4;
     detect = makeDetector();
+    chords.reset(clock());
     // Replay retained measured frequencies through the same smoothing and note
     // tracking as live input. Calibration must never change the source Hz/time.
     const points = [...state.trace.points];
@@ -1348,7 +1532,13 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
     state.pitch = null;
     state.lastSeen = 0;
     state.lastNote = '';
-    points.forEach((point) => trackPitch(point.pitch?.hz ?? null, point.time));
+    points.forEach((point) => {
+      if (point.pitches) state.trace.push(point.pitches.map(p => ({ ...P.describe(p.hz, a4), confidence: p.confidence })), point.time);
+      else {
+        trackPitch(point.pitch?.hz ?? null, point.time);
+        if (chordTarget()) state.trace.push(point.pitch ? P.describe(point.pitch.hz, a4) : null, point.time);
+      }
+    });
     if (state.mode !== 'mic') { state.pitch = null; state.trail.release(); }
     renderReadout();
   }
@@ -1357,11 +1547,13 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
     ui.error.hidden = !message;
   }
   function stopInput() {
+    chords.stop();
     state.request++;
     cancelAnimationFrame(state.frame);
     state.stream?.getTracks().forEach((track) => track.stop());
     state.source?.disconnect();
     state.analyser?.disconnect();
+    state.chordAnalyser?.disconnect(); state.chordAnalyser = null;
     state.stream = state.source = state.analyser = null;
     state.recent = [];
     state.lastNote = '';
@@ -1373,6 +1565,7 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
     state.trail.release();
     ui.mic.textContent = 'Start microphone';
     renderReadout();
+    window.dispatchEvent?.(new CustomEvent('vp:microphone', { detail: { active: false } }));
   }
   async function context() {
     const Audio = window.AudioContext || window.webkitAudioContext;
@@ -1387,6 +1580,7 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
     stopInput();
     if (!navigator.mediaDevices?.getUserMedia) {
       showError('Microphone access is unavailable here. Open this file on localhost or HTTPS in a browser.');
+      window.dispatchEvent?.(new CustomEvent('vp:microphone', { detail: { active: false } }));
       return;
     }
     const request = state.request;
@@ -1406,6 +1600,10 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
       state.analyser.fftSize = P.sampleSize(audio.sampleRate, P.frequency(P.RANGE.minMidi - 0.5, 400));
       state.analyser.smoothingTimeConstant = 0;
       state.source.connect(state.analyser);
+      state.chordAnalyser = audio.createAnalyser();
+      state.chordAnalyser.fftSize = 32768;
+      state.chordAnalyser.smoothingTimeConstant = 0;
+      state.source.connect(state.chordAnalyser);
       // Never connect the microphone to speakers.
       state.mode = 'mic';
       state.pitch = null;
@@ -1415,10 +1613,13 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
       state.staffBottomStep = -5;
       state.lastSeen = state.lastSample = 0;
       ui.mic.textContent = 'Stop microphone';
+      window.dispatchEvent?.(new CustomEvent('vp:microphone', { detail: { active: true } }));
+      chords.reset(clock()); syncChords();
       stream.getAudioTracks().forEach((track) => track.addEventListener('ended', () => {
         if (state.stream === stream) { stopMic(); showError('The microphone disconnected. Reconnect it and start again.'); }
       }, { once: true }));
       const samples = new Float32Array(state.analyser.fftSize);
+      const chordSamples = new Float32Array(state.chordAnalyser.fftSize);
       renderReadout();
       function frame(now) {
         if (state.mode !== 'mic') return;
@@ -1428,6 +1629,10 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
           const result = detect(samples, audio.sampleRate);
           trackPitch(result?.hz ?? null, now);
           renderReadout();
+          if (chordTarget()) {
+            state.chordAnalyser.getFloatTimeDomainData(chordSamples);
+            chords.submit(chordSamples, audio.sampleRate, state.a4, now);
+          } else window.dispatchEvent?.(new CustomEvent('vp:pitch', { detail: { pitch: result ? state.pitch : null, at: now } }));
         }
         state.frame = requestAnimationFrame(frame);
       }
@@ -1443,7 +1648,29 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
       showError(messages[error.name] || error.message || 'The microphone could not start.');
     }
   }
+  window.addEventListener('vp:practice', ({ detail }) => {
+    const previous = state.practice;
+    state.practice = detail;
+    if (!detail || detail.reset || previous?.index !== detail.index || previous?.active !== detail.active) chords.reset(clock());
+    syncChords();
+    if (!detail || detail.reset) {
+      state.trace.reset(); state.trail.reset(); state.recent = []; state.pitch = null;
+      state.shiftStart = null; state.shiftCount = 0;
+    } else if (previous && detail.index > previous.index) {
+      state.shiftStart = globalThis.performance?.now() || 0;
+      state.shiftCount = detail.index - previous.index;
+    }
+    cancelAnimationFrame(state.shiftFrame);
+    renderReadout();
+    function animate() {
+      if (!state.practice || state.shiftStart === null) return;
+      drawStaff();
+      if ((globalThis.performance?.now() || 0) - state.shiftStart < 240) state.shiftFrame = requestAnimationFrame(animate);
+    }
+    if (state.shiftStart !== null) state.shiftFrame = requestAnimationFrame(animate);
+  });
   ui.mic.addEventListener('click', startMic);
+  window.addEventListener('vp:chord-retry', () => { chords.stop(); chords.reset(clock()); syncChords(); });
   ui.key.addEventListener('change', () => {
     state.key = P.KEYS.find((key) => key.id === ui.key.value);
     renderReadout();
@@ -1455,19 +1682,37 @@ globalThis.ViolinMusicGlyphs = {"staffSpace":250.0,"gClef":{"path":"M376 415C374
     state.staffBottomStep = -5;
     renderReadout();
   });
-  new ResizeObserver(() => {
-    drawStaff();
-  }).observe(root);
+  let observedStaffWidth = 0, resizeFrame = 0;
+  new ResizeObserver(entries => {
+    const width = entries[0].contentRect.width;
+    if (width <= 0 || width === observedStaffWidth) return;
+    observedStaffWidth = width;
+    cancelAnimationFrame(resizeFrame);
+    // Drawing changes the SVG height. Defer it so the observer cannot trigger
+    // another layout change during the same resize notification cycle.
+    resizeFrame = requestAnimationFrame(drawStaff);
+  }).observe(ui.staff.parentElement || root);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       if (state.mode === 'mic' || state.mode === 'requesting') stopMic();
     }
   });
-  window.addEventListener('pagehide', () => { stopInput(); if (state.context?.state !== 'closed') state.context?.close(); });
+  window.addEventListener('pagehide', () => {
+    cancelAnimationFrame(resizeFrame); cancelAnimationFrame(state.shiftFrame);
+    stopInput(); if (state.context?.state !== 'closed') state.context?.close();
+  });
   renderReadout();
 })();
 
 </script>
+<script src="./sheet-photo.js"></script>
+<script src="./music-score.js?v=5766a0b2bf4d"></script>
+<script src="./score-editor-model.js?v=d9359d3c9fd0"></script>
+<script src="./composer-staff.js?v=39b4a34055d5"></script>
+<script src="./score-playback.js?v=d3a82079f2c5"></script>
+<script src="./composer-controller.js?v=a9b31f5ab31f"></script>
+<script src="./score-editor.js?v=3ee806991584"></script>
+<script src="./score-practice.js?v=3a48f18aa5a3"></script>
 
 </main>
 </body>

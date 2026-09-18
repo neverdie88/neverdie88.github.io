@@ -1,0 +1,12 @@
+{
+  "name": "pitch-visualizer-tests",
+  "private": true,
+  "scripts": {
+    "test": "node --test pitch-*.test.cjs"
+  },
+  "devDependencies": {
+    "@xmldom/xmldom": "0.9.12",
+    "jsdom": "^26.1.0",
+    "pngjs": "7.0.0"
+  }
+}

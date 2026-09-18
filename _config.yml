@@ -7,3 +7,11 @@ url: "https://neverdie88.github.io"
 markdown: kramdown
 plugins: []
 theme: null
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - node_modules
+  - _tests
