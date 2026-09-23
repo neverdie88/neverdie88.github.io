@@ -209,24 +209,38 @@ test('the staff uses its own width when a photo shares the practice area', async
   await app.stop();
 });
 
-test('trailing off clears history, keeps live notes and tuning, and resumes without a connecting trail', async () => {
-  const app = fixture(); await app.start(); app.play(440, 350); app.play(P.frequency(72), 350);
+test('blue pitch lines toggle only the curves while note history, tuning and live input continue', async () => {
+  const app = fixture(); await app.start(); app.play(440, 2000); app.play(P.frequency(72), 2000);
+  const notes = () => app.nodes().filter(n => n.attributes['data-event-id']);
+  const visibleNotes = JSON.stringify(notes());
+  const originalTrace = app.paths(), originalHeight = app.elements.staff.attributes.height;
+  const originalPitchY = app.pitchY();
   assert.ok(app.paths());
+  assert.ok(notes().some(n => n.attributes['data-event-id'] !== 'current'));
   app.elements['trail-toggle'].checked = false;
   app.elements['trail-toggle'].listeners.change();
   assert.equal(app.paths(), '');
-  assert.deepEqual(app.nodes().filter(n => n.attributes['data-event-id']).map(n => n.attributes['data-event-id']), ['current']);
-  app.play(442, 400);
+  assert.equal(JSON.stringify(notes()), visibleNotes, 'existing notes and their positions remain unchanged');
+  assert.equal(app.elements.staff.attributes.height, originalHeight);
+  assert.equal(app.pitchY(), originalPitchY);
+  app.play(442, 1800);
   assert.equal(app.paths(), ''); assert.equal(app.elements.note.textContent, 'A4');
-  assert.ok(Number.isFinite(app.pitchY()), 'the current pitch marker remains visible without a trail');
+  assert.ok(notes().some(n => n.attributes['data-note'] === 'C5'), 'new history keeps appearing while lines are hidden');
+  assert.notEqual(JSON.stringify(notes()), visibleNotes, 'notes keep scrolling');
+  assert.ok(Number.isFinite(app.pitchY()), 'the current pitch marker remains visible');
   app.setA4(415); assert.equal(app.elements.note.textContent, 'A♯4'); assert.equal(app.paths(), '');
   assert.ok(Number.isFinite(app.pitchY()));
+  app.setA4(440);
+  const continuedNotes = JSON.stringify(notes());
   app.elements['trail-toggle'].checked = true;
   app.elements['trail-toggle'].listeners.change();
-  assert.equal(app.paths(), '', 'old history must not reappear');
-  app.play(442, 150); assert.ok(app.paths());
-  assert.equal(app.nodes().some(n => n.attributes['data-note'] === 'C5'), false);
+  assert.ok(app.paths(), 'turning lines on immediately shows the current recorded window');
+  assert.notEqual(app.paths(), originalTrace);
+  assert.equal(JSON.stringify(notes()), continuedNotes, 'turning lines on preserves all notes');
   assert.equal(app.stopped, false);
+  app.play(440, 8500);
+  assert.equal(notes().some(n => n.attributes['data-note'] === 'C5'), false, 'old notes still expire normally');
+  await app.stop();
 });
 
 test('click, Enter and Space switch staff without restarting the mic or changing the pitch', async () => {

@@ -4,9 +4,11 @@ The `/pitch-visualizer/` app listens to one pitch at a time through the micropho
 Choose treble/bass staff, a major/minor scale, and A4 tuning from 400–480 Hz.
 Tap/click the staff, or focus it and press Enter/Space, to switch clefs.
 
-**Trailing** starts enabled. Turning it off clears the curve and previous notes
-while keeping the current note and live pitch marker visible. Turning it back on
-starts fresh history. The microphone continues running through these changes.
+**Blue pitch lines** starts enabled. These curves trace changes in detected
+pitch, including vibrato and slides. The toggle only shows or hides the curves;
+notes, note history and the live pitch marker stay visible. History continues
+scrolling while the curves are hidden, and turning them back on shows the current
+eight-second window. The microphone continues running through these changes.
 The fullscreen symbol expands the staff; the same symbol or Escape exits.
 
 Sheet imports, photos, editing, playback and recognition are a separate app at
@@ -14,7 +16,7 @@ Sheet imports, photos, editing, playback and recognition are a separate app at
 by this page. Keep the pitch page focused on microphone input.
 
 - `index.html`: page structure and controls.
-- `app.js`: microphone lifecycle, detection, staff rendering and trailing state.
+- `app.js`: microphone lifecycle, detection, staff rendering and pitch-line visibility.
 - `styles.css`: pitch-specific styling.
 - `../music-shared/`: common styles, music theory/detector functions, licensed
   music glyphs and fullscreen controls. Both apps require this directory.

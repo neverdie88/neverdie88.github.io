@@ -53,7 +53,7 @@ to GitHub Pages.
 
 ## Music apps
 
-- `/pitch-visualizer/`: microphone pitch display, optional trailing history,
+- `/pitch-visualizer/`: microphone pitch display, optional blue pitch lines,
   tap/click treble/bass switching, tuning and fullscreen.
 - `/sheet-music/`: separate MusicXML/photo import, recognition, composing,
   playback of all parts or a selected staff/voice, save/print and fullscreen.

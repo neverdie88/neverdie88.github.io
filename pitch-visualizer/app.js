@@ -4,7 +4,7 @@
   const P = globalThis.ViolinPitch;
   const find = (id) => root.querySelector('#vp-' + id);
   const ui = Object.fromEntries(['mic', 'error', 'key', 'clef', 'a4', 'calibration-error', 'note', 'staff', 'score-caption', 'announcement', 'trail-toggle'].map((id) => [id, find(id)]));
-  const state = { trailing: true, mode: 'idle', a4: 440, pitch: null, key: P.KEYS[0], clef: 'treble', staffTopStep: 12, staffBottomStep: -5, stream: null, context: null, source: null, analyser: null, frame: 0, request: 0, trail: P.createNoteTrail(), trace: P.createPitchTrace(), recent: [], lastSeen: 0, lastSample: 0, lastNote: '' };
+  const state = { showPitchLines: true, mode: 'idle', a4: 440, pitch: null, key: P.KEYS[0], clef: 'treble', staffTopStep: 12, staffBottomStep: -5, stream: null, context: null, source: null, analyser: null, frame: 0, request: 0, trail: P.createNoteTrail(), trace: P.createPitchTrace(), recent: [], lastSeen: 0, lastSample: 0, lastNote: '' };
   const makeDetector = () => P.createDetector({ minHz: P.frequency(P.RANGE.minMidi - 0.5, state.a4), maxHz: P.frequency(P.RANGE.maxMidi + 0.5, state.a4) });
   let detect = makeDetector();
 
@@ -37,7 +37,7 @@
   function drawStaff() {
     const gap = (ui.staff.clientWidth || root.clientWidth) < 480 ? 22 : 28;
     const clef = P.CLEFS[state.clef];
-    const segments = state.trailing ? P.traceSegments(state.trace.points, state.key.fifths, state.clef) : [];
+    const segments = P.traceSegments(state.trace.points, state.key.fifths, state.clef);
     // Add space only when a pitch outside the current extent is present. Keep it
     // until the next session so the staff does not jump as old notes scroll out.
     function include(step) {
@@ -49,7 +49,7 @@
     const plotTop = 22, bottom = plotTop + (state.staffTopStep + 2) * gap / 2;
     const plotBottom = bottom - (state.staffBottomStep - 2) * gap / 2, height = plotBottom + 12;
     ui.staff.setAttribute('height', height);
-    const { width, add } = canvas(ui.staff, height, `Pitch trace on a ${clef.name}-clef staff in ${state.key.name}`);
+    const { width, add } = canvas(ui.staff, height, `Live notes on a ${clef.name}-clef staff in ${state.key.name}`);
     const signature = P.keySignature(state.key.fifths, state.clef);
     const glyphs = globalThis.ViolinMusicGlyphs;
     const right = width - 16, clefLeft = 12;
@@ -65,7 +65,7 @@
     const end = state.trace.endTime, start = end - state.trace.windowMs;
     const x = (time) => plotLeft + (time - start) / state.trace.windowMs * (playhead - plotLeft);
     const y = (step) => bottom - step * gap / 2;
-    const label = `${state.trailing ? "Recorded pitch trace over eight seconds" : "Live pitch"}, ${clef.name} clef, ${state.key.name}, A4 = ${state.a4} Hz. Switch to ${state.clef === "treble" ? "bass" : "treble"} staff. ` + (state.pitch ? 'Current note ' + P.notation(state.pitch.midi, state.key.fifths, state.clef).name : 'No current note.');
+    const label = `Notes over eight seconds, blue pitch lines ${state.showPitchLines ? "shown" : "hidden"}, ${clef.name} clef, ${state.key.name}, A4 = ${state.a4} Hz. Switch to ${state.clef === "treble" ? "bass" : "treble"} staff. ` + (state.pitch ? 'Current note ' + P.notation(state.pitch.midi, state.key.fifths, state.clef).name : 'No current note.');
     ui.staff.setAttribute('aria-label', label);
     ui['score-caption'].textContent = state.key.name;
     function glyph(key, gx, baseline, className, parent = ui.staff, size = gap) {
@@ -86,7 +86,7 @@
     // engraved annotations, preventing overlapping heads and accidentals.
     const entries = [];
     let nextX = state.pitch ? playhead : Infinity;
-    for (const entry of (state.trailing ? [...state.trail.entries].reverse() : [])) {
+    for (const entry of [...state.trail.entries].reverse()) {
       if (entry.endedAt <= start || entry.startedAt > end) continue;
       if (state.pitch && entry.id === state.trail.activeId && entry.midi === state.pitch.midi) continue;
       const cx = x(entry.startedAt);
@@ -119,15 +119,15 @@
       // Keep the name close to its notehead, on the side opposite the stem.
       add('text', { x: cx, y: y(note.step) + (note.stemDown ? -18 : 24), 'text-anchor': 'middle', class: 'vp-note-label', 'data-note-label': entries[index].id }, note.name);
     });
-    for (const segment of segments) {
+    for (const segment of (state.showPitchLines ? segments : [])) {
       const path = segment.map((point, i) => `${i ? 'L' : 'M'}${x(point.time).toFixed(2)},${y(point.step).toFixed(2)}`).join(' ');
       plot.appendChild(svgElement('path', { d: path, class: 'vp-trace', 'data-pitch-trace': 'true' }));
     }
     const latest = state.trace.points.at(-1);
-    const livePitch = state.trailing ? latest?.pitch : state.pitch;
+    const livePitch = latest?.pitch;
     if (livePitch && state.pitch) {
       const step = P.notation(livePitch.midi, state.key.fifths, state.clef).step + livePitch.cents / 100;
-      add('circle', { cx: state.trailing ? x(latest.time) : playhead, cy: y(step), r: 5, class: 'vp-live-dot' });
+      add('circle', { cx: x(latest.time), cy: y(step), r: 5, class: 'vp-live-dot' });
     }
   }
   function renderReadout() {
@@ -155,10 +155,8 @@
       state.recent = [];
       if (now - state.lastSeen > 250) state.pitch = null;
     }
-    if (state.trailing) {
-      state.trail.update(instant?.midi ?? null, now);
-      state.trace.push(hz ? P.describe(hz, state.a4) : null, now);
-    }
+    state.trail.update(instant?.midi ?? null, now);
+    state.trace.push(hz ? P.describe(hz, state.a4) : null, now);
   }
 
   function changeTuning() {
@@ -172,7 +170,6 @@
     detect = makeDetector();
     // Replay retained measured frequencies through the same smoothing and note
     // tracking as live input. Calibration must never change the source Hz/time.
-    const currentHz = state.pitch?.hz;
     const points = [...state.trace.points];
     state.trace.reset();
     state.trail.reset();
@@ -181,7 +178,6 @@
     state.lastSeen = 0;
     state.lastNote = '';
     points.forEach((point) => trackPitch(point.pitch?.hz ?? null, point.time));
-    if (!state.trailing && currentHz) trackPitch(currentHz, globalThis.performance?.now() || 0);
     if (state.mode !== 'mic') { state.pitch = null; state.trail.release(); }
     renderReadout();
   }
@@ -303,11 +299,9 @@
     }
   });
   ui['trail-toggle'].addEventListener('change', () => {
-    state.trailing = ui['trail-toggle'].checked;
-    // Start a fresh history in either direction; never join samples across an
-    // interval when trailing was disabled. Live detection keeps running.
-    state.trace.reset(); state.trail.reset();
-    state.staffTopStep = 12; state.staffBottomStep = -5;
+    // This is only a visibility control for the blue curves. Preserve notes,
+    // timing and staff layout, and continue recording the current window.
+    state.showPitchLines = ui['trail-toggle'].checked;
     renderReadout();
   });
   let observedStaffWidth = 0, resizeFrame = 0;
