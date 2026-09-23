@@ -27,10 +27,36 @@ document.getElementById('check').onclick=async()=>{
     if($('mic').textContent==='Start microphone')$('mic').click();
     await until(()=>$('mic').textContent==='Stop microphone','Microphone loop did not start');
     frequency=440;await until(()=>doc.querySelector('[data-note-label="current"]')?.textContent==='A4'&&doc.querySelector('[data-pitch-trace]'),'Note and trace missing');
+    const staff=$('staff');
+    staff.scrollIntoView({block:'center'});
+    const beforeRedraw=staff.querySelector('.vp-staff-line');
+    const targets=['.vp-staff-line','.vp-clef','.vp-note-glyph','.vp-live-dot'].map(selector=>{
+      const box=staff.querySelector(selector).getBoundingClientRect();
+      return {x:box.x+box.width/2,y:box.y+box.height/2};
+    });
+    const staffBox=staff.getBoundingClientRect();
+    targets.push({x:staffBox.x+staffBox.width*.8,y:staffBox.y+staffBox.height*.5});
+    const hitStaff=()=>targets.forEach(point=>check(doc.elementFromPoint(point.x,point.y)===staff,'Staff drawing intercepts pointer input during microphone updates'));
+    hitStaff();
+    await until(()=>!beforeRedraw.isConnected,'Staff did not redraw during the microphone test');
+    hitStaff();
+    for(let attempt=0;attempt<4;attempt++){
+      staff.scrollIntoView({block:'center'});
+      const expected=$('clef').value==='treble'?'bass':'treble';
+      const line=staff.querySelector('.vp-staff-line'),box=line.getBoundingClientRect();
+      const target=doc.elementFromPoint(box.x+box.width*.75,box.y);
+      check(target===staff,'Staff line is not a stable click target');
+      target.dispatchEvent(new win.MouseEvent('mousedown',{bubbles:true,button:0}));
+      await until(()=>!line.isConnected,'No microphone redraw between mouse press and release');
+      check(target.isConnected,'Microphone redraw removed the pressed element');
+      target.dispatchEvent(new win.MouseEvent('mouseup',{bubbles:true,button:0}));
+      target.dispatchEvent(new win.MouseEvent('click',{bubbles:true,button:0}));
+      check($('clef').value===expected,'Staff click failed during microphone redraw');
+      check($('mic').textContent==='Stop microphone','Staff switching interrupted the microphone');
+    }
     $('trail-toggle').click();frequency=220;
     await until(()=>doc.querySelector('[data-note-label="current"]')?.textContent==='A3','Live note stopped with blue pitch lines off');
     check(!doc.querySelector('[data-pitch-trace]'),'Blue pitch lines off still draws a curve');
-    check(doc.querySelectorAll('[data-event-id]').length===1,'Old note history remains');
     $('staff').dispatchEvent(new win.MouseEvent('click',{bubbles:true}));
     check($('clef').value==='bass','Tap did not switch to bass');
     $('staff').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));

@@ -3,6 +3,8 @@
 The `/pitch-visualizer/` app listens to one pitch at a time through the microphone.
 Choose treble/bass staff, a major/minor scale, and A4 tuning from 400–480 Hz.
 Tap/click the staff, or focus it and press Enter/Space, to switch clefs.
+The SVG itself receives pointer input; its frequently replaced drawing children
+do not intercept presses, so switching continues while the microphone redraws it.
 
 **Blue pitch lines** starts enabled. These curves trace changes in detected
 pitch, including vibrato and slides. The toggle only shows or hides the curves;
@@ -27,6 +29,7 @@ backgrounding or leaving the page stops capture. There is no API key or backend.
 
 Run `node --test _tests/pitch-*.test.cjs` from the site root, then build Jekyll.
 `_tests/editor-browser.html` checks the actual microphone loop using synthetic
-signals and verifies the pitch-only page at desktop and 390 px widths. These
+signals and verifies the pitch-only page at desktop and 390 px widths, including
+stable staff hit targets across microphone redraws. These
 checks do not establish accuracy with a physical instrument or microphone.
 Refresh `?v=` SHA-256 hashes in the HTML when changing local JS/CSS assets.
