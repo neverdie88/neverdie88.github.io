@@ -73,6 +73,6 @@ globalThis.ScoreEditor = {
     });
     document.addEventListener('visibilitychange',()=>{if(document.hidden)composer.stop();});
     window.addEventListener('pagehide',()=>composer.close());
-    return { open(xml) { draft=ScoreEditorModel.create(xml);part=measure=selectedTone=0;selected=-1;composer.reset();message('error','');$('settings').open=false;$('dialog').showModal();render();$('dialog').scrollTop=0;$('canvas-scroll').scrollLeft=$('canvas-scroll').scrollTop=0;$('canvas').focus({preventScroll:true}); } };
+    return {ready:()=>composer.ready(), open(xml) { draft=ScoreEditorModel.create(xml);part=measure=selectedTone=0;selected=-1;composer.reset();message('error','');$('settings').open=false;$('dialog').showModal();render();$('dialog').scrollTop=0;$('canvas-scroll').scrollLeft=$('canvas-scroll').scrollTop=0;$('canvas').focus({preventScroll:true}); } };
   }
 };

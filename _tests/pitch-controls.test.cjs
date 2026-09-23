@@ -36,9 +36,10 @@ function fixture() {
     createImageBitmap:async()=>({width:2,height:2,close(){}}),
     Option:class{constructor(text,value){this.textContent=text;this.value=value;}},
     ResizeObserver:class{observe(){}},requestAnimationFrame:()=>1,cancelAnimationFrame(){},
-    queueMicrotask,Blob,URL,setTimeout
+    queueMicrotask,Blob,URL,setTimeout,DOMParser
   });
   vm.runInContext(fs.readFileSync(`${__dirname}/../music-shared/pitch-core.js`, 'utf8'), context);
+  vm.runInContext(fs.readFileSync(`${__dirname}/../sheet-music/score-engraver.js`,'utf8'),context);
   vm.runInContext(source,context);
   return {elements,workers,loads,editor,published, get practice(){return published.filter(e=>e.type==='vp:practice').at(-1)?.detail;},
     async photo(){events['vp:photo']({detail:{blob:new Blob(),name:'Camera.jpg'}});await flush();},

@@ -19,6 +19,11 @@ globalThis.ScoreComposer={
       onStep(event){playing=event;select({measure:event.measure,index:event.index,tone:event.tone});reveal(event.measure);},
       onStop(){playing=null;$('play').textContent='▶ Play preview';$('play-status').textContent='';if(getDraft())draw();}
     });
+    let engravingError=false;
+    const engraving=ScoreEngraver.createEditor(svg,{
+      onReady(value){geometry=value;if(engravingError){$('error').hidden=true;engravingError=false;}reveal(getSelection().measure);},
+      onError(error){geometry=null;engravingError=true;$('error').textContent='The editing score could not be drawn. '+error.message;$('error').hidden=false;}
+    });
     function clearSelection(refresh=false){selectedGroups.clear();anchor=null;keyboardEntry=false;inputCursor=null;select({index:-1,tone:0},false);if(refresh)draw();}
     function setTool(value){
       keyboardEntry=false;inputCursor=null;
@@ -74,12 +79,9 @@ globalThis.ScoreComposer={
       $('part-picker').hidden=snapshot.parts.length<2;$('lane-picker').hidden=lanes.length<2;
       $('lane').replaceChildren(...lanes.map((l,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`Staff ${l.staff} · voice ${l.voice}`;return o;}));
       $('lane').value=String(lanes.findIndex(l=>l.staff===lane.staff&&l.voice===lane.voice));
-      const count=snapshot.parts[selection.part].measures.length,entries=[];
-      for(let m=0;m<count;m++){const s=draft.inspect(selection.part,m);entries.push({measure:m,number:s.parts[selection.part].measures[m],ctx:draft.context(selection.part,m,lane.staff),groups:s.groups});}
+      const count=snapshot.parts[selection.part].measures.length;
       const zoom=Number($('zoom').value),width=($('canvas-scroll').clientWidth||800)/zoom;
-      geometry=ComposerStaff.layout(entries,{...lane,width});
-      ComposerStaff.draw(svg,geometry,{P:ViolinPitch,glyphs:ViolinMusicGlyphs,measure:selection.measure,selected:tool==='multi'?-1:selection.index,tone:selection.tone,playing,selectedGroups});
-      svg.style.width=geometry.width*zoom+'px';svg.style.height=geometry.height*zoom+'px';
+      engraving.draw(draft,selection.part,Math.max(280,width),zoom,{staff:lane.staff,measure:selection.measure,selected:tool==='multi'?-1:selection.index,tone:selection.tone,playing,selectedGroups:new Set(selectedGroups),cursor:keyboardEntry?inputCursor:null});
       $('previous').disabled=selection.measure===0;$('next').disabled=selection.measure===count-1;
       if(group&&tool!=='multi'&&!keyboardEntry){
         type=group.type==='measure'?(Object.keys(ScoreEditorModel.TYPES).find(t=>ScoreEditorModel.TYPES[t]===group.duration)||'whole'):group.type;
@@ -88,17 +90,14 @@ globalThis.ScoreComposer={
       }else $('accidental').value=inputAccidental;
       updateTools();
       if(keyboardEntry&&inputCursor){
-        const bar=geometry.bars.find(b=>b.measure===inputCursor.measure);
-        if(bar){const line=document.createElementNS(svg.namespaceURI,'line'),x=bar.start+inputCursor.beat*bar.beatWidth;
-          for(const [name,value]of Object.entries({'data-input-cursor':'true',x1:x,x2:x,y1:bar.bottom-110,y2:bar.bottom+35,stroke:'#2563eb','stroke-width':2,'pointer-events':'none'}))line.setAttribute(name,value);svg.append(line);}
         $('hint').textContent=`Note entry · measure ${inputCursor.measure+1}, beat ${+(inputCursor.beat+1).toFixed(3)} · A–G: notes · 0: rest · Esc: select`;
       }
     }
     function reveal(measure){
-      const bar=geometry?.bars.find(b=>b.measure===measure);if(!bar)return;
+      const bar=geometry?.bars.find(b=>b.measure===measure&&b.staff===lane.staff);if(!bar)return;
       const pane=$('canvas-scroll'),scale=Number($('zoom').value),left=bar.left*scale,top=bar.top*scale,bottom=(bar.top+bar.height)*scale;
       if(left<pane.scrollLeft||left>pane.scrollLeft+pane.clientWidth-60)pane.scrollLeft=Math.max(0,left-12);
-      if(top<pane.scrollTop||bottom>pane.scrollTop+pane.clientHeight)pane.scrollTop=top;
+      if(top<pane.scrollTop||bottom>pane.scrollTop+pane.clientHeight)pane.scrollTop=Math.max(0,top);
     }
     function point(event){const p=svg.createSVGPoint();p.x=event.clientX;p.y=event.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}
     // Selecting the last inserted note updates its controls, but must not turn
@@ -127,8 +126,9 @@ globalThis.ScoreComposer={
       svg.querySelector('[data-composer-ghost]')?.remove();const target=locate(p);if(!target)return;
       const g=document.createElementNS(svg.namespaceURI,'g');g.dataset.composerGhost='true';g.setAttribute('pointer-events','none');
       const bar=gesture?.hit?.bar||target.bar,pitch=ComposerStaff.pitchAt(p.y,bar,geometry,gesture?.hit?$('accidental').value:inputAccidental);
-      const x=gesture?.hit&&!gesture.hit.rest?gesture.hit.x:target.x,y=bar.bottom-ComposerStaff.stepOf(pitch,bar.ctx.clef)*geometry.halfGap;
-      const ellipse=document.createElementNS(svg.namespaceURI,'ellipse');for(const [k,v] of Object.entries({cx:x,cy:y,rx:10,ry:6,fill:'#1479dd',opacity:.55}))ellipse.setAttribute(k,v);g.append(ellipse);svg.append(g);
+      const x=gesture?.hit&&!gesture.hit.rest?gesture.hit.x:target.x,y=bar.bottom-ComposerStaff.stepOf(pitch,bar.ctx.clef)*(bar.halfGap||geometry.halfGap);
+      const head=document.createElementNS(svg.namespaceURI,'path'),glyph=ViolinMusicGlyphs.noteheadBlack,scale=10/ViolinMusicGlyphs.staffSpace;
+      for(const [k,v] of Object.entries({d:glyph.path,transform:`translate(${x-glyph.width*scale/2} ${y}) scale(${scale} ${-scale})`,fill:'#1479dd',opacity:.6}))head.setAttribute(k,v);g.append(head);svg.append(g);
       $('hint').textContent=`${pitch.step}${pitch.alter>0?'♯':pitch.alter<0?'♭':''}${pitch.octave} · measure ${bar.number}, beat ${+(target.beat+1).toFixed(3)}`;
     }
     function box(p){
@@ -137,10 +137,11 @@ globalThis.ScoreComposer={
       svg.append(rect);
     }
     svg.addEventListener('pointerdown',event=>{
-      if(event.button!==0||!getDraft())return;playback.stop();const p=point(event),hit=ComposerStaff.hit(geometry,p.x,p.y),target=locate(p);
+      if(event.button!==0||!getDraft()||!geometry||engraving.busy)return;playback.stop();const p=point(event),hit=ComposerStaff.hit(geometry,p.x,p.y),target=locate(p);
       keyboardEntry=false;inputCursor=null;
       const multi=tool==='multi'||event.shiftKey||event.ctrlKey||event.metaKey;
       if(!target&&!multi)return;
+      if(target){const staff=target.bar.staff;lane=hit?{staff:hit.staff,voice:hit.voice}:staff===lane.staff?lane:getDraft().lanes(getSelection().part).find(l=>l.staff===staff)||{staff,voice:'1'};}
       const current=selected();
       gesture={id:event.pointerId,start:p,hit,target,moved:false,multi,add:event.shiftKey||event.ctrlKey||event.metaKey,base:multi&&tool!=='multi'&&current.g?{measure:current.s.measure,index:current.s.index}:null};
       svg.setPointerCapture?.(event.pointerId);
@@ -148,7 +149,7 @@ globalThis.ScoreComposer={
       svg.focus({preventScroll:true});
     });
     svg.addEventListener('pointermove',event=>{
-      if(!geometry)return;const p=point(event);
+      if(!geometry||engraving.busy)return;const p=point(event);
       if(gesture){
         if(gesture.id!==event.pointerId)return;
         gesture.moved ||= Math.hypot(p.x-gesture.start.x,p.y-gesture.start.y)>4;
@@ -181,7 +182,7 @@ globalThis.ScoreComposer={
       if(tool==='select')return;
       if(tool==='chord'){
         if(!['treble','bass'].includes(target.bar.ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}
-        const column=geometry.hits.filter(n=>n.measure===target.measure&&!n.rest&&Math.abs(n.column-p.x)<28).sort((a,b)=>Math.abs(a.column-p.x)-Math.abs(b.column-p.x))[0];
+        const column=geometry.hits.filter(n=>n.measure===target.measure&&n.staff===lane.staff&&n.voice===lane.voice&&!n.rest&&Math.abs(n.column-p.x)<20).sort((a,b)=>Math.abs(a.column-p.x)-Math.abs(b.column-p.x))[0];
         if(!column){$('hint').textContent='Tap above or below an existing note to build a chord.';return;}
         const g=d.inspect(s.part,column.measure).groups[column.index];
         if(g.notes.some(n=>n.step===target.pitch.step&&n.alter===target.pitch.alter&&n.octave===target.pitch.octave)){select({measure:column.measure,index:column.index,tone:0});return;}
@@ -233,7 +234,7 @@ globalThis.ScoreComposer={
     $('dialog').addEventListener('keydown',event=>{
       if(!getDraft()||event.target.closest?.('input,select,textarea,[contenteditable="true"]'))return;
       if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='a'){
-        event.preventDefault();tool='multi';selectedGroups=new Set(geometry.hits.map(key));select({index:-1,tone:0});return;
+        if(!geometry||engraving.busy)return;event.preventDefault();tool='multi';selectedGroups=new Set(geometry.hits.map(key));select({index:-1,tone:0});return;
       }
       if(event.key==='Escape'){event.preventDefault();setTool('select');clearSelection(true);return;}
       if((event.ctrlKey||event.metaKey)&&['ArrowUp','ArrowDown'].includes(event.key)){
@@ -247,13 +248,13 @@ globalThis.ScoreComposer={
       if(/^[a-g]$/i.test(event.key)||event.key==='0'){event.preventDefault();inputNote(event.key==='0'?null:event.key.toUpperCase(),event.shiftKey&&event.key!=='0');return;}
       if(event.key===' '){event.preventDefault();if(!event.repeat)$('play').click();return;}
       if(['ArrowLeft','ArrowRight'].includes(event.key)){
-        event.preventDefault();const {s}=selected(),all=geometry.bars.flatMap(b=>b.groups.map(g=>({measure:b.measure,index:g.index}))),index=all.findIndex(g=>g.measure===s.measure&&g.index===s.index);
+        if(!geometry||engraving.busy)return;event.preventDefault();const {s}=selected(),all=geometry.bars.flatMap(b=>b.groups.filter(g=>g.staff===lane.staff&&g.voice===lane.voice).map(g=>({measure:b.measure,index:g.index}))),index=all.findIndex(g=>g.measure===s.measure&&g.index===s.index);
         const next=all[Math.max(0,Math.min(all.length-1,index+(event.key==='ArrowRight'?1:-1)))];
         if(next){keyboardEntry=false;inputCursor=null;select({...next,tone:0});reveal(next.measure);}return;
       }
       if(['Delete','Backspace'].includes(event.key)){event.preventDefault();deleteSelected();return;}
       const {d,s,g}=selected();if(!g||tool==='multi')return;
-      if(['ArrowUp','ArrowDown'].includes(event.key)&&!g.rest){event.preventDefault();const bar=geometry.bars.find(b=>b.measure===s.measure);if(!['treble','bass'].includes(bar.ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}const note=g.notes[s.tone]||g.notes[0],step=ComposerStaff.stepOf(note,bar.ctx.clef)+(event.key==='ArrowUp'?1:-1);mutate(()=>d.pitch(s.part,s.measure,s.index,s.tone,ComposerStaff.pitchAt(bar.bottom-step*geometry.halfGap,bar,geometry,$('accidental').value)));}
+      if(['ArrowUp','ArrowDown'].includes(event.key)&&!g.rest){event.preventDefault();const ctx=d.context(s.part,s.measure,g.staff);if(!['treble','bass'].includes(ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}const note=g.notes[s.tone]||g.notes[0],step=ComposerStaff.stepOf(note,ctx.clef)+(event.key==='ArrowUp'?1:-1);mutate(()=>d.pitch(s.part,s.measure,s.index,s.tone,ComposerStaff.pitchAt(-step,{bottom:0,halfGap:1,ctx},{halfGap:1},$('accidental').value)));}
     });
     svg.addEventListener('click',event=>{
       if(event.detail!==0)return;const item=event.target.closest('[data-composer-note]');if(!item)return;
@@ -278,6 +279,6 @@ globalThis.ScoreComposer={
       catch(error){$('error').textContent=error.message;$('error').hidden=false;}
     });
     if(typeof ResizeObserver!=='undefined')new ResizeObserver(()=>{if(getDraft()&&$('dialog').open&&!gesture)draw();}).observe($('canvas-scroll'));
-    return {render:draw,reveal,clearSelection,exitInput(){setTool('select');clearSelection(true);},currentLane:()=>previousPart===getSelection().part?lane:getDraft()?.lanes(getSelection().part)[0],stop:()=>playback.stop(),close:()=>playback.close(),reset(){playback.stop();previousPart=-1;playing=null;tool='select';type='quarter';gesture=null;keyboardEntry=false;inputCursor=null;selectedGroups.clear();anchor=null;inputAccidental='key';$('input-dots').value='0';$('accidental').value='key';$('canvas-scroll').scrollLeft=$('canvas-scroll').scrollTop=0;updateTools();}};
+    return {render:draw,reveal,clearSelection,ready:()=>engraving.ready(),exitInput(){setTool('select');clearSelection(true);},currentLane:()=>previousPart===getSelection().part?lane:getDraft()?.lanes(getSelection().part)[0],stop:()=>playback.stop(),close(){playback.close();engraving.close();geometry=null;},reset(){playback.stop();engraving.reset();geometry=null;previousPart=-1;playing=null;tool='select';type='quarter';gesture=null;keyboardEntry=false;inputCursor=null;selectedGroups.clear();anchor=null;inputAccidental='key';$('input-dots').value='0';$('accidental').value='key';$('canvas-scroll').scrollLeft=$('canvas-scroll').scrollTop=0;updateTools();}};
   }
 };

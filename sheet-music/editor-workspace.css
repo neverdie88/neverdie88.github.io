@@ -56,6 +56,9 @@ body { margin: 0; background: #fff; color: #1f2937; font-family: -apple-system, 
 .editor-page-area { display: grid; grid-template-rows: auto minmax(0,1fr) auto; min-width: 0; min-height: 0; background: #e9edf2; }
 .score-workspace .vp-composer-navigation { margin: 0; padding: 10px 16px; border-bottom: 1px solid #dbe2ea; background: #f8fafc; font-size: 12px; }
 .score-workspace .vp-composer-paper { min-height: 0; max-height: none; margin: 22px; border: 1px solid #dbe2ea; border-radius: 0; background: white; box-shadow: 0 2px 12px #17203312; }
+.score-workspace .vp-composer-canvas { margin: 26px 0; }
+.score-workspace .vp-composer-paper[aria-busy="true"] { cursor: progress; }
+.score-workspace .vp-composer-paper[aria-busy="true"]:has(svg:empty)::before { content: 'Preparing sheet…'; display: block; padding: 24px; color: #64748b; font-size: 13px; }
 .editor-live-status { padding: 9px 18px; background: #f8fafc; border-top: 1px solid #dbe2ea; font-size: 12px; }
 .editor-live-status p { margin: 0; font-size: 12px; }
 .score-workspace .vp-editor-footer { position: static; padding: 7px 16px; border-top: 1px solid #e2e8f0; background: #fff; min-height: 42px; }

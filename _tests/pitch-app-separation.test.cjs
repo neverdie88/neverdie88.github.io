@@ -3,10 +3,11 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const {JSDOM}=require('jsdom');
-for(const app of ['pitch-visualizer','sheet-music'])test(`${app} boots its complete actual controller stack with no media request`,()=>{
+for(const app of ['pitch-visualizer','sheet-music'])test(`${app} boots its complete actual controller stack with no media request`,async()=>{
   const dir=path.join(__dirname,'..',app),html=fs.readFileSync(path.join(dir,'index.html'),'utf8');
   const dom=new JSDOM(html,{url:`http://localhost/${app}/`,runScripts:'outside-only',pretendToBeVisual:true});
   const win=dom.window,doc=win.document,errors=[];let requests=0;
+  if(app==='sheet-music')require('./engraving-fixture.cjs').install(win);
   win.addEventListener('error',event=>errors.push(event.message));
   Object.defineProperty(win.navigator,'mediaDevices',{value:{getUserMedia:async()=>{requests++;throw Error('Unexpected media request');}}});
   win.ResizeObserver=class{observe(){}disconnect(){}};
@@ -27,6 +28,7 @@ for(const app of ['pitch-visualizer','sheet-music'])test(`${app} boots its compl
     assert.equal(doc.getElementById('vp-score-empty').hidden,false);
     doc.getElementById('vp-score-new').click();
     assert.equal(doc.getElementById('vp-editor-dialog').open,true);
+    for(let i=0;i<40&&!doc.querySelector('[data-composer-measure="0"]');i++)await new Promise(r=>setTimeout(r,5));
     assert.ok(doc.querySelector('[data-composer-measure="0"]'));
     doc.getElementById('vp-editor-cancel').click();
     assert.equal(doc.getElementById('vp-editor-dialog').open,false);

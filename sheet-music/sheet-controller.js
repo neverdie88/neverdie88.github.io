@@ -3,7 +3,6 @@
   'use strict';
   const $ = id => document.getElementById('vp-' + id);
   const state = { photo: null, worker: null, revision: 0, score: null, xml: '', renderer: null, warnings: [] };
-  let rendererLibrary;
   function message(id, text) { $(id).textContent = text; $(id).hidden = !text; }
   function stopRecognition() {
     state.revision++;
@@ -25,28 +24,13 @@
     $('score-render').replaceChildren();
     displayUI();
   }
-  function loadRendererLibrary() {
-    if (!rendererLibrary) rendererLibrary = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = './lib/opensheetmusicdisplay.min.js';
-      script.onload = resolve;
-      script.onerror = () => { script.remove(); rendererLibrary = null; reject(new Error('The score display could not load. Check your connection and try again.')); };
-      document.head.append(script);
-    });
-    return rendererLibrary;
-  }
   async function loadScore(xml, warnings, revision) {
     const parsed = PitchScore.parse(xml);
-    await loadRendererLibrary();
+    await ScoreEngraver.loadLibrary();
     if (revision !== state.revision) return;
     const candidate = document.createElement('div');
-    const renderer = new opensheetmusicdisplay.OpenSheetMusicDisplay(candidate, {
-      backend: 'svg', autoResize: false, drawingParameters: 'compacttight', drawTitle: false,
-      drawComposer: false, drawPartNames: false, drawPartAbbreviations: false,
-      followCursor: false, cursorsOptions: [{ type: 0, color: '#43b581', alpha: .35, follow: false }]
-    });
-    renderer.setLogLevel('error');
-    try { await renderer.load(xml); }
+    const renderer = ScoreEngraver.create(candidate);
+    try { await renderer.load(new DOMParser().parseFromString(xml,'application/xml')); }
     catch { renderer.clear(); throw new Error('This score could not be displayed. Try exporting it as uncompressed MusicXML from a notation editor.'); }
     if (revision !== state.revision) { renderer.clear(); return; }
     // Finish rendering before replacing the current score. Failed edits leave

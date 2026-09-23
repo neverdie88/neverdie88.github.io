@@ -5,6 +5,7 @@
     "test": "node --test pitch-*.test.cjs"
   },
   "devDependencies": {
+    "@napi-rs/canvas": "0.1.80",
     "@xmldom/xmldom": "0.9.12",
     "jsdom": "^26.1.0",
     "pngjs": "7.0.0"

@@ -2,7 +2,6 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
 const {create,blank}=require('../sheet-music/score-editor-model.js');
-const Staff=require('../sheet-music/composer-staff.js');
 const {create:player}=require('../sheet-music/score-playback.js');
 const edit=xml=>create(xml,DOMParser,XMLSerializer);
 const C4={step:'C',octave:4,alter:0};
@@ -66,21 +65,6 @@ test('bulk deletion spans measures, preserves other voices and undoes as one edi
   d.undo();assert.equal(d.xml(),original);d.redo();assert.equal(d.playback().events.length,0);
   const before=d.xml();assert.throws(()=>d.removeMany(0,[{measure:0,index:0},{measure:10,index:0}]),/existing measure/);assert.equal(d.xml(),before);
 });
-test('wrapped rows target the right measure and pitch and allow selections across rows',()=>{
-  const d=edit(blank());for(let m=0;m<6;m++){if(m)d.addMeasure(0);d.place(0,m,0,{pitch:{step:'C',octave:4,alter:0}});}
-  const entries=Array.from({length:6},(_,measure)=>({measure,number:String(measure+1),ctx:d.context(0,measure),groups:d.inspect(0,measure).groups}));
-  for(const width of [900,350]){
-    const g=Staff.layout(entries,{width});assert.ok(g.rows.length>1);assert.ok(g.width<=width+1);
-    for(const bar of g.bars){
-      const target=Staff.target(g,bar.start,bar.bottom+2*g.halfGap);
-      assert.equal(target.measure,bar.measure);assert.equal(target.pitch.midi,60);
-      assert.equal(Staff.hit(g,bar.start,bar.bottom+2*g.halfGap).measure,bar.measure);
-    }
-    const first=g.hits.find(n=>!n.rest),last=g.hits.filter(n=>!n.rest).at(-1);
-    const refs=Staff.groupsInRect(g,{x:0,y:first.y-10},{x:g.width,y:last.y+10});
-    assert.ok(refs.some(n=>n.measure===0));assert.ok(refs.some(n=>n.measure===5));
-  }
-});
 test('preview preserves rests, ties, chord duration and instrument transposition',()=>{
   const source=blank().replace('<clef>','<transpose><chromatic>-2</chromatic></transpose><clef>').replace('<note><rest/><duration>64</duration><type>whole</type></note>',
     '<note><pitch><step>C</step><octave>4</octave></pitch><duration>64</duration><tie type="start"/><type>whole</type></note>')
@@ -88,47 +72,6 @@ test('preview preserves rests, ties, chord duration and instrument transposition
   const d=edit(source),p=d.playback();assert.equal(p.duration,8);
   assert.deepEqual(p.events.map(e=>[e.beat,e.duration,e.midi]),[[0,5,58],[6,2,62]]);
   d.addTone(0,1,2,{step:'G',octave:4,alter:0});assert.deepEqual(d.playback().events.map(e=>e.midi),[58,62,65]);
-});
-test('staff hit testing distinguishes chord tones, measures, clefs and key accidentals',()=>{
-  const d=edit(blank());const i=d.place(0,0,0,{pitch:C4});d.addTone(0,0,i,{step:'E',octave:4,alter:0});d.addMeasure(0);
-  const entries=[0,1].map(measure=>({measure,number:String(measure+1),ctx:d.context(0,measure),groups:d.inspect(0,measure).groups}));
-  const l=Staff.layout(entries),n=l.hits.find(n=>n.tone===1&&!n.rest);
-  assert.equal(Staff.hit(l,n.x,n.y).tone,1);assert.equal(Staff.target(l,l.bars[1].start+64,l.bottom).measure,1);
-  const bass={...l.bars[0],ctx:{...l.bars[0].ctx,clef:'bass',fifths:1}};
-  const f=Staff.pitchAt(l.bottom-Staff.stepOf({step:'F',octave:3},'bass')*l.halfGap,bass,l);
-  assert.deepEqual(f,{step:'F',octave:3,alter:1,midi:54});
-  assert.equal(Staff.pitchAt(l.bottom,bass,l,'0').step,'G');
-});
-test('chords share a stem spanning every tone and seconds alternate without overlapping',()=>{
-  const d=edit(blank()),i=d.place(0,0,1,{pitch:C4});
-  for(const step of ['F','G','A'])d.addTone(0,0,i,{step,octave:4,alter:0});
-  d.addTone(0,0,i,{step:'C',octave:5,alter:0});
-  const geometry=()=>Staff.layout([{measure:0,number:'1',ctx:d.context(0,0),groups:d.inspect().groups}]);
-  const l=geometry(),stem=l.stems[0],heads=l.hits.filter(n=>!n.rest),x=step=>heads.find(n=>n.note.step===step&&n.note.octave===4).x;
-  assert.equal(l.stems.length,1);assert.equal(stem.down,false);
-  assert.ok(stem.start>=Math.max(...heads.map(n=>n.y))-2);
-  assert.ok(stem.end<=Math.min(...heads.map(n=>n.y))-7*l.halfGap);
-  assert.ok(x('G')-x('F')>=16);assert.equal(x('F'),x('A'));
-  for(const n of heads)assert.equal(Staff.hit(l,n.x,n.y).tone,n.tone,'every displaced tone remains selectable');
-  for(const n of heads)d.pitch(0,0,i,n.tone,{...n.note,octave:n.note.octave+1});
-  const high=geometry(),down=high.stems[0];assert.equal(down.down,true);
-  assert.ok(down.end>=Math.max(...high.hits.filter(n=>!n.rest).map(n=>n.y))+7*high.halfGap);
-  assert.ok(down.end<high.height,'long chord stem must fit inside the SVG');
-  const highF=high.hits.find(n=>n.note?.step==='F'),highG=high.hits.find(n=>n.note?.step==='G');
-  assert.ok(highG.x<highF.x,'downward seconds move to the left of the shared stem');
-});
-test('rendered chords have one stem and flag set; whole-note chords have no stem',()=>{
-  class Element{
-    constructor(tag,doc){this.tag=tag;this.ownerDocument=doc;this.children=[];this.attrs={};}
-    setAttribute(k,v){this.attrs[k]=v;}replaceChildren(){this.children=[];}appendChild(n){this.children.push(n);return n;}
-  }
-  const doc={createElementNS(ns,tag){return new Element(tag,doc);}},svg=new Element('svg',doc);
-  const P={CLEFS:{treble:{glyph:'gClef',anchorStep:2}},keySignature:()=>[]};
-  const glyphs={staffSpace:250,gClef:{path:'M0 0',width:600},noteheadBlack:{path:'M0 0',width:295}};
-  const d=edit(blank()),index=d.place(0,0,0,{pitch:C4,type:'eighth'});d.addTone(0,0,index,{step:'D',octave:4,alter:0});
-  const draw=()=>{const g=Staff.layout([{measure:0,number:'1',ctx:d.context(0,0),groups:d.inspect().groups}]);Staff.draw(svg,g,{P,glyphs,measure:0,selected:-1});return svg.children.filter(n=>'data-composer-stem' in n.attrs);};
-  let stems=draw();assert.equal(stems.length,1);assert.equal(stems[0].children.filter(n=>n.tag==='line').length,1);assert.equal(stems[0].children.filter(n=>n.tag==='path').length,1);
-  d.length(0,0,index,'whole',0);stems=draw();assert.equal(stems.length,0);
 });
 test('audio preview schedules piano notes and stops pending/resuming sessions',async t=>{
   let resolveResume,closed=false;const notes=[];

@@ -102,7 +102,10 @@
       const p = put(note,'pitch');
       while (p.firstChild) p.removeChild(p.firstChild);
       p.appendChild(make('step',step)); if (Number(alter)) p.appendChild(make('alter',Number(alter))); p.appendChild(make('octave',Number(octave)));
-      put(note,'accidental', { '-2':'flat-flat','-1':'flat','0':'natural','1':'sharp','2':'double-sharp' }[alter]);
+      // The written pitch carries its alteration. Let the engraver decide when
+      // an accidental is needed in the key/measure instead of forcing a sign
+      // (including a natural) onto every inserted or edited note.
+      remove(child(note,'accidental'));
       note.removeAttribute('default-y');
     }
     function editableRhythm(group) {
@@ -201,6 +204,15 @@
           const duration=TYPES[type]*(2-2**(-dots));
           if(!Number.isFinite(beat)||beat<0||!(type in TYPES)||![0,1,2].includes(dots))throw new Error('Choose a note length and a beat on the staff.');
           if(beat+duration>beatsIn(ctx)+1e-7)throw new Error('That note crosses the bar line. Choose a shorter note or add a measure.');
+          if(Number(staff)>1){
+            const first=measures(part)[0];let attributes=child(first,'attributes');
+            if(!attributes){attributes=make('attributes');first.insertBefore(attributes,first.firstChild);}
+            if(number(attributes,'staves',1)<Number(staff)){
+              let count=child(attributes,'staves');
+              if(!count){count=make('staves');attributes.insertBefore(count,children(attributes).find(n=>['part-symbol','instruments','clef','staff-details','transpose','directive','measure-style'].includes(n.localName))||null);}
+              count.textContent=String(staff);
+            }
+          }
           const covering=lane.find(g=>beat>=g.beat-1e-7&&beat<g.beat+number(g.nodes[0],'duration')/g.divisions-1e-7);
           if(covering) {
             editableRhythm(covering);

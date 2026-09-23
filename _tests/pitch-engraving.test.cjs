@@ -1,0 +1,88 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const {JSDOM}=require('jsdom');
+const {Path2D}=require('@napi-rs/canvas');
+const model=require('../sheet-music/score-editor-model.js');
+const root=`${__dirname}/../sheet-music/`;
+async function fixture(t,xml=model.blank(),width=900){
+  const dom=new JSDOM(`<div style="width:${width}px"><svg xmlns="http://www.w3.org/2000/svg"></svg></div>`,{runScripts:'outside-only'}),win=dom.window;
+  require('./engraving-fixture.cjs').install(win);
+  for(const f of ['score-editor-model.js','composer-staff.js','score-engraver.js'])win.eval(fs.readFileSync(root+f,'utf8'));
+  const draft=win.ScoreEditorModel.create(xml),svg=win.document.querySelector('svg'),errors=[];let geometry;
+  const editor=win.ScoreEngraver.createEditor(svg,{onReady:g=>geometry=g,onError:e=>errors.push(e)});
+  const state={staff:'1',measure:0,selected:-1,tone:0,selectedGroups:new Set(),playing:null,cursor:null};
+  const draw=()=>editor.draw(draft,0,width,1,state);
+  const ready=async()=>{await editor.ready();assert.deepEqual(errors,[]);};
+  t.after(()=>{editor.close();dom.window.close();});draw();await ready();
+  return {win,svg,draft,editor,state,draw,ready,get geometry(){return geometry;}};
+}
+test('edit and applied views use identical engraving, with beams and two piano staves',async t=>{
+  const a=await fixture(t,model.template('piano'));
+  for(let i=0;i<8;i++)a.draft.place(0,0,i/2,{type:'eighth',pitch:{step:'CDEFGABC'[i],octave:i===7?5:4,alter:0}});
+  a.draw();await a.ready();
+  assert.equal(a.geometry.bars.length,8,'empty measures remain individually editable');
+  assert.ok(a.svg.querySelector('.vf-beam'));
+  assert.equal(a.svg.querySelectorAll('.vf-modifiers path').length,0,'natural pitches do not get redundant natural signs');
+  const host=a.win.document.createElement('div');a.win.document.body.append(host);
+  const renderer=a.win.ScoreEngraver.create(host);await renderer.load(new a.win.DOMParser().parseFromString(a.draft.xml(),'application/xml'));renderer.render();
+  const paths=el=>Array.from(el.querySelectorAll('path'),p=>p.getAttribute('d'));
+  assert.deepEqual(paths(a.svg),paths(host),'the editor copies the same engraved paths as the score display');
+  const applied=host.innerHTML;
+  a.draft.place(0,1,0,{pitch:{step:'C',octave:4,alter:0}});a.draw();await a.ready();
+  assert.equal(host.innerHTML,applied,'editor SVG ids never interfere with the applied score');
+  renderer.clear();
+});
+test('each displaced chord head is clickable at its actual ink position',async t=>{
+  const a=await fixture(t),index=a.draft.place(0,0,0,{pitch:{step:'G',octave:4,alter:0},type:'eighth'});
+  for(const [step,octave]of [['C',4],['F',4],['A',4],['C',5]])a.draft.addTone(0,0,index,{step,octave,alter:0});
+  for(const raise of [false,true]){
+    if(raise)for(const [tone,note]of a.draft.inspect().groups[0].notes.entries())a.draft.pitch(0,0,0,tone,{...note,octave:note.octave+1});
+    a.draw();await a.ready();
+    const notes=a.geometry.hits.filter(h=>!h.rest);
+    assert.equal(notes.length,5);
+    assert.ok(new Set(notes.map(n=>n.x)).size>1,'adjacent chord heads are displaced');
+    for(const note of notes){
+      const head=a.svg.querySelector(`[data-engraved-note="${note.measure}:${note.index}:${note.tone}"] path`);
+      const [left,top,right,bottom]=new Path2D(head.getAttribute('d')).computeTightBounds();
+      assert.ok(Math.abs(note.x-(left+right)/2)<2,'hit target follows the actual notehead');
+      assert.ok(Math.abs(note.y-(top+bottom)/2)<1);
+      assert.equal(a.win.ComposerStaff.hit(a.geometry,note.x,note.y).tone,note.tone);
+    }
+  }
+});
+test('wrapped systems map clicks and box selection to engraved measures and bass pitches',async t=>{
+  const a=await fixture(t,model.template('piano'),350);
+  for(let m=0;m<4;m++)a.draft.place(0,m,0,{pitch:{step:'C',octave:3,alter:0},staff:'2',voice:'2'});
+  a.draw();await a.ready();
+  assert.ok(new Set(a.geometry.bars.map(b=>b.row)).size>1);
+  for(const hit of a.geometry.hits.filter(h=>!h.rest)){
+    const target=a.win.ComposerStaff.target(a.geometry,hit.x,hit.y);
+    assert.equal(target.measure,hit.measure);assert.equal(target.bar.staff,'2');assert.equal(target.pitch.midi,48);
+  }
+  const refs=a.win.ComposerStaff.groupsInRect(a.geometry,{x:0,y:0},{x:350,y:a.geometry.height});
+  assert.ok(refs.some(r=>r.measure===0));assert.ok(refs.some(r=>r.measure===3));
+  assert.equal(a.svg.querySelector('[stroke-dasharray="3 5"]'),null,'no beat grid is drawn');
+});
+test('accidental cancellation and half rests use engraved symbols',async t=>{
+  const a=await fixture(t);
+  for(let beat=0;beat<3;beat++)a.draft.place(0,0,beat,{pitch:{step:'C',octave:4,alter:beat===0?1:0}});
+  a.draw();await a.ready();assert.equal(a.svg.querySelectorAll('.vf-modifiers path').length,2);
+  a.draft.addMeasure(0);a.draft.place(0,1,0,{type:'half'});a.draw();await a.ready();
+  const hit=a.geometry.hits.find(n=>n.measure===1&&n.group.type==='half');
+  const path=a.svg.querySelector(`[data-engraved-note="1:${hit.index}:0"] path`);
+  const bounds=new Path2D(path.getAttribute('d')).computeTightBounds();
+  assert.ok(Math.abs(bounds[3]-(hit.bar.bottom-4*hit.bar.halfGap))<1,'half rest sits above the middle staff line');
+});
+test('rapid edits keep the newest layout and closing cancels a pending engraving',async t=>{
+  const a=await fixture(t),prototype=a.win.opensheetmusicdisplay.OpenSheetMusicDisplay.prototype,original=prototype.load;let release;
+  prototype.load=async function(xml){await new Promise(resolve=>release=resolve);return original.call(this,xml);};
+  t.after(()=>{prototype.load=original;});
+  const started=async()=>{for(let i=0;i<20&&!release;i++)await Promise.resolve();assert.equal(typeof release,'function');};
+  a.draft.place(0,0,0,{pitch:{step:'C',octave:4,alter:0}});a.draw();
+  await started();
+  a.draft.undo();a.draw();release();await a.ready();
+  assert.equal(a.geometry.hits.filter(h=>!h.rest).length,0,'old render cannot replace an undo');
+  release=null;a.draft.redo();a.draw();await started();
+  a.editor.close();release();await a.ready();assert.equal(a.svg.children.length,0,'closed drafts never reappear');
+});

@@ -23,6 +23,10 @@ Both apps use `../music-shared/`; publish all three directories together.
 - **Edit sheet** opens an isolated draft. Choose a note/rest length, then tap a
   beat and staff line/space. Use Chord to stack tones, Eraser to remove a tone,
   or Select to drag/change pitch, duration, dots and accidentals.
+- Editing and the applied sheet use the same OpenSheetMusicDisplay engraving:
+  proper noteheads, rests, chord spacing, automatic beams and accidentals.
+  Both piano staves appear together; clicking a note or entering on a staff
+  selects that staff/voice. Empty measures remain separate and editable.
 - Staff, scale, part/staff/voice, measures, zoom and preview controls are in the
   editor. Its **Play preview** plays only the selected staff/voice in the draft.
   It is separate from **Play sheet**, which plays the applied score.
@@ -33,7 +37,9 @@ Both apps use `../music-shared/`; publish all three directories together.
   score. The fullscreen symbols enlarge either the score or uploaded photo.
 
 The full-window editor uses a notation toolbar, properties sidebar and white
-score page inspired by desktop notation editors. Keyboard entry supports:
+score page inspired by desktop notation editors. It uses its own MusicXML edit
+model with OSMD/VexFlow engraving, rather than the native MuseScore application.
+Keyboard entry supports:
 
 | Key | Action |
 | --- | --- |
@@ -97,8 +103,14 @@ are unsupported. See `recognition.html` for source attribution and limits.
 - `score-editor.js`: draft lifecycle, settings, apply/cancel and keyboard undo.
 - `score-editor-model.js`: MusicXML-preserving edits, rest splitting, note timing,
   ties, staff signatures, transposition, history and playback timelines.
-- `composer-controller.js` / `composer-staff.js`: responsive editable SVG staff,
-  pointer/keyboard selection, note entry, hit testing, palettes and draft preview.
+- `score-engraver.js`: shared lazy OSMD loading and rendering options, full-part
+  editor engraving, note-to-model coordinate mapping and selection overlays.
+  Render requests are serialized and stale results cannot replace newer edits.
+  The coordinate adapter uses the pinned OSMD 2.1.2 graphical/VexFlow objects;
+  run the real engraving tests before updating that dependency.
+- `composer-controller.js` / `composer-staff.js`: pointer/keyboard selection,
+  note entry, interpolation between engraved beat positions, hit testing,
+  palettes and draft preview. They do not draw replacement notation.
 - `music-score.js`: score-partwise note extraction; its legacy follower is unused.
 - `omr-engine.js`, `omr-musicxml.js`, `omr-worker.js`: HOMR preprocessing, ONNX
   inference, conversion, local model caching and checksums.
@@ -118,6 +130,10 @@ From the site root run `npm ci --prefix _tests`, then
 `node --test _tests/pitch-*.test.cjs` and `bundle exec jekyll build --trace`.
 Jekyll copies the static files without an app build and excludes `_tests`.
 The tests cover model inference, editing, playback, media lifecycle and both apps.
+Engraving tests use the actual bundled OSMD and native Canvas font/raster support
+in Node, including engraved-note hit positions, grand staves, chord displacement,
+rests, beams, cancellation and identical paths in edit/display modes. These are
+headless SVG/interaction tests, not a browser audio or physical-webcam playtest.
 `_tests/composer-browser.html` exercises the actual sheet editor and export;
 `_tests/sheet-browser.html` checks loading and the applied-sheet transport.
 The pitch-specific browser harness is `_tests/editor-browser.html`.
