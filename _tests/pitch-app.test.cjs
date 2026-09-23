@@ -209,7 +209,7 @@ test('the staff uses its own width when a photo shares the practice area', async
   await app.stop();
 });
 
-test('blue pitch lines toggle only the curves while note history, tuning and live input continue', async () => {
+test('pitch trace toggle only hides the curves while note history, tuning and live input continue', async () => {
   const app = fixture(); await app.start(); app.play(440, 2000); app.play(P.frequency(72), 2000);
   const notes = () => app.nodes().filter(n => n.attributes['data-event-id']);
   const visibleNotes = JSON.stringify(notes());

@@ -55,19 +55,19 @@ document.getElementById('check').onclick=async()=>{
       check($('mic').textContent==='Stop microphone','Staff switching interrupted the microphone');
     }
     $('trail-toggle').click();frequency=220;
-    await until(()=>doc.querySelector('[data-note-label="current"]')?.textContent==='A3','Live note stopped with blue pitch lines off');
-    check(!doc.querySelector('[data-pitch-trace]'),'Blue pitch lines off still draws a curve');
+    await until(()=>doc.querySelector('[data-note-label="current"]')?.textContent==='A3','Live note stopped with pitch trace off');
+    check(!doc.querySelector('[data-pitch-trace]'),'Pitch trace off still draws a curve');
     $('staff').dispatchEvent(new win.MouseEvent('click',{bubbles:true}));
     check($('clef').value==='bass','Tap did not switch to bass');
     $('staff').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
     check($('clef').value==='treble','Keyboard did not switch to treble');
-    $('trail-toggle').click();await until(()=>doc.querySelector('[data-pitch-trace]'),'Blue pitch lines did not reappear');
+    $('trail-toggle').click();await until(()=>doc.querySelector('[data-pitch-trace]'),'Pitch trace did not reappear');
     check(!$('sheet-input')&&!$('score-open')&&!$('editor-dialog'),'Sheet controls remain in the pitch app');
     check(!$('mode-sheet')&&!$('follow-toggle'),'Practice mode remains');
     check(doc.documentElement.scrollWidth<=doc.documentElement.clientWidth+1,'Page overflows horizontally');
     check(!errors.length,errors.join('; '));
     $('mic').click();
-    status.textContent='PASS: blue pitch lines off/on, live notes, tap and keyboard staff switching, separate pitch-only UI, responsive layout; no practice mode or browser errors.';
+    status.textContent='PASS: pitch trace off/on, live notes, tap and keyboard staff switching, separate pitch-only UI, responsive layout; no practice mode or browser errors.';
   } catch(error) { frequency=0;status.textContent='FAIL: '+[error.message,...errors,$('score-error')?.textContent].filter(Boolean).join('; '); }
 };
 document.getElementById('narrow').onclick=()=>{frame.style.width=frame.style.width==='390px'?'100%':'390px';};

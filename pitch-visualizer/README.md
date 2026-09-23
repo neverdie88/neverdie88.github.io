@@ -6,7 +6,7 @@ Tap/click the staff, or focus it and press Enter/Space, to switch clefs.
 The SVG itself receives pointer input; its frequently replaced drawing children
 do not intercept presses, so switching continues while the microphone redraws it.
 
-**Blue pitch lines** starts enabled. These curves trace changes in detected
+**Show pitch trace** starts enabled. These curves trace changes in detected
 pitch, including vibrato and slides. The toggle only shows or hides the curves;
 notes, note history and the live pitch marker stay visible. History continues
 scrolling while the curves are hidden, and turning them back on shows the current

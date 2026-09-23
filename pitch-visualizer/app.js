@@ -65,7 +65,7 @@
     const end = state.trace.endTime, start = end - state.trace.windowMs;
     const x = (time) => plotLeft + (time - start) / state.trace.windowMs * (playhead - plotLeft);
     const y = (step) => bottom - step * gap / 2;
-    const label = `Notes over eight seconds, blue pitch lines ${state.showPitchLines ? "shown" : "hidden"}, ${clef.name} clef, ${state.key.name}, A4 = ${state.a4} Hz. Switch to ${state.clef === "treble" ? "bass" : "treble"} staff. ` + (state.pitch ? 'Current note ' + P.notation(state.pitch.midi, state.key.fifths, state.clef).name : 'No current note.');
+    const label = `Notes over eight seconds, pitch trace ${state.showPitchLines ? "shown" : "hidden"}, ${clef.name} clef, ${state.key.name}, A4 = ${state.a4} Hz. Switch to ${state.clef === "treble" ? "bass" : "treble"} staff. ` + (state.pitch ? 'Current note ' + P.notation(state.pitch.midi, state.key.fifths, state.clef).name : 'No current note.');
     ui.staff.setAttribute('aria-label', label);
     ui['score-caption'].textContent = state.key.name;
     function glyph(key, gx, baseline, className, parent = ui.staff, size = gap) {
