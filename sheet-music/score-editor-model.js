@@ -19,7 +19,7 @@
       if (result.getElementsByTagName('parsererror').length || result.documentElement?.localName !== 'score-partwise') throw new Error('This is not valid partwise MusicXML.');
       return result;
     }
-    let doc = read(xml), original = xml, undo = [], redo = [];
+    let doc = read(xml), original = xml, undo = [], redo = [], changeDepth = 0;
     const serialize = () => new Serializer().serializeToString(doc);
     const parts = () => children(doc.documentElement, 'part');
     const measures = part => children(parts()[part], 'measure');
@@ -37,6 +37,7 @@
       return e;
     }
     function change(action) {
+      if (changeDepth) return action();
       const before = serialize();
       try { action(); }
       catch (error) { doc = read(before); throw error; }
@@ -152,6 +153,7 @@
     const api = {
       xml: serialize,
       context,
+      transaction(action) { change(() => { changeDepth++; try { action(); } finally { changeDepth--; } }); },
       lanes(part=0) {
         const lanes=new Map();
         for(let m=0;m<measures(part).length;m++)for(const g of groups(part,m))lanes.set(`${g.staff}:${g.voice}`,{staff:g.staff,voice:g.voice});
@@ -255,7 +257,15 @@
         });
         return {events,duration:offset};
       },
-      addMeasure(part) { change(() => { const list=measures(part), ctx=context(part,list.length-1); const m=make('measure'); m.setAttribute('number',String(Number(list.at(-1)?.getAttribute('number'))+1 || list.length+1)); const n=make('note'); put(n,'rest').setAttribute('measure','yes'); put(n,'duration',ctx.divisions*beatsIn(ctx)); m.appendChild(n); parts()[part].appendChild(m); }); },
+      addMeasure(part) { change(() => {
+        const list=measures(part), ctx=context(part,list.length-1), lanes=api.lanes(part), length=ctx.divisions*beatsIn(ctx);
+        const m=make('measure');m.setAttribute('number',String(Number(list.at(-1)?.getAttribute('number'))+1 || list.length+1));
+        lanes.forEach((lane,index)=>{
+          if(index){const backup=make('backup');put(backup,'duration',length);m.appendChild(backup);}
+          const n=make('note');put(n,'rest').setAttribute('measure','yes');put(n,'duration',length);put(n,'voice',lane.voice);put(n,'staff',lane.staff);m.appendChild(n);
+        });
+        parts()[part].appendChild(m);
+      }); },
       settings(part, measure, values) { change(() => {
         const m=measures(part)[measure]; let a=children(m).find(n=>!['print','barline'].includes(n.localName)); if(a?.localName!=='attributes') { a=make('attributes'); m.insertBefore(a,m.firstChild); }
         if(values.key !== undefined) {
@@ -285,5 +295,13 @@
     original = serialize();
     return api;
   }
-  return { create, blank, TYPES };
+  function template(kind='piano') {
+    if(kind==='treble')return blank();
+    if(kind==='bass')return blank().replace('<sign>G</sign><line>2</line>','<sign>F</sign><line>4</line>');
+    if(kind!=='piano')throw new Error('Choose a piano, treble or bass score.');
+    const rest=staff=>`<note><rest measure="yes"/><duration>64</duration><voice>${staff}</voice><staff>${staff}</staff></note>`;
+    const attributes='<attributes><divisions>16</divisions><key><fifths>0</fifths><mode>major</mode></key><time><beats>4</beats><beat-type>4</beat-type></time><staves>2</staves><clef number="1"><sign>G</sign><line>2</line></clef><clef number="2"><sign>F</sign><line>4</line></clef></attributes>';
+    return `<?xml version="1.0" encoding="UTF-8"?><score-partwise version="4.0"><work><work-title>Untitled piano score</work-title></work><part-list><score-part id="P1"><part-name>Piano</part-name><score-instrument id="P1-I1"><instrument-name>Grand Piano</instrument-name></score-instrument><midi-instrument id="P1-I1"><midi-channel>1</midi-channel><midi-program>1</midi-program></midi-instrument></score-part></part-list><part id="P1">${Array.from({length:4},(_,i)=>`<measure number="${i+1}">${i===0?attributes:''}${rest('1')}<backup><duration>64</duration></backup>${rest('2')}</measure>`).join('')}</part></score-partwise>`;
+  }
+  return { create, blank, template, TYPES };
 });

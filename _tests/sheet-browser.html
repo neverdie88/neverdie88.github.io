@@ -3,10 +3,10 @@
 <script>
 const frame=document.getElementById('app'),status=document.getElementById('status');let win,doc,errors=[],sounded=[],saved;
 const $=id=>doc.getElementById('vp-'+id),check=(v,m)=>{if(!v)throw Error(m);};
-async function until(fn,message){const start=performance.now();while(!fn()){if(performance.now()-start>15000)throw Error(message);await new Promise(r=>setTimeout(r,30));}}
+async function until(fn,message){const start=performance.now();while(!fn()){if(performance.now()-start>60000)throw Error(message);await new Promise(r=>setTimeout(r,30));}}
 frame.addEventListener('load',()=>{win=frame.contentWindow;doc=win.document;
  win.addEventListener('error',e=>errors.push(e.message));win.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
- const create=win.AudioContext.prototype.createOscillator;win.AudioContext.prototype.createOscillator=function(){const node=create.call(this),start=node.start.bind(node);node.start=(...args)=>{sounded.push(node.frequency.value);start(...args);};return node;};
+ const create=win.AudioContext.prototype.createBufferSource;win.AudioContext.prototype.createBufferSource=function(){const node=create.call(this),start=node.start.bind(node);node.start=(...args)=>{sounded.push({frames:node.buffer.length,rate:node.playbackRate.value});start(...args);};return node;};
  const make=win.URL.createObjectURL.bind(win.URL);win.URL.createObjectURL=blob=>{if(blob.type.includes('musicxml'))saved=blob;return make(blob);};
  const click=win.HTMLAnchorElement.prototype.click;win.HTMLAnchorElement.prototype.click=function(){if(!this.download)return click.call(this);};
  document.getElementById('check').disabled=false;status.textContent='Ready. Tests use actual sheet rendering, editing and Web Audio.';
@@ -16,6 +16,7 @@ document.getElementById('check').onclick=async()=>{try{status.textContent='Check
  if($('editor-dialog').open)$('editor-cancel').click();
  $('score-sample').click();await until(()=>$('score-render').querySelector('svg')&&$('score-title').textContent==='Single notes & chords','Sample did not open');
  sounded=[];$('score-tempo').value='240';$('score-play').click();await until(()=>sounded.length>0,'Playback did not schedule audio');
+ check(sounded[0].frames>0,'Piano sample was not decoded');
  check($('score-play').textContent.includes('Stop'),'Stop control missing');$('score-play').click();
  check($('score-play').textContent.includes('Play sheet'),'Playback did not stop');
  $('score-edit').click();check($('editor-dialog').open,'Editor did not open');
@@ -23,7 +24,7 @@ document.getElementById('check').onclick=async()=>{try{status.textContent='Check
  $('editor-apply').click();await until(()=>!$('editor-dialog').open,'Apply failed');
  check($('score-title').textContent==='Edited sample','Applied edit did not appear');
  $('score-save').click();check((await saved.text()).includes('Edited sample'),'Export lost edited title');
- $('score-new').click();check($('editor-dialog').open&&$('editor-title').value==='New sheet','New sheet did not open');$('editor-cancel').click();
+ $('score-new').click();check($('editor-dialog').open&&$('editor-title').value==='Untitled piano score','New sheet did not open');$('editor-cancel').click();
  check($('score-title').textContent==='Edited sample','Cancel discarded the applied sheet');
  check(doc.documentElement.scrollWidth<=doc.documentElement.clientWidth+1,'Page overflows');
  check(!errors.length,errors.join('; '));status.textContent='PASS: standalone sheet app, sample rendering, actual Web Audio playback/stop, edit/apply, MusicXML export, new/cancel and responsive layout.';

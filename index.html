@@ -1,31 +1,27 @@
 ---
-layout: default
-title: Home
+layout: workspace
+title: Blogs
+nav_section: blogs
+description: "Thien's articles and guides on AI, software, and the systems behind them."
 ---
 
-<div class="hero">
-  <p>Sharing my knowledge.</p>
-  <p>About me: <a href="https://www.linkedin.com/in/thien-nguyen-duc-48354a4a/" target="_blank" rel="noopener noreferrer">LinkedIn</a></p>
-  <p><a href="{{ '/pitch-visualizer/' | relative_url }}">Pitch Visualizer</a></p>
-  <p><a href="{{ '/sheet-music/' | relative_url }}">Sheet Music Editor</a></p>
-  <p><a href="{{ '/markup-studio/' | relative_url }}">Markup Studio</a></p>
+<div class="page-header">
+  <h1>Blogs</h1>
 </div>
 
-<section>
-  <h3>Latest posts</h3>
-  <ul class="post-list">
-    {% assign posts_sorted = site.posts %}
-    {% for post in posts_sorted %}
-      <li>
-        <span class="post-date">{{ post.date | date: "%Y-%m-%d" }}</span>
-        <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
-        {% if post.excerpt %}
-          <div class="muted">{{ post.excerpt | strip_html | truncate: 140 }}</div>
-        {% endif %}
-      </li>
+<div class="content-section">
+  <div class="posts">
+    {% for post in site.posts %}
+      {% assign post_summary = site.data.blog_summaries[post.slug] | default: post.excerpt %}
+      <article class="post">
+        <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%b %-d, %Y' }}</time>
+        <div>
+          <h2><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a></h2>
+          {% if post_summary %}<p>{{ post_summary | strip_html | strip | truncate: 200 | escape }}</p>{% endif %}
+        </div>
+      </article>
+    {% else %}
+      <p class="empty-state">No blog posts yet. Stay tuned!</p>
     {% endfor %}
-    {% if posts_sorted == empty %}
-      <li class="muted">No posts yet. Stay tuned!</li>
-    {% endif %}
-  </ul>
-</section>
+  </div>
+</div>

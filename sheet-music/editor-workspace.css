@@ -1,0 +1,70 @@
+/* Reader workspace colours with a focused notation editing surface. */
+:root { color-scheme: light; --background: #fff; --foreground: #1f2937; --muted: #f1f5f9; --muted-foreground: #64748b; --border: #e2e8f0; --ring: #2563eb; --primary: #2563eb; --primary-foreground: #fff; --radius: 6px; }
+body { margin: 0; background: #fff; color: #1f2937; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.sheet-app-shell { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 42px; margin: 44px 32px; }
+.sheet-app-sidebar { border-right: 1px solid #e2e8f0; padding-right: 28px; }
+.sheet-brand { display: block; color: #1f2937; font-size: 25px; font-weight: 700; letter-spacing: -1px; text-decoration: none; }
+.sheet-brand::before { content: ''; display: block; width: 28px; height: 4px; margin: 8px 0 20px; background: #2563eb; }
+.sheet-app-sidebar p { font-size: 13px; color: #64748b; line-height: 1.7; }
+.sheet-app-sidebar nav { display: grid; gap: 6px; margin-top: 40px; }
+.sheet-app-sidebar nav a { padding: 10px 12px; border-left: 2px solid transparent; color: #64748b; font-size: 14px; text-decoration: none; }
+.sheet-app-sidebar nav a:hover, .sheet-app-sidebar nav [aria-current] { color: #2563eb; background: #eff6ff; border-left-color: #2563eb; }
+.sheet-sidebar-note { margin-top: 48px; }
+.sheet-app-shell .vp-page { width: 100%; min-width: 0; max-width: none; margin: 0; padding: 0; }
+.vp-heading { margin-bottom: 26px; }
+.vp-heading h1 { font-size: 34px; font-weight: 600; letter-spacing: -1px; }
+.vp-heading p { color: #64748b; font-size: 15px; }
+#sheet-music .btn, .score-workspace .btn { padding: 8px 12px; border-radius: 5px; font-size: 13px; min-height: 36px; }
+#sheet-music .btn-primary { color: #fff; background: #2563eb; border-color: #2563eb; }
+#sheet-music .btn:hover { border-color: #93b4ef; }
+#vp-sheet-input { padding: 18px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc; }
+.sheet-template { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.sheet-template select { max-width: 190px; border: 1px solid #cbd5e1; background: white; border-radius: 5px; padding: 8px; }
+.sheet-recognition-note { margin-bottom: 0; font-size: 12px; }
+#vp-score-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 310px; margin: 22px 0; border: 1px solid #e2e8f0; background: #f8fafc; color: #64748b; text-align: center; }
+#vp-score-empty strong { font-weight: 500; color: #1f2937; font-size: 21px; }
+.sheet-empty-symbol { font-family: serif; font-size: 76px; line-height: 1; color: #2563eb; }
+.sheet-sound-badge { display: inline-flex; gap: 7px; align-items: center; padding: 5px 9px; background: #eff6ff; color: #2563eb; border-radius: 4px; font-size: 12px; }
+.sheet-credits { margin-top: 28px; color: #64748b; font-size: 11px; }
+.sheet-credits a { color: #2563eb; text-decoration: none; }
+#vp-score-scroll { background: #e9edf2; padding: 28px; }
+#vp-score-render { min-height: 440px; padding: 24px; background: white; box-shadow: 0 2px 12px #17203312; }
+.score-workspace { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; border-radius: 0; background: #f8fafc; overflow: hidden; }
+.score-workspace[open] { display: grid; grid-template-rows: auto auto minmax(0,1fr) auto; gap: 0; }
+.editor-document-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 22px; border-bottom: 1px solid #e2e8f0; background: white; }
+.editor-document-bar h2 { margin: 2px 0 0; font-size: 19px; font-weight: 600; line-height: 1.4; }
+.editor-eyebrow { color: #64748b; font-size: 11px; letter-spacing: .3px; }
+.score-workspace .vp-editor-actions { position: static; padding: 9px 16px; gap: 8px; background: #fff; border-bottom: 1px solid #dbe2ea; }
+.score-workspace .vp-sheet-tools { gap: 6px; }
+.score-workspace .vp-composer-palette { gap: 3px; }
+.score-workspace .vp-composer-palette .btn { min-width: 46px; padding: 3px 6px; font-size: 10px; }
+.score-workspace .vp-composer-palette svg { height: 29px; }
+.score-workspace .vp-composer-palette kbd { font: 9px system-ui; color: #64748b; }
+.editor-palette-label { margin-right: 8px; color: #64748b; font-size: 12px; }
+.editor-workspace-body { display: grid; grid-template-columns: 220px minmax(0,1fr); min-height: 0; }
+.editor-inspector { padding: 18px 16px; border-right: 1px solid #dbe2ea; background: #fff; overflow-y: auto; }
+.editor-inspector h3 { margin: 0 0 16px; font-size: 13px; font-weight: 600; }
+.editor-inspector label, .editor-inspector .vp-composer-signatures label { display: grid; gap: 5px; font-size: 12px; margin: 0 0 13px; width: 100%; }
+.editor-inspector :is(input,select) { width: 100%; min-width: 0; min-height: 35px; background: #f8fafc; color: #1f2937; padding: 7px; border: 1px solid #dbe2ea; border-radius: 4px; }
+.editor-inspector .vp-composer-signatures { display: block; }
+.editor-inspector .vp-composer-signatures > span { display: block; margin: -4px 0 14px; font-size: 11px; color: #64748b; }
+.editor-property-group { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+.editor-shortcuts { margin-top: 22px; font-size: 12px; color: #64748b; }
+.editor-shortcuts summary { cursor: pointer; color: #1f2937; }
+.editor-shortcuts dl { display: grid; grid-template-columns: 72px 1fr; gap: 8px; font-size: 11px; }
+.editor-shortcuts dt { font-weight: 600; }.editor-shortcuts dd { margin: 0; }
+.editor-page-area { display: grid; grid-template-rows: auto minmax(0,1fr) auto; min-width: 0; min-height: 0; background: #e9edf2; }
+.score-workspace .vp-composer-navigation { margin: 0; padding: 10px 16px; border-bottom: 1px solid #dbe2ea; background: #f8fafc; font-size: 12px; }
+.score-workspace .vp-composer-paper { min-height: 0; max-height: none; margin: 22px; border: 1px solid #dbe2ea; border-radius: 0; background: white; box-shadow: 0 2px 12px #17203312; }
+.editor-live-status { padding: 9px 18px; background: #f8fafc; border-top: 1px solid #dbe2ea; font-size: 12px; }
+.editor-live-status p { margin: 0; font-size: 12px; }
+.score-workspace .vp-editor-footer { position: static; padding: 7px 16px; border-top: 1px solid #e2e8f0; background: #fff; min-height: 42px; }
+#vp-editor-dirty { margin-left: auto; font-size: 11px; }
+#vp-editor-settings[hidden] { display: none; }
+@media(max-width:1000px) { .sheet-app-shell { grid-template-columns: 170px minmax(0,1fr); gap: 24px; margin: 30px 24px; }.sheet-app-sidebar { padding-right: 20px; }.sheet-brand { font-size: 22px; }.editor-workspace-body { grid-template-columns: 185px minmax(0,1fr); }.editor-inspector { padding: 16px 12px; } }
+@media(max-width:700px) {
+  .sheet-app-shell { display: block; margin: 24px 16px; }.sheet-app-sidebar { padding: 0 0 18px; margin-bottom: 24px; border-right: 0; border-bottom: 1px solid #e2e8f0; }.sheet-app-sidebar nav { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 16px; }.sheet-app-sidebar nav a { padding: 7px; font-size: 12px; border: 0; }.sheet-sidebar-note { display: none; }.sheet-brand::before { margin-bottom: 12px; }.vp-heading h1 { font-size: 28px; }
+  .editor-document-bar { padding: 10px 12px; gap: 8px; }.editor-document-bar h2 { max-width: 45vw; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.editor-document-bar .btn { padding: 6px 8px; font-size: 12px; }
+  .score-workspace .vp-editor-actions { padding: 6px 10px; }.editor-palette-label { display: none; }.editor-workspace-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0,1fr); }.editor-inspector { display: flex; gap: 12px; max-height: 84px; padding: 9px 12px; overflow: auto; border-right: 0; border-bottom: 1px solid #dbe2ea; }.editor-inspector > h3, .editor-inspector .vp-composer-signatures > span, .editor-inspector .editor-property-group h3, .editor-shortcuts { display: none; }.editor-inspector .vp-composer-signatures,.editor-property-group { display: flex; flex-shrink: 0; gap: 10px; margin: 0; padding: 0; border: 0; }.editor-inspector label { min-width: 92px; margin: 0; }.editor-inspector .vp-composer-signatures label { margin: 0; min-width: 120px; }.editor-inspector .vp-composer-signatures #vp-editor-key { max-width: 155px; }.score-workspace .vp-composer-paper { margin: 10px; }.score-workspace .vp-composer-navigation { padding: 6px 10px; }.score-workspace .vp-editor-footer { flex-wrap: wrap; padding: 6px 10px; }.editor-live-status { padding: 6px 10px; }#vp-editor-dirty { margin-left: 0; }#vp-score-scroll { padding: 10px; }#vp-score-render { padding: 8px; }
+}
+@media print { .sheet-app-sidebar,.sheet-credits { display: none!important; }.sheet-app-shell { display: block; margin: 0; }#vp-score-scroll,#vp-score-render { background: white; padding: 0; box-shadow: none; } }

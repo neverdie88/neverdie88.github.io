@@ -1,0 +1,139 @@
+/* Original guide layout; common typography and chrome live in site.css. */
+.guide-page { --sidebar-bg: #fafafa; position: relative; }
+.guide-page .container { max-width: none; }
+.guide-page main.container {
+  padding-left: 0;
+  padding-right: 0;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+}
+/* Guide layout */
+.layout-guide {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: stretch; /* ensure content column stretches full height */
+}
+.guide-sidebar {
+  border: 1px solid var(--border);
+  background: var(--sidebar-bg);
+  border-radius: 12px;
+  padding: 1rem;
+  position: sticky;
+  top: 4.25rem; /* below sticky header */
+  height: fit-content;
+  max-height: calc(100vh - 5rem);
+  overflow: auto;
+}
+.guide-sidebar h2 {
+  font-size: 0.95rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.guide-toc {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.98rem;
+}
+.guide-toc li {
+  margin: 0.15rem 0;
+}
+.guide-toc a {
+  color: var(--text);
+}
+.guide-toc a:hover {
+  text-decoration: underline;
+}
+.guide-content {
+  min-width: 0;
+  position: relative;
+}
+.guide-content.split-mode {
+  height: calc(100vh - 180px); /* fixed viewport-sized canvas */
+  overflow: hidden;            /* prevent page scrolling; panes scroll inside */
+}
+/* Floating text boxes (no window split) */
+.float-box {
+  position: fixed; /* keep box fixed on page scroll */
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  width: 420px;
+  height: 300px;
+  min-width: 240px;
+  min-height: 160px;
+  overflow: hidden; /* required for resize */
+  resize: both;     /* user-resizable box */
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+.float-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--accent);
+  cursor: move; /* for dragging the box */
+  user-select: none;
+}
+.float-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.float-close {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.float-close:hover { background: var(--accent); }
+.float-body {
+  overflow: auto;   /* independent scrolling inside the box */
+  min-height: 0;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Easier resizing: thick edge and corner handles */
+.float-box .resizer {
+  position: absolute;
+  z-index: 2;
+  background: transparent; /* keep invisible but large hit area */
+}
+/* edges */
+.float-box .resizer.e { top: 0; bottom: 0; right: -6px; width: 12px; cursor: ew-resize; }
+.float-box .resizer.w { top: 0; bottom: 0; left:  -6px; width: 12px; cursor: ew-resize; }
+.float-box .resizer.s { left: 0; right: 0; bottom: -6px; height: 12px; cursor: ns-resize; }
+.float-box .resizer.n { left: 0; right: 0; top:    -6px; height: 12px; cursor: ns-resize; }
+/* corners */
+.float-box .resizer.se { right: -10px; bottom: -10px; width: 20px; height: 20px; cursor: nwse-resize; }
+.float-box .resizer.ne { right: -10px; top:    -10px; width: 20px; height: 20px; cursor: nesw-resize; }
+.float-box .resizer.sw { left:  -10px; bottom: -10px; width: 20px; height: 20px; cursor: nesw-resize; }
+.float-box .resizer.nw { left:  -10px; top:    -10px; width: 20px; height: 20px; cursor: nwse-resize; }
+
+@media (max-width: 860px) {
+  .layout-guide {
+    grid-template-columns: 1fr;
+  }
+  .guide-sidebar {
+    position: relative;
+    top: 0;
+    max-height: none;
+    margin-bottom: 1rem;
+  }
+}

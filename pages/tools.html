@@ -1,0 +1,36 @@
+---
+layout: workspace
+title: Tools
+permalink: /tools/
+nav_section: tools
+description: "Thien's tools for productivity, music, and games."
+---
+
+<div class="page-header">
+  <h1>Tools</h1>
+</div>
+
+{% assign categories = 'Productivity,Music,Games' | split: ',' %}
+{% for category in categories %}
+<section class="content-section" aria-labelledby="category-{{ category | slugify }}">
+  <div class="section-heading"><h2 id="category-{{ category | slugify }}">{{ category }}</h2></div>
+  {% assign category_tools = site.data.tools | where: 'category', category %}
+  {% for tool in category_tools %}
+    <div class="tool">
+      <div>
+        <div class="project-heading">
+          <h3>{{ tool.name | escape }}</h3>
+          {% if tool.private %}<span class="private-badge">Private repository</span>{% endif %}
+        </div>
+        <p>{{ tool.description | escape }}</p>
+        {% if tool.url %}
+          {% if tool.external %}{% assign tool_url = tool.url %}{% else %}{% assign tool_url = tool.url | relative_url %}{% endif %}
+          <a class="tool-link" href="{{ tool_url | escape }}"{% if tool.external %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ tool.action | default: 'Open tool' | escape }} <span aria-hidden="true">{% if tool.external %}↗{% else %}→{% endif %}</span></a>
+        {% elsif tool.status %}
+          <p class="link-status">{{ tool.status | escape }}</p>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</section>
+{% endfor %}

@@ -81,7 +81,10 @@
     try { editor.open(xml); }
     catch (error) { message('score-error', error.message); }
   }
-  $('score-new').addEventListener('click', () => openEditor());
+  $('score-new').addEventListener('click', () => {
+    const kind=$('score-template')?.value;
+    openEditor(kind&&kind!=='treble'?ScoreEditorModel.template(kind):undefined);
+  });
   $('score-edit').addEventListener('click', () => { if (state.xml) openEditor(state.xml); });
   async function convertPhoto() {
     if (!state.photo) return;

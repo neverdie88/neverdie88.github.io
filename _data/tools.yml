@@ -1,0 +1,41 @@
+- name: Markup Studio
+  category: Productivity
+  description: >-
+    Editing pages directly in Confluence was slow and cumbersome, so I built
+    Markup Studio to prepare and preview Markdown locally before uploading it.
+  url: https://neverdie88.github.io/markup-studio/
+  external: true
+  action: Open tool
+
+- name: Agent Studio
+  category: Productivity
+  description: >-
+    I wanted to understand how AI agents work through a task. I built Agent Studio
+    to follow their steps, tool calls, and results.
+  url: https://github.com/neverdie88/agent-trace-studio
+  external: true
+  action: View repository
+
+- name: Pitch Visualizer
+  category: Music
+  description: >-
+    I built this visualizer to help my daughter learn to play music, with live
+    feedback that shows the notes she plays.
+  url: /pitch-visualizer/
+  action: Open tool
+
+- name: Sheet Music Editor
+  category: Music
+  description: >-
+    Create and edit sheet music, convert a printed sheet photo, and hear your
+    score on a grand piano. Open, save, and print MusicXML in your browser.
+  url: /sheet-music/
+  action: Open tool
+
+- name: Fruit Ninja — Motion Arcade
+  category: Games
+  description: >-
+    Slice fruit with your hands using a webcam, or play with a mouse or touch.
+    Choose Arcade, Classic, or Zen.
+  url: /fruit-ninja/
+  action: Play game

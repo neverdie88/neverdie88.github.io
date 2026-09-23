@@ -13,9 +13,11 @@ globalThis.ScoreEditor = {
     function mutate(action) {
       if (!draft || busy) return;
       composer.stop();
-      try { action(); message('error',''); }
+      let success=false;
+      try { action(); message('error',''); success=true; }
       catch (error) { message('error',error.message); }
       render();
+      return success;
     }
     function render() {
       if(!draft) return;
@@ -24,6 +26,7 @@ globalThis.ScoreEditor = {
       const group=snapshot.groups[selected],ctx=draft.context(part,measure,group?.staff || composer.currentLane?.().staff || '1');
       selectedTone=Math.max(0,Math.min(selectedTone,(group?.notes.length||1)-1));
       $('title').value=snapshot.title;
+      if($('document-title'))$('document-title').textContent=snapshot.title;
       $('part').replaceChildren(...snapshot.parts.map((p,i)=>option(i,p.name)));$('part').value=String(part);
       $('measure').replaceChildren(...snapshot.parts[part].measures.map((m,i)=>option(i,m)));$('measure').value=String(measure);
       $('clef').value=ctx.clef;$('key').value=`${ctx.mode}:${ctx.fifths}`;
@@ -51,7 +54,7 @@ globalThis.ScoreEditor = {
     $('add-measure').addEventListener('click',()=>{mutate(()=>{draft.addMeasure(part);measure=draft.inspect(part,measure).parts[part].measures.length-1;selected=-1;composer.clearSelection?.();});composer.reveal?.(measure);});
     $('undo').addEventListener('click',()=>mutate(()=>{draft.undo();composer.clearSelection?.();}));$('redo').addEventListener('click',()=>mutate(()=>{draft.redo();composer.clearSelection?.();}));
     $('cancel').addEventListener('click',close);
-    $('dialog').addEventListener('cancel',event=>{event.preventDefault();close();});
+    $('dialog').addEventListener('cancel',event=>{event.preventDefault();composer.exitInput?.();});
     $('dialog').addEventListener('keydown',event=>{
       if(!(event.ctrlKey||event.metaKey)||event.key.toLowerCase()!=='z'||event.target.closest('input,select,textarea,[contenteditable="true"]'))return;
       event.preventDefault();mutate(()=>{event.shiftKey?draft.redo():draft.undo();composer.clearSelection?.();});

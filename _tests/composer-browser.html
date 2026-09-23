@@ -4,7 +4,7 @@
 const frame=document.getElementById('app'),status=document.getElementById('status');let win,doc,saved,errors=[],sounded=[];
 const $=id=>doc.getElementById('vp-editor-'+id),click=id=>doc.getElementById('vp-'+id).click();
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),check=(x,m)=>{if(!x)throw Error(m);};
-async function until(fn,message){const start=performance.now();while(!fn()){if(performance.now()-start>12000)throw Error(message);await sleep(30);}}
+async function until(fn,message){const start=performance.now();while(!fn()){if(performance.now()-start>60000)throw Error(message);await sleep(30);}}
 async function run(action){try{status.textContent='Checking…';await action();check(!errors.length,errors.join('; '));}catch(e){status.textContent='FAIL: '+[e.message,...errors,$('error')?.textContent].filter(Boolean).join('; ');}}
 const tool=name=>doc.querySelector(`[data-composer-tool="${name}"]`).click();
 function geometry(beat,step,measure=0){const g=$('canvas').querySelector(`[data-composer-measure="${measure}"]`),beats=g.querySelectorAll('line[stroke="#d4dce7"]'),lines=g.querySelectorAll('line[stroke="#475569"]');return{x:Number(beats[0].getAttribute('x1'))+beat*(Number(beats[1].getAttribute('x1'))-Number(beats[0].getAttribute('x1'))),y:Number(lines[0].getAttribute('y1'))-step*11};}
@@ -19,11 +19,11 @@ const groups=()=>{
   return [...groups.entries()].sort((a,b)=>a[0]-b[0]).map(([,notes])=>notes.join(' + '));
 };
 frame.addEventListener('load',()=>{
-  win=frame.contentWindow;doc=win.document;
+  win=frame.contentWindow;doc=win.document;doc.getElementById('vp-score-template').value='treble';
   // Programmatic pointer events do not create a native active pointer ID.
   $('canvas').setPointerCapture=()=>{};
   win.addEventListener('error',e=>errors.push(e.message));win.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
-  const original=win.AudioContext.prototype.createOscillator;win.AudioContext.prototype.createOscillator=function(){const n=original.call(this),start=n.start.bind(n);n.start=(...args)=>{sounded.push(n.frequency.value);start(...args);};return n;};
+  const load=win.PianoSamples.load;win.PianoSamples.load=async(...args)=>{const instrument=await load(...args),play=instrument.play;instrument.play=(midi,...rest)=>{sounded.push(midi);return play(midi,...rest);};return instrument;};
   const url=win.URL.createObjectURL.bind(win.URL);win.URL.createObjectURL=blob=>{if(blob.type.includes('musicxml'))saved=blob;return url(blob);};
   const anchor=win.HTMLAnchorElement.prototype.click;win.HTMLAnchorElement.prototype.click=function(){if(!this.download)return anchor.call(this);};
   for(const id of ['test','listen','apply','chords','features'])document.getElementById(id).disabled=false;status.textContent='Ready. Actual staff controls, pointer handlers, Web Audio and MusicXML export.';
@@ -50,7 +50,7 @@ document.getElementById('test').onclick=()=>run(async()=>{
 });
 document.getElementById('listen').onclick=()=>run(async()=>{
   sounded=[];$('tempo').value='240';$('play').click();await until(()=>$('play').textContent.includes('Stop'),'Preview did not start');await until(()=>$('play').textContent.includes('Play'),'Preview did not finish');
-  const midi=sounded.map(f=>Math.round(69+12*Math.log2(f/440)));check(midi.join(',')==='62,64,67,66','Preview played wrong pitches: '+midi);
+  const midi=sounded;check(midi.join(',')==='62,64,67,66','Preview played wrong pitches: '+midi);
   $('play').click();await until(()=>$('play').textContent.includes('Stop'),'Second preview did not start');$('play').click();check($('play').textContent.includes('Play'),'Stop did not reset transport');
   status.textContent='PASS: real Web Audio played D4, E4, G4 and F♯4 in order; preview completed and Stop works.';
 });

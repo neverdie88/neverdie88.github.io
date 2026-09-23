@@ -23,6 +23,7 @@
     let model = null, lanes = [];
     function stopped() { $('play').textContent = '▶ Play sheet'; $('play-status').textContent = ''; }
     const player = ScorePlayback.create({
+      onLoading(count, total) { $('play-status').textContent = total ? `Loading grand piano… ${Math.round(count / total * 100)}%` : 'Playing…'; },
       onStep(event) { $('play-status').textContent = `Measure ${event.measure + 1}`; },
       onStop: stopped
     });

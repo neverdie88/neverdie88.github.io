@@ -30,6 +30,25 @@ function fixture(width=900,xml){
   const apply=async()=>{$('apply').click();for(let i=0;i<8;i++)await Promise.resolve();assert.equal($('dialog').open,false,$('error').textContent);assert.deepEqual(errors,[]);return win.ScoreEditorModel.create(saved);};
   return {dom,win,doc,$,svg,editor,tool,length,change,note,point,pos,pointer,tap,pick,groups,apply,errors};
 }
+function press(app,key,mods={},target=app.svg){target.dispatchEvent(new app.win.KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,...mods}));}
+test('keyboard note entry advances beats, appends a measure, and undoes it in one step',async()=>{
+  const a=fixture();press(a,'n');press(a,'5');for(const note of ['c','d','e','f','g'])press(a,note);
+  assert.ok(a.svg.querySelector('[data-input-cursor]'));assert.equal(a.$('error').hidden,true,a.$('error').textContent);
+  a.$('undo').click();assert.equal(a.$('measure').options.length,1);
+  a.$('redo').click();const d=await a.apply();
+  assert.deepEqual(Array.from(d.playback().events,e=>[e.midi,e.beat]),[[60,0],[62,1],[64,2],[65,3],[67,4]]);a.dom.window.close();
+});
+test('keyboard duration, dots, rests, chord tones and Escape keep the current draft',async()=>{
+  const a=fixture();press(a,'n');press(a,'4');press(a,'.');press(a,'c');press(a,'E',{shiftKey:true});press(a,'0');press(a,'.');press(a,'.');press(a,'5');press(a,'d');
+  press(a,'Escape');assert.equal(a.$('dialog').open,true);assert.equal(a.svg.querySelector('[data-input-cursor]'),null);
+  const d=await a.apply();assert.deepEqual(Array.from(d.playback().events,e=>[e.midi,e.beat,e.duration]),[[60,0,.75],[64,0,.75],[62,1.5,1]]);a.dom.window.close();
+});
+test('piano template keyboard input edits the selected staff and ignores form typing',async()=>{
+  const model=require('../sheet-music/score-editor-model.js'),a=fixture(900,model.template('piano'));
+  a.change('lane',1);press(a,'n');press(a,'c');press(a,'ArrowUp',{ctrlKey:true});
+  const count=a.groups().size;press(a,'a',{},a.$('title'));assert.equal(a.groups().size,count);
+  const d=await a.apply();assert.equal(d.playback(0,'1','1').events.length,0);assert.equal(d.playback(0,'2','2').events[0].midi,60);assert.equal(d.context(0,0,'2').clef,'bass');a.dom.window.close();
+});
 test('staff and voice switching survives stopping playback and edits only the chosen lane',async()=>{
   const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
   const d=require('../sheet-music/score-editor-model.js').create(undefined,DOMParser,XMLSerializer);

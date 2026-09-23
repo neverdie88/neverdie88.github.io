@@ -6,13 +6,15 @@ Both apps use `../music-shared/`; publish all three directories together.
 
 ## Using the app
 
-- **New sheet** opens a blank staff composer. **Open MusicXML** accepts
+- Choose **Piano · grand staff**, **Single treble staff**, or **Single bass staff**
+  and click **New sheet**. The piano template has four measures and two staves;
+  the editor works on the staff/voice selected above the page. **Open MusicXML** accepts
   uncompressed score-partwise `.musicxml` or `.xml` files up to 10 MB.
 - **Upload sheet photo** or **Take photo** imports a printed sheet and starts
   local recognition. First conversion downloads roughly 100 MB of models plus
   an 11 MB WASM runtime. **Load sample sheet** opens a four-measure exercise.
 - The complete sheet appears immediately. **Play sheet** plays all parts using
-  synthesized tones. **Listen to** selects a particular part/staff/voice; BPM
+  sampled grand piano. **Listen to** selects a particular part/staff/voice; BPM
   accepts 30–240. Stop, changing the selection or tempo, editing, closing a sheet,
   backgrounding, and leaving the page cancel pending or active playback.
 - Playback honors written order, rests, chords, ties and transposing instruments.
@@ -26,9 +28,43 @@ Both apps use `../music-shared/`; publish all three directories together.
   It is separate from **Play sheet**, which plays the applied score.
 - Select multiple supports taps, box selection and Shift-click ranges.
   Delete selected removes highlighted groups; Undo/Redo retains 50 draft edits.
-  Apply changes replaces the displayed score; Cancel discards the draft.
+  **Apply changes** replaces the displayed score; **Discard** closes the draft.
 - **Save MusicXML** downloads the applied score. **Print / Save PDF** prints the
   score. The fullscreen symbols enlarge either the score or uploaded photo.
+
+The full-window editor uses a notation toolbar, properties sidebar and white
+score page inspired by desktop notation editors. Keyboard entry supports:
+
+| Key | Action |
+| --- | --- |
+| N | Start/stop note entry at the selected note or beginning of the current measure |
+| 1–7 | 64th, 32nd, 16th, eighth, quarter, half, whole note |
+| A–G / 0 | Enter the nearest octave of a note / enter a rest, then advance |
+| Shift + A–G | Add a chord tone to the selected note |
+| . | Cycle zero, one or two augmentation dots |
+| Left / Right | Select the previous / next group |
+| Up / Down | Move the selected tone by one staff step |
+| Ctrl/Cmd + Up / Down | Move the selected tone one octave |
+| Ctrl/Cmd + Z / Shift + Z | Undo / redo |
+| Space / Escape | Start/stop preview / leave note entry without discarding |
+
+Entry appends a measure when needed. A note must fit inside the available rest
+and measure; invalid edits leave the score unchanged. Templates and keyboard
+entry cover basic notation, not the full MuseScore feature set. Imported tuplets,
+grace notes and percussion retain their existing editing restrictions.
+
+## Piano sound
+
+Both playback controls use Salamander Grand Piano V3 recordings by Alexander
+Holm (CC BY 3.0). The compact velocity-6 set contains 30 MP3 files (5.3 MiB),
+hosted with the app. The first Play downloads and decodes them; later plays reuse
+the audio in memory. Loading shows progress, can be stopped, and can be retried
+after a connection failure. No third-party audio service is needed.
+
+This is one recorded velocity layer, with nearby notes repitched and a short
+release envelope. It has no pedal/resonance simulation, dynamic layers or
+instrument switching. See `samples/piano/ATTRIBUTION.md` and `manifest.json`
+for provenance, license links and file checksums.
 
 ## Privacy and recognition limits
 
@@ -54,7 +90,9 @@ are unsupported. See `recognition.html` for source attribution and limits.
 - `sheet-controller.js`: photo recognition worker lifecycle, stale-result
   protection, lazy OSMD loading, transactional replacement, editing/export/print.
 - `sheet-player.js`: applied-score transport and combining staff/voice timelines.
-- `score-playback.js`: cancellable short-lookahead Web Audio tone scheduler.
+- `score-playback.js`: cancellable short-lookahead Web Audio sample scheduler.
+- `piano-samples.js`: lazy sample fetch/decode, caches, repitching and release.
+- `editor-workspace.css`: Reader-style app shell and full-window score editor.
 - `sheet-photo.js`: local camera/files, rotation and cleanup; emits `vp:photo`.
 - `score-editor.js`: draft lifecycle, settings, apply/cancel and keyboard undo.
 - `score-editor-model.js`: MusicXML-preserving edits, rest splitting, note timing,

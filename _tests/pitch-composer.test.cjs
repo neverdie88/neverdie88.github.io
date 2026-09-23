@@ -6,6 +6,13 @@ const Staff=require('../sheet-music/composer-staff.js');
 const {create:player}=require('../sheet-music/score-playback.js');
 const edit=xml=>create(xml,DOMParser,XMLSerializer);
 const C4={step:'C',octave:4,alter:0};
+test('piano templates and appended measures preserve independent treble and bass timelines',()=>{
+  const {template}=require('../sheet-music/score-editor-model.js'),d=edit(template('piano'));
+  assert.equal(d.inspect().parts[0].measures.length,4);assert.equal(d.lanes().length,2);
+  d.addMeasure(0);assert.deepEqual(d.inspect(0,4).groups.map(g=>[g.staff,g.voice,g.beat,g.duration]),[['1','1',0,4],['2','2',0,4]]);
+  d.place(0,4,0,{pitch:C4,staff:'1',voice:'1'});d.place(0,4,0,{pitch:{step:'C',alter:0,octave:3},staff:'2',voice:'2'});
+  assert.equal(d.playback(0,'1','1').events[0].beat,16);assert.equal(d.playback(0,'2','2').events[0].beat,16);
+});
 test('staff-only editor opens, cancels and applies edits without removed panel elements',async()=>{
   const fs=require('node:fs'),vm=require('node:vm');
   const html=fs.readFileSync(`${__dirname}/../sheet-music/index.html`,'utf8'),elements={},saved=[];
@@ -123,13 +130,14 @@ test('rendered chords have one stem and flag set; whole-note chords have no stem
   let stems=draw();assert.equal(stems.length,1);assert.equal(stems[0].children.filter(n=>n.tag==='line').length,1);assert.equal(stems[0].children.filter(n=>n.tag==='path').length,1);
   d.length(0,0,index,'whole',0);stems=draw();assert.equal(stems.length,0);
 });
-test('audio preview schedules real note frequencies and stops pending/resuming sessions',async()=>{
+test('audio preview schedules piano notes and stops pending/resuming sessions',async t=>{
   let resolveResume,closed=false;const notes=[];
   const context={currentTime:0,destination:{},resume:()=>Promise.resolve(),close(){closed=true;},
     createGain(){return{gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};},
     createOscillator(){const n={frequency:{value:0},connect(){},disconnect(){},start(at){this.at=at;},stop(at){this.stopAt=at;}};notes.push(n);return n;}};
-  const p=player({makeContext:()=>context});await p.start({events:[{beat:0,duration:1,midi:69}],duration:1},60);
-  assert.equal(notes[0].frequency.value,440);assert.equal(notes[0].at,.05);assert.ok(Math.abs(notes[0].stopAt-1.02)<1e-8);
+  const p=player({makeContext:()=>context,loadInstrument:async()=>({play(midi,at,duration){const n=context.createOscillator();n.frequency.value=440*2**((midi-69)/12);n.start(at);n.stop(at+duration+.26);return n;}})});await p.start({events:[{beat:0,duration:1,midi:69}],duration:1},60);
+  t.after(()=>p.close());
+  assert.equal(notes[0].frequency.value,440);assert.equal(notes[0].at,.05);assert.ok(Math.abs(notes[0].stopAt-1.31)<1e-8);
   p.stop();assert.equal(p.active,false);assert.equal(notes[0].stopAt,undefined);
   context.resume=()=>new Promise(resolve=>resolveResume=resolve);const pending=p.start({events:[{beat:0,duration:1,midi:60}],duration:1},120);
   p.stop();resolveResume();await pending;assert.equal(notes.length,1);p.close();assert.equal(closed,true);

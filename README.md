@@ -1,5 +1,19 @@
 # neverdie88.github.io
 
+## Site layout
+
+The homepage lists **Blogs** and `/tools/` lists the published apps. Both use
+`_layouts/workspace.html` and `assets/css/workspace.css`: the Reader workspace
+sidebar, blue accents and LinkedIn icon selected from the local Tools preview.
+Shared navigation is in `_includes/navigation-links.html`; tools and concise
+blog descriptions are in `_data/tools.yml` and `_data/blog_summaries.yml`.
+Tools are grouped in order into Productivity, Music and Games using each entry's
+`category` field. Fruit Ninja is a static bundle at `/fruit-ninja/`; its source
+project is `../fruit-ninja/`. Run that project's tests and build, then copy its
+`dist/` and `THIRD_PARTY.md` into this site's `fruit-ninja/` to update the game.
+`/blogs/` redirects to the homepage. Existing article URLs and content remain
+in place, with shared styles under `assets/css/`.
+
 ## Markup Studio
 
 [Open Markup Studio](https://neverdie88.github.io/markup-studio/).
@@ -56,7 +70,8 @@ to GitHub Pages.
 - `/pitch-visualizer/`: microphone pitch display, optional pitch trace,
   tap/click treble/bass switching, tuning and fullscreen.
 - `/sheet-music/`: separate MusicXML/photo import, recognition, composing,
-  playback of all parts or a selected staff/voice, save/print and fullscreen.
+  piano/treble/bass templates, keyboard note entry, sampled grand piano playback
+  of all parts or a selected staff/voice, save/print and fullscreen.
 - `/music-shared/`: theme, theory/detector helpers, licensed glyphs and fullscreen.
 
 Keep all three directories together. Each app README documents its source and

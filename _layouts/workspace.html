@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {% include head.html %}
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="workspace">
+      <aside class="sidebar" aria-label="Site navigation">
+        <div class="identity">
+          <a class="brand" href="{{ '/' | relative_url }}">{{ site.title | escape }}</a>
+          <p class="tagline">Sharing what I build and learn.</p>
+        </div>
+        <nav class="navigation" aria-label="Main navigation">
+          {% include navigation-links.html %}
+        </nav>
+      </aside>
+      <main id="main-content" tabindex="-1">
+        {{ content }}
+        <footer class="workspace-footer">© {{ 'now' | date: '%Y' }} {{ site.author.name | escape }}.</footer>
+      </main>
+    </div>
+  </body>
+</html>

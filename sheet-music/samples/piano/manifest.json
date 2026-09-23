@@ -1,0 +1,162 @@
+{
+  "library": "Salamander Grand Piano V3",
+  "author": "Alexander Holm",
+  "license": "CC BY 3.0",
+  "license_url": "https://creativecommons.org/licenses/by/3.0/",
+  "source": "https://archive.org/details/SalamanderGrandPianoV3",
+  "package": "@audio-samples/piano-mp3-velocity6",
+  "version": "1.0.5",
+  "package_integrity": "sha512-2bCJH3XneHFiX/5chhhhUmMEFjwLmoCmvHAcd8JveZNEzPa5I+IGp73mgHmavZ3VoL1QE7mmyaaIRTtti/JXpA==",
+  "files": [
+    {
+      "file": "A0v6.mp3",
+      "bytes": 310664,
+      "sha256": "35e856fc8fe9444769f6f302e2b03b38ef4e07cd5d9230dbdeaf5d980e441c99"
+    },
+    {
+      "file": "A1v6.mp3",
+      "bytes": 319436,
+      "sha256": "65097436797c02006b419d89b62345fdb6476a4e0148792db348a61c720ed2fb"
+    },
+    {
+      "file": "A2v6.mp3",
+      "bytes": 237416,
+      "sha256": "890c12d473b169f791d49c16713cc9728f9300eb3cf06d1218ece2758f171ec9"
+    },
+    {
+      "file": "A3v6.mp3",
+      "bytes": 229050,
+      "sha256": "2b4efdd036f57dab76eea72470a49bedb41e0ef7031aba1c18052653991b481f"
+    },
+    {
+      "file": "A4v6.mp3",
+      "bytes": 171266,
+      "sha256": "a5811a5e1f4120b74c565c962919518399ae59807ad2083db99122a5e9e82699"
+    },
+    {
+      "file": "A5v6.mp3",
+      "bytes": 127661,
+      "sha256": "d0db825baf91f84cec2eecbbce43a34d27fe7bf05dee07d6b55825db0a2bb64c"
+    },
+    {
+      "file": "A6v6.mp3",
+      "bytes": 72958,
+      "sha256": "458337208a045b0e59271d9ff2bc7001871303ea160c8d1850bcc8db097fb911"
+    },
+    {
+      "file": "A7v6.mp3",
+      "bytes": 41820,
+      "sha256": "ac9ddb4827d3d91e9c9bf189582cbe05990f401baeff7665469ac46bd8c94926"
+    },
+    {
+      "file": "C1v6.mp3",
+      "bytes": 290938,
+      "sha256": "c694f63ca970b384bee9f840a7a050a2560dac94bb4e6e245c231e395eab4ee8"
+    },
+    {
+      "file": "C2v6.mp3",
+      "bytes": 310522,
+      "sha256": "a0764d5dc352b77a7aebe6a953c84cfd7cc1d15bd3271cbd2eed423aed0f68d6"
+    },
+    {
+      "file": "C3v6.mp3",
+      "bytes": 214977,
+      "sha256": "ee944d125763e9d8e6f36342f0c57d8694118cc983460d05fd26f72982e8176f"
+    },
+    {
+      "file": "C4v6.mp3",
+      "bytes": 215796,
+      "sha256": "8786c252f83d053be0f66e58b01854e4b01c1f7890076a8d10c77e9b63fec71d"
+    },
+    {
+      "file": "C5v6.mp3",
+      "bytes": 172057,
+      "sha256": "8e8c4b3dc74df6bb92391648ead9a82dee849d5bdeda0f8f8b029bacc6d72ed1"
+    },
+    {
+      "file": "C6v6.mp3",
+      "bytes": 92087,
+      "sha256": "099d25d45a747ae2e8d1d2076cc3f6e4f6bed7bf2479312b1ce8c9952e657726"
+    },
+    {
+      "file": "C7v6.mp3",
+      "bytes": 48907,
+      "sha256": "77620d9ee890994441f408c4bf9640bca601786b9917e2bde76922e4a84c6846"
+    },
+    {
+      "file": "C8v6.mp3",
+      "bytes": 52531,
+      "sha256": "b0684eeb157445e196a37d109cff1bbdf4e36484952bca08a29a38763efe65f7"
+    },
+    {
+      "file": "D#1v6.mp3",
+      "bytes": 340726,
+      "sha256": "7f1e1bf6ef1973e967bf2a4001d2429115bdfb022705136bd93c546895de0ae9"
+    },
+    {
+      "file": "D#2v6.mp3",
+      "bytes": 319103,
+      "sha256": "3b17b51609d95d6cfe28cb7774a90d77f245b4fda17d237fadc448e9248d7857"
+    },
+    {
+      "file": "D#3v6.mp3",
+      "bytes": 220923,
+      "sha256": "786568c6f569ebc2685beb83aef8e40886e98357285a80dfb411791889e3be65"
+    },
+    {
+      "file": "D#4v6.mp3",
+      "bytes": 181526,
+      "sha256": "23afa1f027396167f7411f6a044cd1f1dd688c67c424d9cf6d422b6b548a2196"
+    },
+    {
+      "file": "D#5v6.mp3",
+      "bytes": 140737,
+      "sha256": "82fddf024c32a20607440516a57ab583f93b37ebc06442316e48c9378f0e05c6"
+    },
+    {
+      "file": "D#6v6.mp3",
+      "bytes": 100869,
+      "sha256": "7740c9967be9005da8cfeefb549c1f41e2abcf0c447bbf768924ce7664deae3f"
+    },
+    {
+      "file": "D#7v6.mp3",
+      "bytes": 55554,
+      "sha256": "2fff65f584d66373e77726bb154681ec001147cc94a1fc31c0077478be07554f"
+    },
+    {
+      "file": "F#1v6.mp3",
+      "bytes": 301714,
+      "sha256": "b51c4e1536d0b1baf462d7c6b068a666d75ac0de6bf9df1a0c93f92f459a561d"
+    },
+    {
+      "file": "F#2v6.mp3",
+      "bytes": 290092,
+      "sha256": "4f5e3b04772c1b9bc552be719707d75d3ea36521b2e530ec50177129929ed15e"
+    },
+    {
+      "file": "F#3v6.mp3",
+      "bytes": 228785,
+      "sha256": "95559f20c32060d1e06ab21254dda05baea2e6e902d9f4a15e6eebac76f78862"
+    },
+    {
+      "file": "F#4v6.mp3",
+      "bytes": 171990,
+      "sha256": "95668f928f42238245449d22282adbe3d1234c9fad9aaf3774abda3c2607b8d7"
+    },
+    {
+      "file": "F#5v6.mp3",
+      "bytes": 133073,
+      "sha256": "9b0a0a163af1cb2288a5b69865635a8886e54ee15a549043bd896e033e97f944"
+    },
+    {
+      "file": "F#6v6.mp3",
+      "bytes": 83666,
+      "sha256": "339028a5a3db24dba003f792f0210e20d31d981e8b7f30fa4aeb4aeee700ee8e"
+    },
+    {
+      "file": "F#7v6.mp3",
+      "bytes": 77350,
+      "sha256": "e7c39fb8d4fb3e960d4e248170b0496305a499b9c291f7dc616bc82b0f174b27"
+    }
+  ]
+}

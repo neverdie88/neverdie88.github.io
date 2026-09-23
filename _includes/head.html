@@ -1,0 +1,21 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% capture page_title %}{{ page.title }} | {{ site.title }}{% endcapture %}
+{% assign page_description = page.description | default: site.description %}
+<title>{{ page_title | strip | escape }}</title>
+<meta name="description" content="{{ page_description | escape }}">
+<link rel="canonical" href="{{ page.url | replace: 'index.html', '' | absolute_url }}">
+<meta property="og:type" content="{% if page.date %}article{% else %}website{% endif %}">
+<meta property="og:site_name" content="{{ site.title | escape }}">
+<meta property="og:title" content="{{ page_title | strip | escape }}">
+<meta property="og:description" content="{{ page_description | escape }}">
+<meta property="og:url" content="{{ page.url | replace: 'index.html', '' | absolute_url }}">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%232563eb"/><text x="50%" y="58%" text-anchor="middle" font-size="40" font-family="Arial" fill="%23ffffff">T</text></svg>' />
+{% if page.layout == 'workspace' %}
+  <link rel="stylesheet" href="{{ '/assets/css/workspace.css' | relative_url }}">
+{% else %}
+  <link rel="stylesheet" href="{{ '/assets/css/site.css' | relative_url }}">
+{% endif %}
+{% if page.layout == 'guide' %}<link rel="stylesheet" href="{{ '/assets/css/guide.css' | relative_url }}">{% endif %}
+{% if page.custom_css %}<link rel="stylesheet" href="{{ page.custom_css | relative_url }}">{% endif %}

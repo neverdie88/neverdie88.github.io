@@ -4,6 +4,9 @@ globalThis.ScoreComposer={
     const $=id=>document.getElementById('vp-editor-'+id),svg=$('canvas');
     let tool='select',type='quarter',lane={staff:'1',voice:'1'},geometry,gesture,playing=null,previousPart=-1;
     let selectedGroups=new Set(),anchor=null,inputAccidental='key';
+    let keyboardEntry=false,inputCursor=null,lastMidi=60;
+    const durationKeys={'1':'64th','2':'32nd','3':'16th','4':'eighth','5':'quarter','6':'half','7':'whole'};
+    const noteMidi=note=>({C:0,D:2,E:4,F:5,G:7,A:9,B:11}[note.step]+Number(note.alter)+12*(note.octave+1));
     const key=ref=>`${ref.measure}:${ref.index}`;
     const ref=value=>{const [measure,index]=value.split(':').map(Number);return {measure,index};};
     const hints={select:'Tap a note to select it. Drag it up or down to change pitch.',note:'Choose a length, then tap a beat to add a note.',rest:'Tap a beat to write a rest, or tap a note to turn it into a rest.',chord:'Tap above or below a note at the same beat to add a chord tone.',erase:'Tap a note to erase it. A single note becomes a rest; chord tones can be erased separately.',multi:'Tap notes or chords to toggle them, or drag a box. Shift-click selects a range.'};
@@ -12,11 +15,13 @@ globalThis.ScoreComposer={
       return {d,s,g:d?.inspect(s.part,s.measure).groups[s.index]};
     }
     const playback=ScorePlayback.create({
+      onLoading(count,total){$('play-status').textContent=total?`Loading grand piano… ${Math.round(count/total*100)}%`:'Playing this staff and voice';},
       onStep(event){playing=event;select({measure:event.measure,index:event.index,tone:event.tone});reveal(event.measure);},
       onStop(){playing=null;$('play').textContent='▶ Play preview';$('play-status').textContent='';if(getDraft())draw();}
     });
-    function clearSelection(refresh=false){selectedGroups.clear();anchor=null;select({index:-1,tone:0},false);if(refresh)draw();}
+    function clearSelection(refresh=false){selectedGroups.clear();anchor=null;keyboardEntry=false;inputCursor=null;select({index:-1,tone:0},false);if(refresh)draw();}
     function setTool(value){
+      keyboardEntry=false;inputCursor=null;
       playback.stop();cancel();
       if(value==='multi'){
         const {s,g}=selected();if(g)selectedGroups.add(key(s));select({index:-1,tone:0},false);
@@ -40,20 +45,21 @@ globalThis.ScoreComposer={
     }
     function changeLength(value,dots){
       const {d,s,g}=selected();type=value;
-      if(g&&tool!=='multi')mutate(()=>d.length(s.part,s.measure,s.index,value,dots));
+      if(g&&tool!=='multi'&&!keyboardEntry)mutate(()=>d.length(s.part,s.measure,s.index,value,dots));
       else {if(!['rest','chord','multi'].includes(tool))tool='note';updateTools();}
     }
-    for(const [value,label] of Object.entries({whole:'Whole',half:'Half',quarter:'Quarter',eighth:'Quaver','16th':'16th','32nd':'32nd'})) {
+    for(const [value,label] of Object.entries({whole:'Whole',half:'Half',quarter:'Quarter',eighth:'Eighth','16th':'16th','32nd':'32nd','64th':'64th'})) {
       const button=document.createElement('button');button.type='button';button.className='btn';button.dataset.length=value;button.title=value==='eighth'?'Quaver (eighth note)':label+' note';button.setAttribute('aria-label',button.title);
-      const hollow=value==='whole'||value==='half',flags=['eighth','16th','32nd'].indexOf(value)+1;
+      const hollow=value==='whole'||value==='half',flags=['eighth','16th','32nd','64th'].indexOf(value)+1;
       const shape=`<ellipse cx="9" cy="24" rx="6" ry="4" transform="rotate(-20 9 24)" fill="${hollow?'none':'currentColor'}" stroke="currentColor" stroke-width="1.6"/>`+(value==='whole'?'':'<path d="M14 24V3" fill="none" stroke="currentColor" stroke-width="1.6"/>')+Array.from({length:Math.max(0,flags)},(_,i)=>`<path d="M14 ${3+i*4}q12 5 5 12" fill="none" stroke="currentColor" stroke-width="1.6"/>`).join('');
-      button.innerHTML=`<svg viewBox="0 0 28 34" aria-hidden="true">${shape}</svg><span>${label}</span>`;
+      const shortcut=Object.keys(durationKeys).find(k=>durationKeys[k]===value);button.title+=` (${shortcut})`;
+      button.innerHTML=`<svg viewBox="0 0 28 34" aria-hidden="true">${shape}</svg><span>${label} <kbd>${shortcut}</kbd></span>`;
       button.addEventListener('click',()=>changeLength(value,Number($('input-dots').value)));$('palette').append(button);
     }
     $('input-dots').addEventListener('change',()=>changeLength(type,Number($('input-dots').value)));
     $('accidental').addEventListener('change',()=>{
       inputAccidental=$('accidental').value;
-      const {d,s,g}=selected();if(!g||g.rest||tool==='multi')return;
+      const {d,s,g}=selected();if(!g||g.rest||tool==='multi'||keyboardEntry)return;
       const note=g.notes[s.tone]||g.notes[0],choice=$('accidental').value,fifths=d.context(s.part,s.measure,g.staff).fifths;
       const alter=choice==='key'?((fifths<0?'BEADGCF':'FCGDAEB').slice(0,Math.abs(fifths)).includes(note.step)?Math.sign(fifths):0):Number(choice);
       mutate(()=>d.pitch(s.part,s.measure,s.index,s.tone,{...note,alter}));
@@ -75,12 +81,18 @@ globalThis.ScoreComposer={
       ComposerStaff.draw(svg,geometry,{P:ViolinPitch,glyphs:ViolinMusicGlyphs,measure:selection.measure,selected:tool==='multi'?-1:selection.index,tone:selection.tone,playing,selectedGroups});
       svg.style.width=geometry.width*zoom+'px';svg.style.height=geometry.height*zoom+'px';
       $('previous').disabled=selection.measure===0;$('next').disabled=selection.measure===count-1;
-      if(group&&tool!=='multi'){
+      if(group&&tool!=='multi'&&!keyboardEntry){
         type=group.type==='measure'?(Object.keys(ScoreEditorModel.TYPES).find(t=>ScoreEditorModel.TYPES[t]===group.duration)||'whole'):group.type;
         $('input-dots').value=String(group.dots);
         if(!group.rest)$('accidental').value=String((group.notes[selection.tone]||group.notes[0]).alter);
       }else $('accidental').value=inputAccidental;
       updateTools();
+      if(keyboardEntry&&inputCursor){
+        const bar=geometry.bars.find(b=>b.measure===inputCursor.measure);
+        if(bar){const line=document.createElementNS(svg.namespaceURI,'line'),x=bar.start+inputCursor.beat*bar.beatWidth;
+          for(const [name,value]of Object.entries({'data-input-cursor':'true',x1:x,x2:x,y1:bar.bottom-110,y2:bar.bottom+35,stroke:'#2563eb','stroke-width':2,'pointer-events':'none'}))line.setAttribute(name,value);svg.append(line);}
+        $('hint').textContent=`Note entry · measure ${inputCursor.measure+1}, beat ${+(inputCursor.beat+1).toFixed(3)} · A–G: notes · 0: rest · Esc: select`;
+      }
     }
     function reveal(measure){
       const bar=geometry?.bars.find(b=>b.measure===measure);if(!bar)return;
@@ -126,6 +138,7 @@ globalThis.ScoreComposer={
     }
     svg.addEventListener('pointerdown',event=>{
       if(event.button!==0||!getDraft())return;playback.stop();const p=point(event),hit=ComposerStaff.hit(geometry,p.x,p.y),target=locate(p);
+      keyboardEntry=false;inputCursor=null;
       const multi=tool==='multi'||event.shiftKey||event.ctrlKey||event.metaKey;
       if(!target&&!multi)return;
       const current=selected();
@@ -179,12 +192,65 @@ globalThis.ScoreComposer={
       const input={type,dots:Number($('input-dots').value),pitch:tool==='rest'?null:target.pitch,...lane};
       mutate(()=>{const index=d.place(s.part,target.measure,target.beat,input);select({measure:target.measure,index,tone:0},false);});
     });
-    svg.addEventListener('keydown',event=>{
+    function beginInput(){
+      const {d,s,g}=selected(),ctx=d.context(s.part,s.measure,lane.staff);
+      const start={measure:s.measure,beat:g?.beat??0},note=g&&!g.rest?(g.notes[s.tone]||g.notes[0]):null;
+      lastMidi=note?noteMidi(note):ctx.clef==='bass'?48:60;
+      setTool('note');keyboardEntry=true;inputCursor=start;draw();
+    }
+    function inputNote(letter,chord=false){
+      if(!keyboardEntry&&!chord)beginInput();
+      const {d,s,g}=selected();
+      const point=chord?{measure:s.measure,beat:g?.beat??0}:{...inputCursor};
+      if(chord&&(!g||g.rest)){$('hint').textContent='Select a note before adding a chord tone.';return;}
+      if(chord&&!keyboardEntry)lastMidi=noteMidi(g.notes[s.tone]||g.notes[0]);
+      let ctx=d.context(s.part,Math.min(point.measure,d.inspect().parts[s.part].measures.length-1),lane.staff);
+      const meter=()=>ctx.beats.split('+').reduce((a,b)=>a+Number(b),0)*4/Number(ctx.beatType);
+      if(!chord&&point.beat>=meter()-1e-7){point.measure++;point.beat=0;ctx=d.context(s.part,Math.min(point.measure,d.inspect().parts[s.part].measures.length-1),lane.staff);}
+      let pitch=null,midi=lastMidi;
+      if(letter){
+        const alter=inputAccidental==='key'?((ctx.fifths<0?'BEADGCF':'FCGDAEB').slice(0,Math.abs(ctx.fifths)).includes(letter)?Math.sign(ctx.fifths):0):Number(inputAccidental);
+        const candidates=Array.from({length:9},(_,octave)=>({step:letter,alter,octave,midi:{C:0,D:2,E:4,F:5,G:7,A:9,B:11}[letter]+alter+12*(octave+1)})).filter(n=>n.midi>=21&&n.midi<=108);
+        const chosen=candidates.sort((a,b)=>Math.abs(a.midi-lastMidi)-Math.abs(b.midi-lastMidi))[0];
+        pitch={step:chosen.step,alter:chosen.alter,octave:chosen.octave};midi=chosen.midi;
+      }
+      const duration=ScoreEditorModel.TYPES[type]*(2-2**(-Number($('input-dots').value)));
+      const ok=mutate(()=>d.transaction(()=>{
+        if(chord){
+          if(!g.notes.some(n=>n.step===pitch.step&&n.alter===pitch.alter&&n.octave===pitch.octave)){
+            d.addTone(s.part,s.measure,s.index,pitch);select({tone:g.notes.length},false);
+          }
+          return;
+        }
+        while(d.inspect().parts[s.part].measures.length<=point.measure)d.addMeasure(s.part);
+        const occupied=d.inspect(s.part,point.measure).groups.find(n=>n.staff===lane.staff&&n.voice===lane.voice&&Math.abs(n.beat-point.beat)<1e-7);
+        if(occupied&&!occupied.rest)d.rest(s.part,point.measure,occupied.index,true);
+        const index=d.place(s.part,point.measure,point.beat,{type,dots:Number($('input-dots').value),pitch,...lane});
+        select({measure:point.measure,index,tone:0},false);
+      }));
+      if(ok){lastMidi=midi;if(!chord)inputCursor={measure:point.measure,beat:point.beat+duration};draw();reveal(point.measure);}
+    }
+    $('dialog').addEventListener('keydown',event=>{
+      if(!getDraft()||event.target.closest?.('input,select,textarea,[contenteditable="true"]'))return;
       if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='a'){
         event.preventDefault();tool='multi';selectedGroups=new Set(geometry.hits.map(key));select({index:-1,tone:0});return;
       }
-      if(event.key==='Escape'){event.preventDefault();clearSelection(true);return;}
+      if(event.key==='Escape'){event.preventDefault();setTool('select');clearSelection(true);return;}
+      if((event.ctrlKey||event.metaKey)&&['ArrowUp','ArrowDown'].includes(event.key)){
+        const {d,s,g}=selected();if(g&&!g.rest){event.preventDefault();const note=g.notes[s.tone]||g.notes[0],delta=event.key==='ArrowUp'?1:-1;
+          if(mutate(()=>d.pitch(s.part,s.measure,s.index,s.tone,{...note,octave:note.octave+delta})))lastMidi=noteMidi(note)+delta*12;}return;
+      }
       if(event.ctrlKey||event.metaKey||event.altKey)return;
+      if(event.key.toLowerCase()==='n'){event.preventDefault();if(keyboardEntry)setTool('select');else beginInput();return;}
+      if(durationKeys[event.key]){event.preventDefault();changeLength(durationKeys[event.key],Number($('input-dots').value));return;}
+      if(event.key==='.'){event.preventDefault();$('input-dots').value=String((Number($('input-dots').value)+1)%3);changeLength(type,Number($('input-dots').value));return;}
+      if(/^[a-g]$/i.test(event.key)||event.key==='0'){event.preventDefault();inputNote(event.key==='0'?null:event.key.toUpperCase(),event.shiftKey&&event.key!=='0');return;}
+      if(event.key===' '){event.preventDefault();if(!event.repeat)$('play').click();return;}
+      if(['ArrowLeft','ArrowRight'].includes(event.key)){
+        event.preventDefault();const {s}=selected(),all=geometry.bars.flatMap(b=>b.groups.map(g=>({measure:b.measure,index:g.index}))),index=all.findIndex(g=>g.measure===s.measure&&g.index===s.index);
+        const next=all[Math.max(0,Math.min(all.length-1,index+(event.key==='ArrowRight'?1:-1)))];
+        if(next){keyboardEntry=false;inputCursor=null;select({...next,tone:0});reveal(next.measure);}return;
+      }
       if(['Delete','Backspace'].includes(event.key)){event.preventDefault();deleteSelected();return;}
       const {d,s,g}=selected();if(!g||tool==='multi')return;
       if(['ArrowUp','ArrowDown'].includes(event.key)&&!g.rest){event.preventDefault();const bar=geometry.bars.find(b=>b.measure===s.measure);if(!['treble','bass'].includes(bar.ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}const note=g.notes[s.tone]||g.notes[0],step=ComposerStaff.stepOf(note,bar.ctx.clef)+(event.key==='ArrowUp'?1:-1);mutate(()=>d.pitch(s.part,s.measure,s.index,s.tone,ComposerStaff.pitchAt(bar.bottom-step*geometry.halfGap,bar,geometry,$('accidental').value)));}
@@ -212,6 +278,6 @@ globalThis.ScoreComposer={
       catch(error){$('error').textContent=error.message;$('error').hidden=false;}
     });
     if(typeof ResizeObserver!=='undefined')new ResizeObserver(()=>{if(getDraft()&&$('dialog').open&&!gesture)draw();}).observe($('canvas-scroll'));
-    return {render:draw,reveal,clearSelection,currentLane:()=>previousPart===getSelection().part?lane:getDraft()?.lanes(getSelection().part)[0],stop:()=>playback.stop(),close:()=>playback.close(),reset(){playback.stop();previousPart=-1;playing=null;tool='select';type='quarter';gesture=null;selectedGroups.clear();anchor=null;inputAccidental='key';$('input-dots').value='0';$('accidental').value='key';$('canvas-scroll').scrollLeft=$('canvas-scroll').scrollTop=0;updateTools();}};
+    return {render:draw,reveal,clearSelection,exitInput(){setTool('select');clearSelection(true);},currentLane:()=>previousPart===getSelection().part?lane:getDraft()?.lanes(getSelection().part)[0],stop:()=>playback.stop(),close:()=>playback.close(),reset(){playback.stop();previousPart=-1;playing=null;tool='select';type='quarter';gesture=null;keyboardEntry=false;inputCursor=null;selectedGroups.clear();anchor=null;inputAccidental='key';$('input-dots').value='0';$('accidental').value='key';$('canvas-scroll').scrollLeft=$('canvas-scroll').scrollTop=0;updateTools();}};
   }
 };

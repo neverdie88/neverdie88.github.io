@@ -26,6 +26,7 @@ function fixture(t){
     createOscillator(){const node={frequency:{value:0},connect(){},disconnect(){},start(at){audio.starts.push([node.frequency.value,at]);},stop(){audio.stops++;}};return node;}
     createGain(){return {gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};}
   };
+  win.PianoSamples={load:async()=>({play(midi,at){audio.starts.push([440*2**((midi-69)/12),at]);return {stop(){audio.stops++;}};}})};
   for(const file of ['score-editor-model.js','score-playback.js','sheet-player.js'])win.eval(fs.readFileSync(`${__dirname}/../sheet-music/${file}`,'utf8'));
   const player=win.SheetPlayer.mount();player.load(xml);
   t.after(()=>{player.clear();dom.window.close();});
