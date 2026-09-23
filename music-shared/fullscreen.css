@@ -1,0 +1,10 @@
+.vp-fullscreen-button { width: 44px; min-height: 44px !important; padding: 10px; display: inline-grid; place-items: center; flex-shrink: 0; }
+.vp-fullscreen-button svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.vp-collapse-icon, .vp-fullscreen-button[aria-pressed="true"] .vp-expand-icon { display: none; }
+.vp-fullscreen-button[aria-pressed="true"] .vp-collapse-icon { display: block; }
+.vp-fullscreen-dialog { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: var(--background); color: var(--foreground); }
+.vp-fullscreen-dialog::backdrop { background: var(--background); }
+[data-music-app] :is(:fullscreen, .vp-expanded-sheet) { box-sizing: border-box; width: 100%; height: 100%; max-width: none; padding: 20px; margin: 0; overflow: auto; background: var(--background); color: var(--foreground); align-content: start; }
+[data-music-app] :is(:fullscreen, .vp-expanded-sheet) > :is(.vp-sheet-heading, .vp-section-header) { position: sticky; top: -20px; z-index: 3; padding: 8px 0; background: var(--background); }
+[data-music-app] :is(:fullscreen, .vp-expanded-sheet) :is(.vp-score-scroll, .vp-sheet-viewport) { max-height: none; overflow: visible; }
+@media print { .vp-fullscreen-button { display: none !important; } }

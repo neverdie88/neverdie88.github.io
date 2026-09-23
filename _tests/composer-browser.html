@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Staff composer checks</title><style>body{margin:0;font:14px system-ui;background:#eee}header{padding:10px;display:flex;gap:8px;flex-wrap:wrap}button{padding:8px}#status{margin:0 10px 8px}iframe{width:100%;height:calc(100vh - 105px);border:0}</style></head><body>
-<header><button id="test" disabled>Test staff composing</button><button id="listen" disabled>Test playback</button><button id="apply" disabled>Test apply and save</button><button id="features" disabled>Test editing and selection</button><button id="chords" disabled>Check chord layout</button><button id="narrow">390 px view</button></header><p id="status">Loading…</p><iframe id="app" title="Production staff composer" src="../pitch-visualizer/"></iframe>
+<header><button id="test" disabled>Test staff composing</button><button id="listen" disabled>Test playback</button><button id="apply" disabled>Test apply and save</button><button id="features" disabled>Test editing and selection</button><button id="chords" disabled>Check chord layout</button><button id="narrow">390 px view</button></header><p id="status">Loading…</p><iframe id="app" title="Production staff composer" src="../sheet-music/"></iframe>
 <script>
-const frame=document.getElementById('app'),status=document.getElementById('status');let win,doc,saved,practice,errors=[],sounded=[];
+const frame=document.getElementById('app'),status=document.getElementById('status');let win,doc,saved,errors=[],sounded=[];
 const $=id=>doc.getElementById('vp-editor-'+id),click=id=>doc.getElementById('vp-'+id).click();
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),check=(x,m)=>{if(!x)throw Error(m);};
 async function until(fn,message){const start=performance.now();while(!fn()){if(performance.now()-start>12000)throw Error(message);await sleep(30);}}
@@ -23,14 +23,13 @@ frame.addEventListener('load',()=>{
   // Programmatic pointer events do not create a native active pointer ID.
   $('canvas').setPointerCapture=()=>{};
   win.addEventListener('error',e=>errors.push(e.message));win.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
-  win.addEventListener('vp:practice',e=>practice=e.detail);
   const original=win.AudioContext.prototype.createOscillator;win.AudioContext.prototype.createOscillator=function(){const n=original.call(this),start=n.start.bind(n);n.start=(...args)=>{sounded.push(n.frequency.value);start(...args);};return n;};
   const url=win.URL.createObjectURL.bind(win.URL);win.URL.createObjectURL=blob=>{if(blob.type.includes('musicxml'))saved=blob;return url(blob);};
   const anchor=win.HTMLAnchorElement.prototype.click;win.HTMLAnchorElement.prototype.click=function(){if(!this.download)return anchor.call(this);};
   for(const id of ['test','listen','apply','chords','features'])document.getElementById(id).disabled=false;status.textContent='Ready. Actual staff controls, pointer handlers, Web Audio and MusicXML export.';
 });
 document.getElementById('test').onclick=()=>run(async()=>{
-  if($('dialog').open)$('cancel').click();click('mode-sheet');click('score-new');
+  if($('dialog').open)$('cancel').click();click('score-new');
   doc.querySelector('[data-length="quarter"]').click();
   tap(0,-2);tap(1,0,'touch');tap(2,2);
   check(groups().join(',')==='C4,E4,G4,Rest','Tapping did not write the right notes');
@@ -56,12 +55,12 @@ document.getElementById('listen').onclick=()=>run(async()=>{
   status.textContent='PASS: real Web Audio played D4, E4, G4 and F♯4 in order; preview completed and Stop works.';
 });
 document.getElementById('apply').onclick=()=>run(async()=>{
-  $('apply').click();await until(()=>!$('dialog').open,'Apply failed');check(practice.sequence.map(n=>n.notes[0].midi).join(',')==='62,64,67,66','Practice targets are wrong');
+  $('apply').click();await until(()=>!$('dialog').open,'Apply failed');check(!doc.getElementById('vp-score-scroll').hidden,'Applied sheet is hidden');
   click('score-save');const score=win.PitchScore.parse(await saved.text());check(score.lanes[0].events.map(n=>n.notes[0].midi).join(',')==='62,64,67,66','Saved XML is wrong');
-  click('score-edit');$('title').value='Canceled title';$('title').dispatchEvent(new win.Event('change'));$('cancel').click();check(doc.getElementById('vp-score-title').textContent!=='Canceled title','Cancel replaced applied title');click('score-edit');status.textContent='PASS: staff composition applied to practice and exported as MusicXML with matching notes.';
+  click('score-edit');$('title').value='Canceled title';$('title').dispatchEvent(new win.Event('change'));$('cancel').click();check(doc.getElementById('vp-score-title').textContent!=='Canceled title','Cancel replaced applied title');click('score-edit');status.textContent='PASS: staff composition displayed and exported as MusicXML with matching notes.';
 });
 document.getElementById('features').onclick=()=>run(async()=>{
-  if($('dialog').open)$('cancel').click();click('mode-sheet');click('score-new');
+  if($('dialog').open)$('cancel').click();click('score-new');
   const change=(id,value)=>{$(id).value=String(value);$(id).dispatchEvent(new win.Event('change',{bubbles:true}));};
   const pick=(m,i,tone=0)=>{const n=$('canvas').querySelector(`[data-composer-note="${m}:${i}:${tone}"]`),p={x:+n.dataset.x,y:+n.dataset.y};pointer('pointerdown',p);pointer('pointerup',p);};
   doc.querySelector('[data-length="whole"]').click();tap(0,-2);tool('chord');tap(0,0);tool('select');pick(0,0);
@@ -89,7 +88,7 @@ document.getElementById('features').onclick=()=>run(async()=>{
   status.textContent='PASS: selected accidentals, whole-to-quaver chord, dots, wrapped rows, staff/scale, multi-delete, Undo, box selection and MusicXML save.';
 });
 document.getElementById('chords').onclick=()=>run(async()=>{
-  if($('dialog').open)$('cancel').click();click('mode-sheet');click('score-new');
+  if($('dialog').open)$('cancel').click();click('score-new');
   doc.querySelector('[data-length="quarter"]').click();tap(0,4);tap(1,-2);
   tool('chord');for(const step of [1,2,3,5])tap(1,step);
   tool('note');tap(2,5);tool('chord');for(const step of [7,8,9])tap(2,step);

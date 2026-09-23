@@ -3,7 +3,7 @@ const { test } = require('node:test');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const fragment = fs.readFileSync(`${__dirname}/../pitch-visualizer/index.html`, 'utf8');
-const scripts = [...fragment.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(match => match[1]).filter(script => script.trim());
+const scripts = ['music-shared/pitch-core.js', 'music-shared/music-glyphs.js', 'pitch-visualizer/app.js'].map(name => fs.readFileSync(`${__dirname}/../${name}`, 'utf8'));
 const core = vm.createContext({});
 vm.runInContext(scripts[0], core);
 const P = core.ViolinPitch;
@@ -30,7 +30,7 @@ function fixture(width = 736) {
     element.value = attrs.match(/\bvalue="([^"]*)"/)?.[1] ?? '';
     elements[id.slice(3)] = element;
   }
-  let now = 0, inputHz = 442, stopped = false, frameId = 0, chordCallbacks;
+  let now = 0, inputHz = 442, stopped = false, frameId = 0;
   const frames = new Map(), windowEvents = {};
   const track = { stop() { stopped = true; }, addEventListener() {} };
   const stream = { getTracks: () => [track], getAudioTracks: () => [track] };
@@ -52,20 +52,15 @@ function fixture(width = 736) {
     performance: { now: () => now },
     CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init.detail; } },
     navigator: { mediaDevices: { getUserMedia: async () => stream } },
-    // This suite isolates UI/audio routing. Recorded-audio inference and the
-    // actual worker lifecycle are covered by pitch-chords and browser checks.
-    ChordListener: { create(callbacks) { chordCallbacks = callbacks; return { start(){}, stop(){}, reset(){}, submit(){} }; } },
     ResizeObserver: class { observe() {} },
     requestAnimationFrame(callback) { frames.set(++frameId,callback); return frameId; },
     cancelAnimationFrame(id) { frames.delete(id); }
   });
-  vm.runInContext(fs.readFileSync(`${__dirname}/../pitch-visualizer/practice-staff.js`, 'utf8'), context);
   for (const script of scripts) vm.runInContext(script, context);
   return {
     events,
     dispatch: (type, detail) => context.window.dispatchEvent(new context.CustomEvent(type, {detail})),
     on: (type, fn) => context.window.addEventListener(type, fn),
-    chordFrames: frames => chordCallbacks.onFrames(frames),
     nodes: () => descendants(elements.staff),
     elements,
     start: () => elements.mic.listeners.click(),
@@ -84,34 +79,28 @@ function fixture(width = 736) {
   };
 }
 
-test('starts with an empty staff, tuning controls, and sheet-photo inputs', () => {
+test('starts with an empty staff and tuning controls without sheet import or editing', () => {
   const app = fixture();
   assert.equal(app.elements.note.textContent, '—');
   assert.equal(app.paths(), '');
   assert.equal(app.elements.a4.value, '440');
   assert.equal(app.elements.clef.value, 'treble');
-  assert.ok(app.elements['sheet-upload']);
-  assert.ok(app.elements['sheet-camera']);
+  assert.equal(app.elements['sheet-upload'], undefined);
+  assert.equal(app.elements['sheet-camera'], undefined);
+  assert.doesNotMatch(fragment, /Upload sheet photo|Take photo|Open MusicXML|Load sample sheet|New sheet|photo conversion|100 MB|sheet-controller|composer-controller|omr-worker/);
   assert.doesNotMatch(fragment, /Demo|Detune|Open strings|Play reference|Played pitch|Written notes/);
 });
 
-test('only fresh microphone samples drive practice, with silence releasing repeated notes', async () => {
-  const { createFollower } = require('../pitch-visualizer/music-score.js');
+test('only fresh microphone samples emit pitch events, with silence reported separately', async () => {
   const app = fixture();
-  const follower = createFollower([{midi:69},{midi:69},{midi:71}]);
-  await app.start();
-  assert.ok(app.events.some(e => e.type === 'vp:microphone' && e.detail.active));
-  app.play(440,350);
-  let cursor = 0;
-  const consume = () => { for (;cursor<app.events.length;cursor++) { const e=app.events[cursor]; if(e.type==='vp:pitch') follower.update(e.detail.pitch,e.detail.at); } };
-  consume(); assert.equal(follower.current().index,1);
-  const count=app.events.length;
+  await app.start(); app.play(440, 350);
+  assert.ok(app.events.some(e => e.type === 'vp:pitch' && e.detail.pitch?.midi === 69));
+  const count = app.events.length;
   app.setA4(442); app.setA4(440); app.setClef('bass');
-  assert.equal(app.events.length,count,'redrawing old samples must never count as practice');
-  app.play(440,500); consume(); assert.equal(follower.current().index,1);
-  app.play(0,200); app.play(440,350); consume(); assert.equal(follower.current().index,2);
-  app.play(P.frequency(71),350); consume(); assert.equal(follower.current().complete,true);
-  await app.stop(); assert.equal(app.events.at(-1).detail.active,false);
+  assert.equal(app.events.length, count);
+  app.play(0, 300);
+  assert.equal(app.events.filter(e => e.type === 'vp:pitch').at(-1).detail.pitch, null);
+  await app.stop(); assert.equal(app.events.at(-1).detail.active, false);
 });
 
 test('calibration updates note names and retained trace without changing measured frequency', async () => {
@@ -220,36 +209,38 @@ test('the staff uses its own width when a photo shares the practice area', async
   await app.stop();
 });
 
-test('sheet practice draws only a trace and pending targets, fades chord tones, then shifts left', async () => {
-  const { DOMParser } = require('@xmldom/xmldom');
-  const { parse, createFollower } = require('../pitch-visualizer/music-score.js');
-  const lane=parse(fs.readFileSync(`${__dirname}/../pitch-visualizer/samples/notes-and-chords.musicxml`,'utf8'),DOMParser).lanes[0];
-  const follower=createFollower(lane.events), app=fixture(800);
-  const publish=(result,reset=false)=>app.dispatch('vp:practice',{sequence:lane.events,index:result.index,matchedPitches:result.matchedPitches,clef:'treble',fifths:0,reset});
-  publish(follower.current(),true);
-  app.on('vp:pitch',({detail})=>publish(follower.update(detail.pitch,detail.at)));
-  app.on('vp:chords',({detail})=>{ for(const frame of detail.frames) publish(follower.update(frame.pitches,frame.time)); });
-  await app.start(); app.play(440,350); app.play(P.frequency(71),350);
-  assert.equal(follower.current().index,2);
-  let targets=app.nodes().filter(n=>n.attributes['data-practice-event']);
-  assert.equal(targets[0].attributes['data-event-index'],'2');
-  assert.equal(Number(targets[0].attributes['data-event-x']),400);
-  assert.ok(targets.slice(1).every(n=>Number(n.attributes['data-event-x'])>400));
-  app.play(P.frequency(76),350);
-  app.chordFrames(Array.from({length:7},(_,i)=>({time:750+i*50,pitches:[{midi:76,cents:0,hz:P.frequency(76)}]})));
-  assert.equal(follower.current().index,2);
-  const tones=descendants(app.nodes().find(n=>n.attributes['data-event-index']==='2')).filter(n=>n.attributes['data-target-midi']);
-  assert.equal(tones.find(n=>n.attributes['data-target-midi']==='76').attributes['data-matched'],'true');
-  assert.match(tones.find(n=>n.attributes['data-target-midi']==='76').attributes.class,/is-matched/);
-  assert.equal(tones.find(n=>n.attributes['data-target-midi']==='72').attributes['data-matched'],'false');
-  assert.ok(app.paths()); assert.equal(app.elements.note.textContent,'');
-  assert.equal(app.nodes().some(n=>n.attributes['data-event-id'] || n.attributes.class==='vp-live-dot'),false);
-  app.play(P.frequency(72),350);
-  app.chordFrames(Array.from({length:7},(_,i)=>({time:1100+i*50,pitches:[{midi:72,cents:0,hz:P.frequency(72)}]})));
-  assert.equal(follower.current().index,3);
-  targets=app.nodes().filter(n=>n.attributes['data-practice-event']);
-  assert.equal(targets[0].attributes['data-event-index'],'3');
-  assert.equal(Number(targets[0].attributes['data-event-x']),400);
-  assert.equal(targets.some(n=>n.attributes['data-event-index']==='2'),false);
-  await app.stop();
+test('trailing off clears history, keeps live notes and tuning, and resumes without a connecting trail', async () => {
+  const app = fixture(); await app.start(); app.play(440, 350); app.play(P.frequency(72), 350);
+  assert.ok(app.paths());
+  app.elements['trail-toggle'].checked = false;
+  app.elements['trail-toggle'].listeners.change();
+  assert.equal(app.paths(), '');
+  assert.deepEqual(app.nodes().filter(n => n.attributes['data-event-id']).map(n => n.attributes['data-event-id']), ['current']);
+  app.play(442, 400);
+  assert.equal(app.paths(), ''); assert.equal(app.elements.note.textContent, 'A4');
+  assert.ok(Number.isFinite(app.pitchY()), 'the current pitch marker remains visible without a trail');
+  app.setA4(415); assert.equal(app.elements.note.textContent, 'A♯4'); assert.equal(app.paths(), '');
+  assert.ok(Number.isFinite(app.pitchY()));
+  app.elements['trail-toggle'].checked = true;
+  app.elements['trail-toggle'].listeners.change();
+  assert.equal(app.paths(), '', 'old history must not reappear');
+  app.play(442, 150); assert.ok(app.paths());
+  assert.equal(app.nodes().some(n => n.attributes['data-note'] === 'C5'), false);
+  assert.equal(app.stopped, false);
+});
+
+test('click, Enter and Space switch staff without restarting the mic or changing the pitch', async () => {
+  const app = fixture(); await app.start(); app.play(P.frequency(48));
+  app.elements.staff.listeners.click();
+  assert.equal(app.elements.clef.value, 'bass'); assert.equal(app.elements.note.textContent, 'C3');
+  assert.match(app.elements.staff.attributes['aria-label'], /Switch to treble staff/);
+  let prevented = 0;
+  app.elements.staff.listeners.keydown({ key: 'Enter', preventDefault() { prevented++; } });
+  assert.equal(app.elements.clef.value, 'treble');
+  app.elements.staff.listeners.keydown({ key: ' ', preventDefault() { prevented++; } });
+  assert.equal(app.elements.clef.value, 'bass'); assert.equal(prevented, 2);
+  app.elements.staff.listeners.keydown({ key: ' ', repeat: true, preventDefault() {} });
+  assert.equal(app.elements.clef.value, 'bass');
+  assert.equal(app.stopped, false); assert.equal(app.elements.note.textContent, 'C3');
+  assert.doesNotMatch(fragment, /vp-mode-sheet|vp-follow-toggle|practice-staff\.js|chord-listener\.js/);
 });

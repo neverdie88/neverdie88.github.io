@@ -2,11 +2,11 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const fs = require('node:fs');
 const { DOMParser, XMLSerializer } = require('@xmldom/xmldom');
-const { create, blank } = require('../pitch-visualizer/score-editor-model.js');
-const { parse } = require('../pitch-visualizer/music-score.js');
+const { create, blank } = require('../sheet-music/score-editor-model.js');
+const { parse } = require('../sheet-music/music-score.js');
 const edit = xml => create(xml, DOMParser, XMLSerializer);
 const read = xml => parse(xml, DOMParser);
-const sample = fs.readFileSync(`${__dirname}/../pitch-visualizer/samples/notes-and-chords.musicxml`,'utf8');
+const sample = fs.readFileSync(`${__dirname}/../sheet-music/samples/notes-and-chords.musicxml`,'utf8');
 const note = (step, extra='', length=4) => `<note><pitch><step>${step}</step><octave>4</octave></pitch><duration>${length}</duration><type>quarter</type>${extra}</note>`;
 const score = measures => `<score-partwise version="4.0"><identification><creator type="composer">Original composer</creator></identification><part-list><score-part id="P1"><part-name>Piano</part-name></score-part><score-part id="P2"><part-name>Other part</part-name></score-part></part-list><part id="P1">${measures}</part><part id="P2"><measure number="1">${note('G')}</measure></part></score-partwise>`;
 

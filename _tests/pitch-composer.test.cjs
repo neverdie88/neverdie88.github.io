@@ -1,14 +1,14 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
-const {create,blank}=require('../pitch-visualizer/score-editor-model.js');
-const Staff=require('../pitch-visualizer/composer-staff.js');
-const {create:player}=require('../pitch-visualizer/score-playback.js');
+const {create,blank}=require('../sheet-music/score-editor-model.js');
+const Staff=require('../sheet-music/composer-staff.js');
+const {create:player}=require('../sheet-music/score-playback.js');
 const edit=xml=>create(xml,DOMParser,XMLSerializer);
 const C4={step:'C',octave:4,alter:0};
 test('staff-only editor opens, cancels and applies edits without removed panel elements',async()=>{
   const fs=require('node:fs'),vm=require('node:vm');
-  const html=fs.readFileSync(`${__dirname}/../pitch-visualizer/index.html`,'utf8'),elements={},saved=[];
+  const html=fs.readFileSync(`${__dirname}/../sheet-music/index.html`,'utf8'),elements={},saved=[];
   const element=()=>({value:'',children:[],listeners:{},hidden:false,open:false,
     get options(){return this.children;},append(...nodes){this.children.push(...nodes);},replaceChildren(...nodes){this.children=nodes;},
     addEventListener(type,fn){this.listeners[type]=fn;},showModal(){this.open=true;},close(){this.open=false;},focus(){}});
@@ -17,10 +17,10 @@ test('staff-only editor opens, cancels and applies edits without removed panel e
   const context=vm.createContext({
     document:{getElementById:id=>elements[id.replace('vp-editor-','')]||null,createElement:element,addEventListener(){}},
     window:{addEventListener(){}},ViolinPitch:{KEYS:[]},ScoreEditorModel:{create:xml=>edit(xml||blank())},
-    PitchScore:{parse:xml=>require('../pitch-visualizer/music-score.js').parse(xml,DOMParser)},
+    PitchScore:{parse:xml=>require('../sheet-music/music-score.js').parse(xml,DOMParser)},
     ScoreComposer:{mount(options){composer=options;return{render(){assert.ok(composer.getDraft());},stop(){},close(){},reset(){}};}}
   });
-  vm.runInContext(fs.readFileSync(`${__dirname}/../pitch-visualizer/score-editor.js`,'utf8'),context);
+  vm.runInContext(fs.readFileSync(`${__dirname}/../sheet-music/score-editor.js`,'utf8'),context);
   api=context.ScoreEditor.mount({apply:async xml=>saved.push(xml)});api.open();
   assert.equal(elements.dialog.open,true);assert.equal(elements['note-details'],undefined);assert.equal(elements['full-preview'],undefined);
   composer.mutate(()=>composer.getDraft().place(0,0,0,{pitch:C4}));

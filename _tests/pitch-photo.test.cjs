@@ -4,8 +4,8 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
-const source = fs.readFileSync(path.join(__dirname, '../pitch-visualizer/sheet-photo.js'), 'utf8');
-const html = fs.readFileSync(path.join(__dirname, '../pitch-visualizer/index.html'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../sheet-music/sheet-photo.js'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '../sheet-music/index.html'), 'utf8');
 const deferred = () => {
   let resolve, reject;
   const promise = new Promise((yes, no) => { resolve = yes; reject = no; });

@@ -1,45 +1,48 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Free play checks</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pitch control checks</title>
 <style>body{margin:0;font:15px system-ui;background:#eee}header{padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}button{padding:8px}iframe{width:100%;height:calc(100vh - 110px);border:0}#status{margin:0 10px 8px}</style></head><body>
-<header><button id="free" disabled>Check free play</button><a href="composer-browser.html">Staff composer checks</a><button id="narrow">390 px view</button></header>
-<p id="status" role="status">Loading. Synthetic microphone; no device access.</p><iframe id="app" title="Production app with synthetic microphone input" src="../pitch-visualizer/"></iframe>
+<header><button id="check" disabled>Check pitch controls</button><a href="composer-browser.html">Staff composer checks</a><button id="narrow">390 px view</button></header>
+<p id="status" role="status">Loading. Synthetic microphone; no device access.</p><iframe id="app" title="Production app with synthetic microphone input" src="../pitch-visualizer/" allowfullscreen></iframe>
 <script>
 const frame=document.getElementById('app'),status=document.getElementById('status');
-let win,doc,frequency=0,practice=null,saved,downloadName,errors=[];
+let win,doc,frequency=0,errors=[];
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const check=(value,message)=>{if(!value)throw Error(message);};
 const $=id=>doc.getElementById('vp-'+id);
-const change=(id,value)=>{const el=$(id);const options=el.closest('details');if(options)options.open=true;el.value=value;el.dispatchEvent(new win.Event('change',{bubbles:true}));};
 async function until(fn,message){const at=performance.now();while(!fn()){if(performance.now()-at>15000)throw Error(message);await sleep(40);}}
-async function sample(){frequency=0;$('mode-sheet').click();$('score-sample').click();await until(()=>practice?.sequence.length===11&&practice.index===0&&$('score-title').textContent==='Single notes & chords','Sample did not open');}
-async function run(action){try{status.textContent='Checking…';await action();check(!errors.length,errors.join('; '));}catch(error){frequency=0;status.textContent='FAIL: '+[error.message,...errors,$('score-error')?.textContent].filter(Boolean).join('; ');}}
 frame.addEventListener('load',()=>{
   win=frame.contentWindow;doc=win.document;
   const track={stop(){frequency=0;},addEventListener(){}};
   win.navigator.mediaDevices.getUserMedia=async()=>({getTracks:()=>[track],getAudioTracks:()=>[track]});
   win.AudioContext=class{state='running';sampleRate=48000;createMediaStreamSource(){return{connect(){},disconnect(){}};}createAnalyser(){return{disconnect(){},getFloatTimeDomainData(samples){for(let i=0;i<samples.length;i++)samples[i]=frequency?.3*Math.sin(2*Math.PI*frequency*i/48000):0;}};}close(){this.state='closed';}async resume(){this.state='running';}};
-  win.addEventListener('vp:practice',({detail})=>practice=detail);
   win.addEventListener('error',event=>errors.push(event.message));
   win.addEventListener('unhandledrejection',event=>errors.push(String(event.reason)));
-  const createURL=win.URL.createObjectURL.bind(win.URL);win.URL.createObjectURL=blob=>{if(blob.type.includes('musicxml'))saved=blob;return createURL(blob);};
-  const click=win.HTMLAnchorElement.prototype.click;win.HTMLAnchorElement.prototype.click=function(){if(this.download){downloadName=this.download;return;}return click.call(this);};
-  for(const id of ['free'])document.getElementById(id).disabled=false;
-  status.textContent='Ready. Tests use the production controls, notation renderer and microphone loop.';
+  document.getElementById('check').disabled=false;
+  status.textContent='Ready. Uses the production controls, notation renderer and microphone loop.';
 });
-document.getElementById('free').onclick=()=>run(async()=>{
-  if($('editor-dialog').open)$('editor-cancel').click();
-  $('mode-free').click();change('clef','bass');change('key','minor:-1');
-  if($('mic').textContent==='Start microphone')$('mic').click();
-  await until(()=>$('mic').textContent==='Stop microphone','Microphone loop did not start');
-  frequency=220;await until(()=>doc.querySelector('[data-note-label="current"]')?.textContent==='A3'&&doc.querySelector('[data-pitch-trace]'),'Free play did not show both note and trace');
-  check(!$('notation-controls').hidden&&$('sheet-input').hidden,'Free-play controls are wrong');
-  check($('score-caption').textContent.includes('D minor'),'Scale did not change');
-  await sample();$('follow-skip').click();check(practice.index===1,'Skip did not advance');
-  $('mode-free').click();frequency=220;await until(()=>doc.querySelector('[data-note-label="current"]'),'Live notation was not restored');
-  check($('clef').value==='bass'&&$('key').value==='minor:-1','Staff/scale selection was lost');
-  $('mode-sheet').click();check(practice.index===1&&!practice.active,'Paused sheet progress was lost');
-  check(!doc.querySelector('[data-event-id="current"]'),'Played notehead is visible in Follow sheet');
-  $('mode-free').click();frequency=220;$('live-panel').scrollIntoView({block:'center'});
-  status.textContent='PASS: free play shows A3 and trace on bass staff / D minor; switching modes preserves the paused sheet and staff/scale choices.';
-});
+document.getElementById('check').onclick=async()=>{
+  try {
+    status.textContent='Checking…';
+    $('clef').value='treble';$('clef').dispatchEvent(new win.Event('change'));
+    $('trail-toggle').checked=true;$('trail-toggle').dispatchEvent(new win.Event('change'));
+    if($('mic').textContent==='Start microphone')$('mic').click();
+    await until(()=>$('mic').textContent==='Stop microphone','Microphone loop did not start');
+    frequency=440;await until(()=>doc.querySelector('[data-note-label="current"]')?.textContent==='A4'&&doc.querySelector('[data-pitch-trace]'),'Note and trace missing');
+    $('trail-toggle').click();frequency=220;
+    await until(()=>doc.querySelector('[data-note-label="current"]')?.textContent==='A3','Live note stopped with trailing off');
+    check(!doc.querySelector('[data-pitch-trace]'),'Trailing off still draws a curve');
+    check(doc.querySelectorAll('[data-event-id]').length===1,'Old note history remains');
+    $('staff').dispatchEvent(new win.MouseEvent('click',{bubbles:true}));
+    check($('clef').value==='bass','Tap did not switch to bass');
+    $('staff').dispatchEvent(new win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+    check($('clef').value==='treble','Keyboard did not switch to treble');
+    $('trail-toggle').click();await until(()=>doc.querySelector('[data-pitch-trace]'),'Trailing did not resume');
+    check(!$('sheet-input')&&!$('score-open')&&!$('editor-dialog'),'Sheet controls remain in the pitch app');
+    check(!$('mode-sheet')&&!$('follow-toggle'),'Practice mode remains');
+    check(doc.documentElement.scrollWidth<=doc.documentElement.clientWidth+1,'Page overflows horizontally');
+    check(!errors.length,errors.join('; '));
+    $('mic').click();
+    status.textContent='PASS: trailing off/on, live notes, tap and keyboard staff switching, separate pitch-only UI, responsive layout; no practice mode or browser errors.';
+  } catch(error) { frequency=0;status.textContent='FAIL: '+[error.message,...errors,$('score-error')?.textContent].filter(Boolean).join('; '); }
+};
 document.getElementById('narrow').onclick=()=>{frame.style.width=frame.style.width==='390px'?'100%':'390px';};
 </script></body></html>

@@ -1,8 +1,8 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const { DOMParser } = require('@xmldom/xmldom');
-const { parse, createFollower } = require('../pitch-visualizer/music-score.js');
-const { convert, duration } = require('../pitch-visualizer/omr-musicxml.js');
+const { parse, createFollower } = require('../sheet-music/music-score.js');
+const { convert, duration } = require('../sheet-music/omr-musicxml.js');
 const pitch = (step, octave = 4, extra = '') => `<note><pitch><step>${step}</step><octave>${octave}</octave></pitch><duration>4</duration>${extra}</note>`;
 const score = measures => `<score-partwise version="4.0"><part-list><score-part id="P1"><part-name>Violin</part-name></score-part></part-list><part id="P1">${measures}</part></score-partwise>`;
 const read = text => parse(text, DOMParser);
@@ -81,7 +81,7 @@ test('a held shared pitch cannot complete the next chord, and partial matches su
 
 test('sample sheet has single notes, repeats, two-note and three-note chords', () => {
   const fs=require('node:fs');
-  const result=read(fs.readFileSync(`${__dirname}/../pitch-visualizer/samples/notes-and-chords.musicxml`,'utf8'));
+  const result=read(fs.readFileSync(`${__dirname}/../sheet-music/samples/notes-and-chords.musicxml`,'utf8'));
   assert.deepEqual(result.lanes[0].events.map(event=>event.notes.length),[1,1,2,1,3,1,1,3,1,1,2]);
   assert.equal(result.lanes[0].events.flatMap(event=>event.notes).length,17);
 });

@@ -49,3 +49,17 @@ files private unless you intend to share them; they are not part of this site.
 
 Pushes to `main` build this site with the existing Jekyll workflow and deploy it
 to GitHub Pages.
+
+
+## Music apps
+
+- `/pitch-visualizer/`: microphone pitch display, optional trailing history,
+  tap/click treble/bass switching, tuning and fullscreen.
+- `/sheet-music/`: separate MusicXML/photo import, recognition, composing,
+  playback of all parts or a selected staff/voice, save/print and fullscreen.
+- `/music-shared/`: theme, theory/detector helpers, licensed glyphs and fullscreen.
+
+Keep all three directories together. Each app README documents its source and
+behavior. The pitch app does not load the editor, score renderer or OMR models.
+Run `npm ci --prefix _tests` and `node --test _tests/pitch-*.test.cjs`, then the
+normal Jekyll build. The browser harnesses in `_tests` are excluded from Pages.

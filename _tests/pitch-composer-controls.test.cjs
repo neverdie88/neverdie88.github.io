@@ -2,14 +2,14 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM}=require('jsdom');
-const html=fs.readFileSync(`${__dirname}/../pitch-visualizer/index.html`,'utf8');
-const scripts=[...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]).filter(s=>s.trim());
+const html=fs.readFileSync(`${__dirname}/../sheet-music/index.html`,'utf8');
+const shared = name => fs.readFileSync(`${__dirname}/../music-shared/${name}`, 'utf8');
 function fixture(width=900,xml){
-  const dom=new JSDOM(html,{runScripts:'outside-only',url:'http://localhost/pitch-visualizer/'}),win=dom.window,doc=win.document;
+  const dom=new JSDOM(html,{runScripts:'outside-only',url:'http://localhost/sheet-music/'}),win=dom.window,doc=win.document;
   const $=id=>doc.getElementById('vp-editor-'+id),errors=[];let saved;
   win.addEventListener('error',e=>errors.push(e.error));
-  win.eval(scripts[0]);win.ViolinMusicGlyphs=JSON.parse(html.match(/globalThis.ViolinMusicGlyphs = (\{[^\n]+\});/)[1]);
-  for(const file of ['music-score.js','score-editor-model.js','composer-staff.js','score-playback.js','composer-controller.js','score-editor.js'])win.eval(fs.readFileSync(`${__dirname}/../pitch-visualizer/${file}`,'utf8'));
+  win.eval(shared('pitch-core.js'));win.eval(shared('music-glyphs.js'));
+  for(const file of ['music-score.js','score-editor-model.js','composer-staff.js','score-playback.js','composer-controller.js','score-editor.js'])win.eval(fs.readFileSync(`${__dirname}/../sheet-music/${file}`,'utf8'));
   $('dialog').showModal=function(){this.open=true;};$('dialog').close=function(){this.open=false;};
   Object.defineProperty($('canvas-scroll'),'clientWidth',{get:()=>width});Object.defineProperty($('canvas-scroll'),'clientHeight',{value:500});
   const svg=$('canvas');svg.setPointerCapture=()=>{};svg.getScreenCTM=()=>({inverse:()=>({})});svg.createSVGPoint=()=>({x:0,y:0,matrixTransform(){return{x:this.x,y:this.y};}});
@@ -32,7 +32,7 @@ function fixture(width=900,xml){
 }
 test('staff and voice switching survives stopping playback and edits only the chosen lane',async()=>{
   const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
-  const d=require('../pitch-visualizer/score-editor-model.js').create(undefined,DOMParser,XMLSerializer);
+  const d=require('../sheet-music/score-editor-model.js').create(undefined,DOMParser,XMLSerializer);
   d.place(0,0,0,{pitch:{step:'C',alter:0,octave:4}});
   d.place(0,0,0,{staff:'2',voice:'2',pitch:{step:'G',alter:0,octave:3}});
   d.settings(0,0,{clef:'bass',staff:'2'});

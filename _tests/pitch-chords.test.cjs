@@ -3,9 +3,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
-const { detect } = require('../pitch-visualizer/chord-engine.js');
-const { createFollower } = require('../pitch-visualizer/music-score.js');
-const { create } = require('../pitch-visualizer/chord-listener.js');
+const { detect } = require('../sheet-music/chord-engine.js');
+const { createFollower } = require('../sheet-music/music-score.js');
+const { create } = require('../sheet-music/chord-listener.js');
 const { windowAudio } = require('./piano-audio.cjs');
 const group = midis => ({ notes: midis.map(midi => ({ midi })) });
 
@@ -41,10 +41,10 @@ test('live listener drops old results on reset/stop, bounds work, and can retry 
 });
 
 test('real Basic Pitch WASM recognizes recorded piano chords and rejects missing/wrong tones', { timeout: 120000 }, async () => {
-  const ort = require('../pitch-visualizer/lib/ort/ort.wasm.min.js');
-  ort.env.wasm.numThreads = 1; ort.env.wasm.wasmPaths = path.resolve(__dirname, '../pitch-visualizer/lib/ort') + '/';
-  const bytes = fs.readFileSync(path.join(__dirname, '../pitch-visualizer/models/basic-pitch/model.onnx'));
-  const manifest = require('../pitch-visualizer/models/basic-pitch/manifest.json');
+  const ort = require('../sheet-music/lib/ort/ort.wasm.min.js');
+  ort.env.wasm.numThreads = 1; ort.env.wasm.wasmPaths = path.resolve(__dirname, '../sheet-music/lib/ort') + '/';
+  const bytes = fs.readFileSync(path.join(__dirname, '../sheet-music/models/basic-pitch/model.onnx'));
+  const manifest = require('../sheet-music/models/basic-pitch/manifest.json');
   assert.equal(createHash('sha256').update(bytes).digest('hex'), manifest.sha256);
   const session = await ort.InferenceSession.create(bytes, { executionProviders: ['wasm'] });
   try {
