@@ -34,8 +34,5 @@
 
 - name: Fruit Ninja — Motion Arcade
   category: Games
-  description: >-
-    Slice fruit with your hands using a webcam, or play with a mouse or touch.
-    Choose Arcade, Classic, or Zen.
   url: /fruit-ninja/
   action: Play game

@@ -14,6 +14,9 @@ description: "Thien's tools for productivity, music, and games."
 {% for category in categories %}
 <section class="content-section" aria-labelledby="category-{{ category | slugify }}">
   <div class="section-heading"><h2 id="category-{{ category | slugify }}">{{ category }}</h2></div>
+  {% if category == 'Games' %}
+    <p class="section-description">I created a collection of fun motion tracking games for kids to enjoy with friends.</p>
+  {% endif %}
   {% assign category_tools = site.data.tools | where: 'category', category %}
   {% for tool in category_tools %}
     <div class="tool">
@@ -22,7 +25,9 @@ description: "Thien's tools for productivity, music, and games."
           <h3>{{ tool.name | escape }}</h3>
           {% if tool.private %}<span class="private-badge">Private repository</span>{% endif %}
         </div>
+        {% if category != 'Games' and tool.description %}
         <p>{{ tool.description | escape }}</p>
+        {% endif %}
         {% if tool.url %}
           {% if tool.external %}{% assign tool_url = tool.url %}{% else %}{% assign tool_url = tool.url | relative_url %}{% endif %}
           <a class="tool-link" href="{{ tool_url | escape }}"{% if tool.external %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ tool.action | default: 'Open tool' | escape }} <span aria-hidden="true">{% if tool.external %}↗{% else %}→{% endif %}</span></a>
