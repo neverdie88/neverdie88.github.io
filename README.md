@@ -21,10 +21,10 @@ within each game.
 
 | Game | Published path | Source project in Playground |
 | --- | --- | --- |
-| Fruit Ninja | `/fruit-ninja/` | `fruit-ninja/` |
+| Orchard Sparks | `/orchard-sparks/` | `fruit-ninja/` |
 | Dragon Race | `/dragon-race/` | `dragon-race/` |
 | Ice Bump Rally | `/ice-bump-rally/` | `ice-race/` |
-| Flappy Birds | `/flappy-birds/` | `flappy-birds/` |
+| Wingbeat Rally | `/wingbeat-rally/` | `flappy-birds/` |
 | Star Sentinel | `/star-sentinel/` | `star-sentinel/` |
 | Mole Mayhem | `/mole-mayhem/` | `whack-a-mole/` |
 
@@ -103,3 +103,5 @@ Keep all three directories together. Each app README documents its source and
 behavior. The pitch app does not load the editor, score renderer or OMR models.
 Run `npm ci --prefix _tests` and `node --test _tests/pitch-*.test.cjs`, then the
 normal Jekyll build. The browser harnesses in `_tests` are excluded from Pages.
+
+The two retired game URLs contain redirects only. Ship the six current game directories above; do not restore previous character assets from Git history. Each game includes a Credits page, original character art and `third-party.json` with dependency hashes and source/licensing references. The legacy source-directory names in this table are local development paths, not current game branding.

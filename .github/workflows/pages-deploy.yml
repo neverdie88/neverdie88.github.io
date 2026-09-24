@@ -31,6 +31,9 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
 
+      - name: Check game assets and license notices
+        run: node _scripts/audit-game-releases.mjs
+
       - name: Build with Jekyll
         run: bundle exec jekyll build -d ./_site --trace
 
