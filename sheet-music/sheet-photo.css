@@ -9,12 +9,23 @@
 .vp-composer-palette svg { width: 25px; height: 32px; }
 .vp-composer-palette-row { align-items: end; }
 .vp-composer-palette-row label { display: grid; gap: 2px; font-size: 12px; }
+.vp-transpose-controls { display: inline-flex; align-items: center; gap: 4px; margin: 0 4px; white-space: nowrap; }
+.vp-transpose-controls > span { margin-right: 3px; font-size: 12px; }
+.vp-transpose-controls .btn { min-width: 36px; font-size: 18px; line-height: 1; }
+.vp-playback-range { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.vp-playback-range [aria-pressed="true"] { background: #dbeafe; color: #1e40af; border-color: #60a5fa; }
+.vp-playback-range [role="status"] { max-width: 230px; font-size: 12px; }
+[data-playback-measure] { cursor: crosshair; }
+[data-playback-measure]:hover, [data-playback-measure]:focus { fill-opacity: .12; outline: none; }
+@media print { [data-playback-range] { display: none; } }
 .vp-composer-paper { overflow: auto; max-height: 55dvh; min-height: 260px; background: #fff; color: #172033; border: 1px solid #cbd5e1; border-radius: 8px; overscroll-behavior: contain; }
 .vp-composer-canvas { display: block; max-width: none; touch-action: pan-x pan-y; user-select: none; -webkit-user-select: none; }
 .vp-composer-canvas[data-tool="note"], .vp-composer-canvas[data-tool="rest"], .vp-composer-canvas[data-tool="chord"] { cursor: crosshair; }
-.vp-composer-canvas[data-tool="erase"] { cursor: cell; }
-.vp-composer-canvas[data-tool="multi"] { cursor: crosshair; touch-action: none; }
-.vp-composer-canvas[data-tool="multi"] [data-composer-note] { cursor: crosshair; }
+.vp-composer-canvas[data-tool="erase"] { cursor: crosshair; touch-action: none; }
+.vp-composer-canvas[data-tool="select"] { touch-action: none; }
+.vp-composer-canvas[data-tool^="clef-"] { cursor: crosshair; touch-action: none; }
+.vp-composer-canvas[data-tool="select"] [data-composer-symbol^="clef:"] { cursor: pointer; }
+.vp-composer-canvas[data-tool="erase"] [data-composer-note] { cursor: crosshair; }
 .vp-composer-canvas [data-composer-note] { cursor: grab; }
 .vp-composer-signatures label { display: flex; align-items: center; gap: 8px; }
 #vp-editor-selection-status:empty { display: none; }
@@ -32,6 +43,7 @@
   .vp-editor-actions { position: static; }
   .vp-editor-actions > .vp-sheet-tools, .vp-editor-dialog .vp-composer-navigation { flex-wrap: nowrap; overflow-x: auto; min-width: 0; padding-bottom: 4px; }
   .vp-editor-actions :is(.btn, label), .vp-composer-palette, .vp-composer-navigation > * { flex-shrink: 0; }
+  .vp-editor-actions .vp-playback-range { flex-wrap: nowrap; flex-shrink: 0; }
   .vp-composer-play { margin-left: 0; }
   .vp-editor-dialog .vp-editor-actions .btn { min-height: 36px; padding: 6px 8px; font-size: 12px; }
   .vp-composer-palette button { min-width: 36px; padding: 4px; }

@@ -6,11 +6,11 @@
 <title>Sheet Music Editor</title>
 <link rel="stylesheet" href="../music-shared/base.css?v=02ece7fa7f18">
 <link rel="stylesheet" href="../music-shared/fullscreen.css?v=4b95671cc0ad">
-<link rel="stylesheet" href="./sheet-photo.css?v=df0e6eeeaaa7">
+<link rel="stylesheet" href="./sheet-photo.css?v=e9b80429d090">
 
-<link rel="stylesheet" href="./editor-workspace.css?v=957fc255e667"></head>
+<link rel="stylesheet" href="./editor-workspace.css?v=dbff5f35db97"></head>
 <body>
-<div class="sheet-app-shell"><aside class="sheet-app-sidebar"><a class="sheet-brand" href="../">Thien’s Blog</a><p>Sharing what I build and learn.</p><nav aria-label="Site navigation"><a href="../tools/">Tools</a><a href="../">Blogs</a><a href="../pitch-visualizer/">Pitch Visualizer</a><a href="./" aria-current="page">Sheet Music Editor</a></nav><p class="sheet-sidebar-note">MusicXML scores.<br>Grand piano playback.</p></aside><main class="vp-page">
+<main class="vp-page">
 <header class="vp-heading"><h1>Sheet Music Editor</h1><p>A place to write, edit, and hear your music.</p></header>
 <div id="sheet-music" data-music-app="">
   <section id="vp-sheet-input" class="vp-sheet-input" aria-label="Add sheet music">
@@ -32,11 +32,11 @@
   <section id="vp-recognition" class="vp-section" aria-label="Photo recognition" hidden="">
     <div class="vp-sheet-tools">
       <label for="vp-recognition-line">Recognize</label>
-      <select id="vp-recognition-line"><option value="all">All lines, top to bottom</option></select>
+      <select id="vp-recognition-line"><option value="all">All staves · auto layout</option></select>
       <button id="vp-recognize" class="btn" type="button">Convert photo again</button>
       <button id="vp-recognition-cancel" class="btn btn-ghost" type="button" hidden="">Cancel conversion</button>
     </div>
-    <p class="text-small text-muted">Best with flat, well-lit, printed music for one instrument. For piano or ensemble music, choose one staff line. <a href="./recognition.html" target="_blank" rel="noopener">About recognition</a></p>
+    <p class="text-small text-muted">Connected pairs are kept as grand-staff rows. If a brace is faint or missing, choose Grand staff. Lyrics and chord names are not imported from photos. <a href="./recognition.html" target="_blank" rel="noopener">About recognition</a></p>
   </section>
   <p id="vp-score-status" class="text-small" role="status" aria-live="polite" hidden=""></p>
   <p id="vp-score-error" class="text-destructive" role="alert" hidden=""></p>
@@ -58,6 +58,7 @@
         <button id="vp-score-play" class="btn btn-primary" type="button">▶ Play sheet</button>
         <label for="vp-score-tempo">BPM <input id="vp-score-tempo" class="form-control" type="number" min="30" max="240" step="1" value="120"></label>
         <label for="vp-score-listen">Listen to <select id="vp-score-listen"><option value="all">All parts</option></select></label>
+        <span class="vp-playback-range" role="group" aria-label="Playback measure range"><button id="vp-score-play-start" class="btn" type="button" aria-pressed="false" title="Click a measure to start playback there">Set start</button><button id="vp-score-play-end" class="btn" type="button" aria-pressed="false" title="Click the last measure to play">Set end</button><button id="vp-score-play-all" class="btn btn-ghost" type="button" title="Reset playback to the whole sheet">Whole sheet</button><span id="vp-score-play-range-status" class="text-small" role="status" aria-live="polite"></span></span>
         <span id="vp-score-play-status" class="text-small" role="status" aria-live="polite"></span>
       <span class="sheet-sound-badge"><span aria-hidden="true">♪</span> Grand piano</span></div>
       <p id="vp-score-warnings" class="text-small text-muted" hidden=""></p>
@@ -101,27 +102,31 @@
 
   <dialog id="vp-editor-dialog" class="vp-editor-dialog score-workspace" aria-labelledby="vp-editor-heading"><header class="editor-document-bar"><div><span class="editor-eyebrow">Sheet Music Editor</span><h2 id="vp-editor-heading"><span id="vp-editor-document-title">Untitled score</span></h2></div><div class="vp-sheet-tools"><button id="vp-editor-cancel" class="btn btn-ghost" type="button">Discard</button><button id="vp-editor-apply" class="btn btn-primary" type="button">Apply changes</button></div></header><div id="vp-editor-actions" class="vp-editor-actions">
       <div class="vp-sheet-tools" role="group" aria-label="Composer tools">
-        <button class="btn" type="button" data-composer-tool="select" aria-pressed="true" title="Select or move a note">Select</button>
+        <button class="btn" type="button" data-composer-tool="select" aria-pressed="true" title="Tap a note, drag from blank space to select notes, or tap a clef to switch it">Select</button>
         <button class="btn" type="button" data-composer-tool="note" aria-pressed="false">Note</button>
-        <button class="btn" type="button" data-composer-tool="rest" aria-pressed="false">Rest</button>
         <button class="btn" type="button" data-composer-tool="chord" aria-pressed="false">Chord</button>
-        <button class="btn" type="button" data-composer-tool="erase" aria-pressed="false">Eraser</button>
-        <button class="btn" type="button" data-composer-tool="multi" aria-pressed="false">Select multiple</button>
+        <button class="btn" type="button" data-composer-tool="erase" aria-pressed="false" title="Tap a note, accidental or clef change to erase; drag a rectangle to erase notes">Eraser</button>
+        <span class="vp-transpose-controls" role="group" aria-label="Transpose whole score"><span>Transpose</span>
+          <button id="vp-editor-transpose-down" class="btn" type="button" aria-label="Transpose whole score down one semitone" title="Transpose whole score down one semitone">−</button>
+          <button id="vp-editor-transpose-up" class="btn" type="button" aria-label="Transpose whole score up one semitone" title="Transpose whole score up one semitone">+</button>
+        </span>
         <button id="vp-editor-undo" class="btn" type="button">Undo</button>
         <button id="vp-editor-redo" class="btn" type="button">Redo</button>
-        <button id="vp-editor-play" class="btn vp-composer-play" type="button">▶ Play preview</button>
+        <button id="vp-editor-play" class="btn vp-composer-play" type="button">▶ Play</button>
+        <span class="vp-playback-range" role="group" aria-label="Playback measure range"><button id="vp-editor-play-start" class="btn" type="button" aria-pressed="false" title="Click a measure to start playback there">Set start</button><button id="vp-editor-play-end" class="btn" type="button" aria-pressed="false" title="Click the last measure to play">Set end</button><button id="vp-editor-play-all" class="btn btn-ghost" type="button" title="Reset playback to the whole sheet">Whole sheet</button><span id="vp-editor-play-range-status" class="text-small" role="status" aria-live="polite"></span></span>
       <label class="form-label" for="vp-editor-tempo">BPM<input id="vp-editor-tempo" class="form-control" type="number" min="30" max="240" value="120" step="1" aria-label="Preview tempo in beats per minute"></label></div>
-      <div class="vp-sheet-tools vp-composer-palette-row"><span class="editor-palette-label">Duration</span>
-        <div id="vp-editor-palette" class="vp-composer-palette" role="group" aria-label="Note lengths"></div>
-
-
-
+      <div class="vp-sheet-tools vp-composer-palette-row"><span class="editor-palette-label">Notation</span>
+        <div id="vp-editor-palette" class="vp-composer-palette" role="group" aria-label="Note lengths, clefs and rests"></div>
+      </div>
+      <div id="vp-editor-note-properties" class="vp-sheet-tools editor-note-properties" role="group" aria-label="Selected note properties" hidden>
+        <span class="editor-palette-label">Note properties</span>
+        <div id="vp-editor-dots" class="editor-property-symbols" role="group" aria-label="Augmentation dots"></div>
+        <div id="vp-editor-accidentals" class="editor-property-symbols" role="group" aria-label="Accidentals"></div>
       </div>
     </div><div class="editor-workspace-body"><aside class="editor-inspector"><h3>Score</h3><label class="form-label" for="vp-editor-title">Title<input id="vp-editor-title" class="form-control" maxlength="200"></label><div class="vp-sheet-tools vp-composer-signatures" aria-label="Staff and scale">
-        <label class="form-label" for="vp-editor-clef">Clef<select class="form-select" id="vp-editor-clef" aria-describedby="vp-editor-clef-position"><option value="treble">Treble (G clef)</option><option value="bass">Bass (F clef)</option><option value="other" disabled="">Original clef</option></select><small id="vp-editor-clef-position" aria-live="polite"></small></label>
         <label class="form-label" for="vp-editor-key">Scale<select class="form-select" id="vp-editor-key"></select></label>
-      <span class="text-small">Scale applies from the selected measure</span>
-    </div><label class="form-label" for="vp-editor-time">Time signature<select class="form-select" id="vp-editor-time"><option>4/4</option><option>3/4</option><option>2/4</option><option>6/8</option><option>9/8</option><option>12/8</option><option>2/2</option></select></label><section class="editor-property-group"><h3>Note properties</h3><label class="form-label" for="vp-editor-input-dots">Dots<select id="vp-editor-input-dots"><option value="0">None</option><option value="1">One</option><option value="2">Two</option></select></label><label class="form-label" for="vp-editor-accidental">Accidental<select id="vp-editor-accidental"><option value="key">In key</option><option value="0">♮ Natural</option><option value="1">♯ Sharp</option><option value="-1">♭ Flat</option><option value="2">𝄪 Double sharp</option><option value="-2">𝄫 Double flat</option></select></label></section><details class="editor-shortcuts"><summary>Keyboard shortcuts</summary><dl><dt>N</dt><dd>Note entry</dd><dt>A–G</dt><dd>Enter a note</dd><dt>Shift + A–G</dt><dd>Add a chord tone</dd><dt>1–7</dt><dd>Note duration (5 = quarter)</dd><dt>0</dt><dd>Enter a rest</dd><dt>.</dt><dd>Cycle dots</dd><dt>Space</dt><dd>Play / stop</dd><dt>← →</dt><dd>Select previous / next</dd><dt>⌘ / Ctrl + ↑ ↓</dt><dd>Move by an octave</dd><dt>Esc</dt><dd>Return to selection</dd></dl></details><details id="vp-editor-settings" class="vp-editor-options" hidden="">
+      <span class="text-small">Select a note or rest where the scale should change</span>
+    </div><label class="form-label" for="vp-editor-time">Time signature<select class="form-select" id="vp-editor-time"><option>4/4</option><option>3/4</option><option>2/4</option><option>6/8</option><option>9/8</option><option>12/8</option><option>2/2</option></select></label><details id="vp-editor-settings" class="vp-editor-options" hidden="">
       <summary>Sheet settings · title and time</summary>
 
       <div class="vp-editor-settings">
@@ -129,15 +134,10 @@
       </div>
     </details></aside><section class="editor-page-area"><div class="vp-sheet-tools vp-composer-navigation">
       <span id="vp-editor-part-picker" class="vp-sheet-tools"><label for="vp-editor-part">Part</label><select id="vp-editor-part"></select></span>
-      <span id="vp-editor-lane-picker" class="vp-sheet-tools"><label for="vp-editor-lane">Staff / voice</label><select id="vp-editor-lane"></select></span>
-      <button id="vp-editor-previous" class="btn" type="button" aria-label="Previous measure">←</button>
-      <label for="vp-editor-measure">Measure</label><select id="vp-editor-measure"></select>
-      <button id="vp-editor-next" class="btn" type="button" aria-label="Next measure">→</button>
       <button id="vp-editor-add-line" class="btn" type="button" title="Append four measures on a new line, keeping the staves together">Add line</button>
-      <button id="vp-editor-add-measure" class="btn" type="button">Add measure</button>
       <label for="vp-editor-zoom">Zoom</label><select id="vp-editor-zoom"><option value="0.6">60%</option><option value="0.8">80%</option><option value="1" selected="">100%</option><option value="1.3">130%</option><option value="1.6">160%</option></select>
     </div><div id="vp-editor-canvas-scroll" class="vp-composer-paper" tabindex="0" role="region" aria-label="Editable sheet. Scroll down for more rows.">
-      <svg id="vp-editor-canvas" class="vp-composer-canvas" tabindex="0" role="group" aria-label="Editable staff. Select a note to change its length or accidental. Select multiple to highlight groups; Delete removes them."></svg>
+      <svg id="vp-editor-canvas" class="vp-composer-canvas" tabindex="0" role="group" aria-label="Editable staff. In Select, drag from blank space to select notes, tap a note to edit it, or tap a clef to switch it. Play plays selected notes. Choose G clef or F clef to insert a clef. Eraser removes notes, accidentals or clef changes."></svg>
     </div><div class="editor-live-status"><p id="vp-editor-hint" class="text-small">Select a note on the staff, then drag it up or down to change pitch.</p><p id="vp-editor-meter" class="text-small text-muted" hidden=""></p><p id="vp-editor-error" class="text-destructive" role="alert" hidden=""></p><span id="vp-editor-play-status" class="text-small" role="status"></span></div></section></div><div class="vp-sheet-tools vp-editor-footer"><button id="vp-editor-delete-selected" class="btn" type="button" disabled="">Delete selected</button> <button id="vp-editor-clear-selection" class="btn btn-ghost" type="button" disabled="" title="Clear selection">Clear</button> <span id="vp-editor-selection-status" class="text-small" role="status"></span><span id="vp-editor-dirty" class="text-small text-muted"></span></div></dialog>
 </div>
 <script src="../music-shared/pitch-core.js?v=38f34c86abf8"></script>
@@ -145,15 +145,15 @@
 <script src="../music-shared/fullscreen.js?v=3c122736a629"></script>
 <script src="./sheet-photo.js?v=79436fca85f5"></script>
 <script src="./music-score.js?v=5766a0b2bf4d"></script>
-<script src="./score-editor-model.js?v=4904e0671f65"></script>
-<script src="./composer-staff.js?v=6809d63db14d"></script>
-<script src="./score-engraver.js?v=4242d6f829a9"></script>
-<script src="./piano-samples.js?v=47c0ddb91cb9"></script><script src="./score-playback.js?v=3e9d5c9d5bf8"></script>
-<script src="./sheet-player.js?v=87d7e5de601a"></script>
-<script src="./composer-controller.js?v=a08427c98dbb"></script>
-<script src="./score-editor.js?v=2b70db5447cc"></script>
-<script src="./sheet-controller.js?v=02f202488864"></script>
-<p class="sheet-credits">Piano: <a href="./samples/piano/ATTRIBUTION.md">Salamander Grand Piano</a> by Alexander Holm · <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a></p></main></div>
+<script src="./score-editor-model.js?v=44428a89974a"></script>
+<script src="./composer-staff.js?v=94cb4594643b"></script>
+<script src="./score-engraver.js?v=51f98433577c"></script>
+<script src="./piano-samples.js?v=47c0ddb91cb9"></script><script src="./score-playback.js?v=395bece755a9"></script>
+<script src="./sheet-player.js?v=13f2a1167c8c"></script>
+<script src="./composer-controller.js?v=99d5ee06ddbd"></script>
+<script src="./score-editor.js?v=3446f025b047"></script>
+<script src="./sheet-controller.js?v=9b3ff1779764"></script>
+<p class="sheet-credits">Piano: <a href="./samples/piano/ATTRIBUTION.md">Salamander Grand Piano</a> by Alexander Holm · <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a></p></main>
 
 
 </body></html>

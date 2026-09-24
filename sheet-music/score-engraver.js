@@ -20,8 +20,49 @@
     const renderer=new root.opensheetmusicdisplay.OpenSheetMusicDisplay(host,{...options});
     if(renderer.EngravingRules){
       renderer.EngravingRules.RenderMultipleRestMeasures=false;
+      renderer.EngravingRules.LyricsHeight=1.7;
+      renderer.EngravingRules.HorizontalBetweenLyricsDistance=.6;
+      renderer.EngravingRules.LyricsXPaddingFactorForLongLyrics=1.3;
+      renderer.EngravingRules.LyricsXPaddingWidthThreshold=.8;
     }
     renderer.setLogLevel('error');return renderer;
+  }
+  function fitToWidth(renderer,width){
+    // Re-engrave for the actual score container, including sidebar/fullscreen
+    // changes. Scaling the SVG after layout would make notes too small or clip.
+    renderer.Zoom=width<500?.55:width<900?.72:1;
+    renderer.render();
+  }
+  async function loadScore(renderer,source){
+    // MusicXML defaults an omitted clef number to staff 1. Make that default
+    // explicit for OSMD, including sheets saved by older editor versions.
+    // Prepare a copy so rendering never rewrites the user's score or draft.
+    const score=source.cloneNode(true);
+    for(const attributes of score.getElementsByTagName('attributes')){
+      const clefs=Array.from(attributes.childNodes).filter(n=>n.nodeType===1&&n.localName==='clef');
+      if(!clefs.length)continue;
+      const after=clefs.at(-1).nextSibling;
+      for(const clef of clefs)if(!clef.hasAttribute('number'))clef.setAttribute('number','1');
+      for(const clef of clefs.sort((a,b)=>Number(a.getAttribute('number'))-Number(b.getAttribute('number'))))attributes.insertBefore(clef,after);
+    }
+    await renderer.load(score);
+    // OSMD moves a measure-start clef to the previous bar's end. Keep the
+    // instruction at the start of its own measure so the symbol and its edit
+    // target sit after the same barline in both the editor and applied sheet.
+    const draft=root.ScoreEditorModel.create(new XMLSerializer().serializeToString(score));
+    const {ClefInstruction,SourceStaffEntry}=root.opensheetmusicdisplay;
+    let staffOffset=0;
+    for(const [part,instrument]of renderer.Sheet.Instruments.entries()){
+      for(const change of draft.clefs(part).filter(c=>c.measure>0&&Math.abs(c.beat)<1e-7)){
+        const staff=staffOffset+Number(change.staff)-1,previous=renderer.Sheet.SourceMeasures[change.measure-1],measure=renderer.Sheet.SourceMeasures[change.measure];
+        const last=previous?.LastInstructionsStaffEntries[staff];if(!last||!measure)continue;
+        const clefs=last.Instructions.filter(n=>n instanceof ClefInstruction);if(!clefs.length)continue;
+        let first=measure.FirstInstructionsStaffEntries[staff];
+        if(!first)first=measure.FirstInstructionsStaffEntries[staff]=new SourceStaffEntry(undefined,undefined);
+        for(const clef of clefs){last.Instructions.splice(last.Instructions.indexOf(clef),1);clef.Parent=first;first.Instructions.unshift(clef);}
+      }
+      staffOffset+=instrument.Staves.length;
+    }
   }
   function add(parent,tag,attrs){
     const el=parent.ownerDocument.createElementNS(NS,tag);
@@ -29,8 +70,37 @@
     parent.append(el);return el;
   }
   const xAt=(bar,beat)=>ComposerStaff.xAt(bar,beat);
+  function rangeOverlay(parent,bars,state){
+    if(!state||!bars.length)return;
+    const layer=add(parent,'g',{'data-playback-range':'true'});
+    if(state.setting)for(const bar of bars)add(layer,'rect',{
+      'data-playback-measure':bar.measure,x:bar.left,y:bar.top,width:Math.max(1,bar.end-bar.left),height:bar.height,
+      fill:'#2563eb','fill-opacity':0,role:'button',tabindex:0,'aria-label':`Set playback ${state.setting} at measure ${bar.number}, staff ${bar.staff}`});
+    for(const [boundary,marked,index,color]of [['Start',state.markedStart,state.start,'#2563eb'],['End',state.markedEnd,state.end,'#b45309']]){
+      const group=bars.filter(b=>b.measure===index);if(!marked||!group.length)continue;
+      const x=boundary==='Start'?Math.min(...group.map(b=>b.left)):Math.max(...group.map(b=>b.end));
+      const top=Math.min(...group.map(b=>b.top)),bottom=Math.max(...group.map(b=>b.top+b.height));
+      const marker=add(layer,'g',{'data-playback-boundary':boundary.toLowerCase(),'data-measure':index,'pointer-events':'none','aria-hidden':'true'});
+      add(marker,'line',{x1:x,x2:x,y1:top,y2:bottom,stroke:color,'stroke-width':2});
+      const label=add(marker,'text',{x:x+(boundary==='Start'?4:-4),y:top-4,fill:color,'font-size':12,'font-family':'system-ui,sans-serif','font-weight':600,'text-anchor':boundary==='Start'?'start':'end'});label.textContent=boundary;
+    }
+  }
+  function markPlaybackRange(renderer,host,state){
+    host.querySelectorAll('[data-playback-range]').forEach(n=>n.remove());
+    const pages=new Map();
+    for(const [measure,staves]of renderer.GraphicSheet.MeasureList.entries())for(const graphical of staves){
+      if(!graphical)continue;const v=graphical.getVFStave(),svg=v.context.svg;
+      if(!svg)continue;if(!pages.has(svg))pages.set(svg,[]);
+      const top=v.getYForLine(0)-22;
+      pages.get(svg).push({measure,number:renderer.Sheet.SourceMeasures[measure]?.MeasureNumber??measure+1,
+        staff:String(graphical.ParentStaff.Id),left:v.getX()+1,end:v.getX()+v.getWidth()-1,top,height:v.getYForLine(4)+22-top});
+    }
+    // VexFlow's SVG viewBox already accounts for zoom and page offsets.
+    for(const [svg,bars]of pages)rangeOverlay(svg,bars,state);
+  }
   function geometry(renderer,draft,part,width){
-    const bars=[],hits=[],rows=new Map(),instrument=renderer.Sheet.Instruments[part];
+    const bars=[],hits=[],symbols=[],rows=new Map(),instrument=renderer.Sheet.Instruments[part],clefs=draft.clefs(part);
+    const glyphBox=(glyph,x,y)=>({x:x+glyph.bbox.x+(glyph.originShift?.x||0),y:y+glyph.bbox.y+(glyph.originShift?.y||0),width:glyph.bbox.w,height:glyph.bbox.h});
     for(const [measure,staffs]of renderer.GraphicSheet.MeasureList.entries()){
       const snapshot=draft.inspect(part,measure);
       for(const graphical of staffs){
@@ -43,6 +113,13 @@
         const bar={measure,number:snapshot.parts[part].measures[measure],staff,ctx,contexts,groups,meter,beats,halfGap,
           row:rows.get(graphical.ParentMusicSystem),left:v.getX(),end:v.getX()+v.getWidth(),bottom,
           top:v.getYForLine(0)-30,height:100,points:[],start:v.getNoteStartX()+12};
+        const addClef=(vf,beat,x)=>{
+          const change=clefs.find(c=>c.measure===measure&&c.staff===staff&&Math.abs(c.beat-beat)<1e-7)||
+            (beat===0?{measure,staff,beat,value:ctx.clef,inherited:true}:null);
+          if(change&&vf?.glyph)symbols.push({...change,kind:'clef',id:`clef:${measure}:${staff}:${beat}`,bar,...glyphBox(vf.glyph,x,v.getYForLine(vf.clef.line))});
+        };
+        for(const modifier of v.getModifiers())if(modifier.getCategory()==='clefs'&&modifier.getPosition()===5)addClef(modifier,0,modifier.getX());
+        for(const entry of graphical.staffEntries)if(entry.vfClefBefore)addClef(entry.vfClefBefore,entry.relInMeasureTimestamp.RealValue*4,entry.vfClefBefore.getAbsoluteX());
         const matched=new Map();
         for(const entry of graphical.staffEntries)for(const voice of entry.graphicalVoiceEntries)for(const note of voice.notes){
           const source=note.sourceNote,beat=entry.relInMeasureTimestamp.RealValue*4;
@@ -64,6 +141,11 @@
           const hit={measure,index:group.index,tone,staff,voice:group.voice,bar,group,ctx:noteContext,rest:group.rest,note:group.notes[tone],
             step:group.rest?4:ComposerStaff.stepOf(group.notes[tone],noteContext.clef),x,y,column:(vf.getNoteHeadBeginX()+vf.getNoteHeadEndX())/2};
           hits.push(hit);
+          for(const accidental of vf.modifiers||[])if(accidental.getCategory()==='accidentals'&&accidental.getIndex()===index&&accidental.glyph){
+            const start=vf.getModifierStartXY(accidental.getPosition(),index);
+            symbols.push({kind:'accidental',id:`accidental:${id}`,measure,index:group.index,tone,staff,beat,bar,
+              ...glyphBox(accidental.glyph,start.x+accidental.x_shift,start.y+accidental.y_shift)});
+          }
           if(!(group.rest&&group.duration>=meter)&&!bar.points.some(p=>Math.abs(p.beat-beat)<1e-6))bar.points.push({beat,x:hit.column});
         }
         bar.points.sort((a,b)=>a.beat-b.beat);
@@ -79,7 +161,7 @@
     }
     const pages=[...renderer.container.querySelectorAll('svg')];
     const height=Math.max(180,...pages.map(p=>Number(p.getAttribute('height'))));
-    return {width,height,bars,hits,stems:[],halfGap:bars[0]?.halfGap||5};
+    return {width,height,bars,hits,symbols,stems:[],halfGap:bars[0]?.halfGap||5};
   }
   function createEditor(svg,{onReady,onError}){
     let current=null,pending=null,draining=false,epoch=0,desiredKey=null;
@@ -92,18 +174,28 @@
         'data-composer-measure':bar.measure,'data-composer-row':bar.row,'data-composer-staff':bar.staff,
         'data-bottom':bar.bottom,'data-half-gap':bar.halfGap,'data-beat-points':JSON.stringify(bar.points),
         role:'group','aria-label':`Measure ${bar.number}, staff ${bar.staff}`})]));
+      for(const [bar,layer] of layers){
+        add(layer,'rect',{'data-composer-measure-area':`${bar.measure}:${bar.staff}`,
+          x:bar.left+1,y:bar.bottom-8*bar.halfGap-16,width:Math.max(0,bar.end-bar.left-2),height:8*bar.halfGap+32,
+          fill:'none','pointer-events':'none','aria-hidden':'true'});
+      }
       for(const hit of current.geometry.hits){
         const id=`${hit.measure}:${hit.index}:${hit.tone}`;
-        const chosen=state.selectedGroups.has(`${hit.measure}:${hit.index}`)||(hit.measure===state.measure&&hit.index===state.selected&&hit.tone===state.tone);
-        const playing=state.playing?.measure===hit.measure&&state.playing.index===hit.index;
+        const chosen=state.selectedNotes.has(id)||(hit.measure===state.measure&&hit.index===state.selected&&hit.tone===state.tone);
+        const playing=state.playing?.has(id);
         const head=svg.querySelector(`[data-engraved-note="${id}"]`);
         if(head)for(const path of head.querySelectorAll('path'))path.setAttribute('fill',playing?'#15803d':chosen?'#2563eb':'#000000');
-        const label=hit.rest?'Rest':`${hit.note.step}${hit.note.alter>0?' sharp':hit.note.alter<0?' flat':''}${hit.note.octave}`;
+        const label=hit.rest?'Rest':`${hit.note.step}${hit.note.alter===2?' double sharp':hit.note.alter===-2?' double flat':hit.note.alter>0?' sharp':hit.note.alter<0?' flat':''}${hit.note.octave}`;
         const target=add(layers.get(hit.bar),'g',{'data-composer-note':id,'data-x':hit.x,'data-y':hit.y,'data-staff':hit.staff,
           role:'button',tabindex:'-1','aria-pressed':String(chosen),'aria-label':`${label}, measure ${hit.bar.number}, beat ${hit.group.beat+1}`,style:'touch-action:none'});
         if(chosen||playing)add(target,'rect',{x:hit.x-9,y:hit.y-8,width:18,height:16,rx:3,fill:playing?'#15803d':'#2563eb',opacity:.12,'pointer-events':'none'});
         add(target,'circle',{cx:hit.x,cy:hit.y,r:10,fill:'transparent'});
       }
+      for(const symbol of current.geometry.symbols){
+        add(overlay,'rect',{'data-composer-symbol':symbol.id,x:symbol.x-2,y:symbol.y-2,width:symbol.width+4,height:symbol.height+4,
+          fill:'transparent',role:'button',tabindex:'-1','aria-label':`${symbol.kind==='clef'?`${symbol.value} clef`:'Accidental'}, measure ${symbol.bar.number}, staff ${symbol.staff}`});
+      }
+      rangeOverlay(overlay,current.geometry.bars,state.playbackRange);
       if(state.cursor){
         const bar=current.geometry.bars.find(b=>b.measure===state.cursor.measure&&b.staff===state.staff);
         if(bar){const x=xAt(bar,state.cursor.beat);add(overlay,'line',{'data-input-cursor':'true',x1:x,x2:x,y1:bar.bottom-8*bar.halfGap-14,y2:bar.bottom+14,stroke:'#2563eb','stroke-width':1.5,'pointer-events':'none'});}
@@ -119,7 +211,7 @@
         stage.append(host);document.body.append(stage);let renderer;
         try{
           await loadLibrary();if(token!==epoch)continue;
-          renderer=create(host);await renderer.load(new DOMParser().parseFromString(request.xml,'application/xml'));if(token!==epoch)continue;
+          renderer=create(host);await loadScore(renderer,new DOMParser().parseFromString(request.xml,'application/xml'));if(token!==epoch)continue;
           renderer.Sheet.Instruments.forEach((instrument,index)=>{instrument.Visible=index===request.part;});
           renderer.render();
           if(token!==epoch||desiredKey!==request.key)continue;
@@ -153,5 +245,5 @@
       close(){this.reset();}
     };
   }
-  root.ScoreEngraver={loadLibrary,create,options,createEditor,xAt};
+  root.ScoreEngraver={loadLibrary,loadScore,create,fitToWidth,options,createEditor,xAt,markPlaybackRange};
 })(globalThis);

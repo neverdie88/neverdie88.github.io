@@ -94,9 +94,11 @@
         for(const clef of children(node,'clef'))if((clef.getAttribute('number')||'1')===staff)remove(clef);
         if(node!==attributes&&!children(node).length)remove(node);
       }
-      const clef=make('clef');if(staff!=='1')clef.setAttribute('number',staff);
+      // Keep staff 1 explicit too: the engraver can misassign an unnumbered
+      // clef when it follows another staff's numbered clef in the attributes.
+      const clef=make('clef');clef.setAttribute('number',staff);
       put(clef,'sign',value==='bass'?'F':'G');put(clef,'line',value==='bass'?4:2);
-      attributes.insertBefore(clef,children(attributes).find(n=>['staff-details','transpose','for-part','directive','measure-style'].includes(n.localName))||null);
+      attributes.insertBefore(clef,children(attributes).find(n=>n.localName==='clef'&&Number(n.getAttribute('number')||'1')>Number(staff)||['staff-details','transpose','for-part','directive','measure-style'].includes(n.localName))||null);
     }
     function groups(part, measure) {
       const m = measures(part)[measure]; if (!m) throw new Error('Select an existing measure.');
@@ -116,6 +118,7 @@
       return result;
     }
     function get(part, measure, index) { const group = groups(part, measure)[index]; if (!group) throw new Error('Select a note or rest first.'); return group; }
+    const writtenBeats=all=>Math.max(0,...all.flatMap(g=>g.nodes.map(n=>g.beat+number(n,'duration')/g.divisions)));
     const identity = n => ['step','alter','octave'].map(k => text(child(n,'pitch'), k, k === 'alter' ? '0' : '')).join(':');
     const tied = (n, type) => children(n, 'tie').concat(children(child(n, 'notations'), 'tied')).some(t => t.getAttribute('type') === type);
     function tieChain(note, part) {
@@ -198,6 +201,30 @@
         return [...new Set([0,...events.map(e=>e.beat)])].sort((a,b)=>a-b).map(beat=>({beat,ctx:context(part,measure,staff,beat)}));
       },
       changeClef(part, measure, staff, beat, value) { change(()=>setClef(part,measure,staff,beat,value)); },
+      clefs(part=0) {
+        return measures(part).flatMap((m,measure)=>attributeEvents(m,measure?context(part,measure-1).divisions:1).flatMap(({node,beat})=>
+          children(node,'clef').map(clef=>({measure,beat,staff:clef.getAttribute('number')||'1',value:text(clef,'sign')==='F'?'bass':text(clef,'sign')==='G'?'treble':'other'}))));
+      },
+      removeClef(part,measure,staff,beat) {
+        if(measure===0&&beat===0)throw new Error('The first clef is required. Use the Clef menu to change it.');
+        change(()=>{
+          for(const {node,beat:at} of attributeEvents(measures(part)[measure],measure?context(part,measure-1).divisions:1))if(Math.abs(at-beat)<1e-7){
+            for(const clef of children(node,'clef'))if((clef.getAttribute('number')||'1')===staff)remove(clef);
+            if(!children(node).length)remove(node);
+          }
+        });
+      },
+      removeAccidental(part,measure,index,tone) {
+        const group=get(part,measure,index),note=group.nodes[tone],p=child(note,'pitch');
+        if(!p)throw new Error('Select an accidental beside a pitched note.');
+        const step=text(p,'step'),octave=number(p,'octave'),fifths=context(part,measure,group.staff,group.beat).fifths;
+        let alter=(fifths<0?'BEADGCF':'FCGDAEB').slice(0,Math.abs(fifths)).includes(step)?Math.sign(fifths):0;
+        // Erasing a sign restores the key or preceding accidental for this
+        // pitch on this staff, including a natural that cancels a sharp/flat.
+        for(const earlier of groups(part,measure).filter(g=>g.staff===group.staff&&g.beat<group.beat-1e-7).sort((a,b)=>a.beat-b.beat))
+          for(const n of earlier.nodes){const prior=child(n,'pitch');if(prior&&text(prior,'step')===step&&number(prior,'octave')===octave)alter=number(prior,'alter');}
+        api.pitch(part,measure,index,tone,{step,octave,alter});
+      },
       transaction(action) { change(() => { changeDepth++; try { action(); } finally { changeDepth--; } }); },
       lanes(part=0) {
         const lanes=new Map();
@@ -221,6 +248,109 @@
       },
       title(value) { change(() => { if (!value.trim()) throw new Error('Enter a sheet title.'); const root=doc.documentElement; let work=child(root,'work'); if (!work) { work=make('work'); root.insertBefore(work,root.firstChild); } put(work,'work-title',value.trim()); if (child(root,'movement-title')) put(root,'movement-title',value.trim()); }); },
       pitch(part, measure, index, tone, value) { change(() => { const note=get(part,measure,index).nodes[tone]; if (!note) throw new Error('Select a chord tone.'); for (const n of tieChain(note,part)) pitch(n,value); }); },
+      shiftPitch(part, selection, steps) { change(() => {
+        if(!Number.isInteger(steps))throw new Error('Choose a whole number of staff steps.');
+        const letters='CDEFGAB',changes=new Map();
+        for(const ref of selection){
+          const note=get(part,ref.measure,ref.index).nodes[ref.tone||0],p=child(note,'pitch');
+          if(!p||changes.has(note))continue;
+          const position=number(p,'octave')*7+letters.indexOf(text(p,'step'))+steps;
+          const value={step:letters[(position%7+7)%7],octave:Math.floor(position/7),alter:number(p,'alter')};
+          // Capture every original tie chain before writing, so moving adjacent
+          // chord tones cannot merge their identities or shift a tie twice.
+          for(const tiedNote of tieChain(note,part))changes.set(tiedNote,value);
+        }
+        for(const [note,value]of changes)pitch(note,value);
+      }); },
+      transpose(semitones) { change(() => {
+        if(!Number.isInteger(semitones)||Math.abs(semitones)>12||!semitones)throw new Error('Choose 1–12 semitones up or down.');
+        const letters='CDEFGAB',naturals=[0,2,4,5,7,9,11],mod=(n,b)=>(n%b+b)%b;
+        const keyAlter=(step,fifths)=>(fifths<0?'BEADGCF':'FCGDAEB').slice(0,Math.abs(fifths)).includes(step)?Math.sign(fifths):0;
+        function nextKey(fifths){
+          if(!Number.isInteger(fifths)||Math.abs(fifths)>7)throw new Error('Transpose supports standard key signatures with up to seven sharps or flats.');
+          if(semitones%12===0)return fifths;
+          return Array.from({length:15},(_,i)=>i-7).filter(n=>mod(n-fifths-7*semitones,12)===0)
+            .sort((a,b)=>Math.abs(a)-Math.abs(b)||(Math.sign(b)===Math.sign(fifths)?1:0)-(Math.sign(a)===Math.sign(fifths)?1:0))[0];
+        }
+        function shifted(step,alter,octave,fifths){
+          const index=letters.indexOf(step),key=nextKey(fifths);
+          if(index<0||!Number.isInteger(alter)||!Number.isInteger(octave))throw new Error('Transpose supports notes and chord symbols with whole-semitone pitches.');
+          // Use the interval between the old and new key tonics to preserve
+          // diatonic spelling (for example A-flat major becomes B-flat major).
+          const tonic=mod(4*fifths,7),nextTonic=mod(4*key,7);
+          const tonicMidi=60+naturals[tonic]+keyAlter(letters[tonic],fifths)+semitones;
+          const nextOctave=(tonicMidi-naturals[nextTonic]-keyAlter(letters[nextTonic],key))/12-1;
+          const delta=nextOctave*7+nextTonic-(4*7+tonic),position=octave*7+index+delta;
+          const midi=12*(octave+1)+naturals[index]+alter+semitones;
+          let value={step:letters[mod(position,7)],octave:Math.floor(position/7)};
+          value.alter=midi-12*(value.octave+1)-naturals[letters.indexOf(value.step)];
+          if(Math.abs(value.alter)>2){
+            // Prefer a readable enharmonic to a triple sharp/flat.
+            value=letters.split('').flatMap((s,i)=>[-1,0,1].map(offset=>{
+              const o=Math.floor(midi/12)-1+offset;return {step:s,octave:o,alter:midi-12*(o+1)-naturals[i]};
+            })).filter(v=>Math.abs(v.alter)<=2).sort((a,b)=>
+              Math.abs(a.alter-keyAlter(a.step,key))-Math.abs(b.alter-keyAlter(b.step,key))||Math.abs(a.alter)-Math.abs(b.alter))[0];
+          }
+          return value;
+        }
+        const pitches=new Map(),harmonies=[],keys=[],initialKeys=[];
+        parts().forEach((partNode,part)=>{
+          const staves=new Set(['1']);
+          measures(part).forEach((m,measure)=>{
+            for(const g of groups(part,measure))for(const n of g.nodes){
+              const staff=text(n,'staff',g.staff);staves.add(staff);
+              const p=child(n,'pitch');if(p)pitches.set(n,shifted(text(p,'step'),number(p,'alter'),number(p,'octave'),context(part,measure,staff,g.beat).fifths));
+            }
+            let beat=0,divisions=measure?context(part,measure-1).divisions:1;
+            for(const n of children(m)){
+              if(n.localName==='attributes'){
+                divisions=number(n,'divisions',divisions);
+                for(let s=1;s<=number(n,'staves',1);s++)staves.add(String(s));
+                for(const k of children(n,'key')){
+                  if(!child(k,'fifths')||children(k,'key-step').length)throw new Error('Transpose supports standard major and minor key signatures.');
+                  keys.push({node:k,fifths:nextKey(number(k,'fifths')),cancel:child(k,'cancel')?nextKey(number(k,'cancel')):null});
+                }
+              }
+              if(n.localName==='harmony'){
+                const fifths=context(part,measure,text(n,'staff','1'),beat+number(n,'offset')/divisions).fifths;
+                for(const kind of ['root','bass']){
+                  const p=child(n,kind);if(p)harmonies.push({node:p,kind,value:shifted(text(p,kind+'-step'),number(p,kind+'-alter'),4,fifths)});
+                }
+              }
+              if(n.localName==='backup')beat-=number(n,'duration')/divisions;
+              if(n.localName==='forward'||n.localName==='note'&&!child(n,'chord')&&!child(n,'grace'))beat+=number(n,'duration')/divisions;
+            }
+          });
+          const first=measures(part)[0];
+          if(first){
+            const atStart=attributeEvents(first,1).filter(e=>Math.abs(e.beat)<1e-7).flatMap(e=>children(e.node,'key'));
+            const missing=[...staves].filter(staff=>!atStart.some(k=>!k.getAttribute('number')||k.getAttribute('number')===staff));
+            if(missing.length&&nextKey(0)!==0)initialKeys.push({first,staffs:atStart.length?missing:[null],fifths:nextKey(0)});
+          }
+          // A tied continuation must retain the start note's spelling, even
+          // across a key change that chooses an enharmonic key signature.
+          for(const [n,value] of pitches)if(n.parentNode?.parentNode===partNode&&tied(n,'start')){
+            const chain=tieChain(n,part),firstValue=pitches.get(chain[0])||value;
+            for(const continuation of chain)pitches.set(continuation,firstValue);
+          }
+        });
+        // Gather all targets before changing any key context. change() rolls
+        // back every part if even one note exceeds the supported piano range.
+        for(const [n,value]of pitches)pitch(n,value);
+        for(const {node,kind,value}of harmonies){
+          put(node,kind+'-step',value.step).removeAttribute('text');
+          if(value.alter)put(node,kind+'-alter',value.alter);else remove(child(node,kind+'-alter'));
+        }
+        for(const {node,fifths,cancel}of keys){put(node,'fifths',fifths);if(cancel!==null)put(node,'cancel',cancel);children(node,'key-octave').forEach(remove);}
+        for(const {first,staffs,fifths}of initialKeys){
+          let attributes=attributeEvents(first,1).find(e=>Math.abs(e.beat)<1e-7)?.node;
+          if(!attributes){attributes=make('attributes');first.insertBefore(attributes,children(first).find(n=>!['print','barline'].includes(n.localName))||null);}
+          for(const staff of staffs){
+            const key=make('key');if(staff)key.setAttribute('number',staff);put(key,'fifths',fifths);
+            attributes.insertBefore(key,children(attributes).find(n=>!['footnote','level','divisions','key'].includes(n.localName))||null);
+          }
+        }
+      }); },
       length(part, measure, index, type, dots) { change(() => { const g=get(part,measure,index); editableRhythm(g); const old=number(g.nodes[0],'duration'); const next=TYPES[type]*(2-2**(-Number(dots)))*g.divisions; shiftBackup(g,next-old); for(const n of g.nodes) rhythm(n,type,dots,g.divisions); cleanLayout(part,measure); }); },
       rest(part, measure, index, isRest) { change(() => { const g=get(part,measure,index); editableRhythm(g); if (isRest) { for(const n of g.nodes) detachTies(n,part); g.nodes.slice(1).forEach(remove); const n=g.nodes[0]; remove(child(n,'pitch')); remove(child(n,'unpitched')); remove(child(n,'accidental')); remove(child(n,'stem')); put(n,'rest'); } else pitch(g.nodes[0],{step:'C',alter:0,octave:4}); cleanLayout(part,measure); }); },
       addTone(part, measure, index, value={step:'E',alter:0,octave:4}) { change(() => { const g=get(part,measure,index); editableRhythm(g); if(child(g.nodes[0],'rest')) throw new Error('Turn the rest into a note first.'); const n=g.nodes[0].cloneNode(true); for(const key of ['tie','notations','lyric','beam','chord']) children(n,key).forEach(remove); n.removeAttribute('id'); put(n,'chord'); pitch(n,value); g.nodes[0].parentNode.insertBefore(n,g.nodes.at(-1).nextSibling); }); },
@@ -293,24 +423,38 @@
         });
         return groups(part,measure).findIndex(g=>g.nodes.includes(placed));
       },
-      playback(part=0,staff='1',voice='1') {
+      playback(part=0,staff='1',voice='1',selection=null,range=null) {
+        const count=measures(part).length,start=range?.start??0,end=range?.end??count-1;
+        if(!Number.isInteger(start)||!Number.isInteger(end)||start<0||end<start||end>=count)throw new Error('Choose a valid start and end measure.');
+        const selected=selection&&new Set(selection.map(n=>`${n.measure}:${n.index}:${n.tone||0}`));
         const events=[],ties=new Map();let offset=0;
         measures(part).forEach((m,measure)=>{
-          const ctx=context(part,measure,staff),all=groups(part,measure);
-          for(const g of all.filter(g=>g.staff===staff&&g.voice===voice))for(const [tone,n] of g.nodes.entries()) {
+          // Start ties afresh at the chosen bar and stop them at the end bar.
+          // Keep the selected measures' opening rests and original note IDs.
+          if(measure<start||measure>end)return;
+          const ctx=context(part,measure,staff||'1'),all=groups(part,measure);
+          for(const g of all.filter(g=>(staff===null||g.staff===staff)&&(voice===null||g.voice===voice)))for(const [tone,n] of g.nodes.entries()) {
+            if(selected&&!selected.has(`${measure}:${all.indexOf(g)}:${tone}`))continue;
             if(!child(n,'pitch')||child(n,'grace'))continue;
-            const p=child(n,'pitch'),midi={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[text(p,'step')]+number(p,'alter')+12*(number(p,'octave')+1)+ctx.transpose;
+            const p=child(n,'pitch'),midi={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[text(p,'step')]+number(p,'alter')+12*(number(p,'octave')+1)+context(part,measure,g.staff,g.beat).transpose;
             const event={beat:offset+g.beat,duration:number(n,'duration')/g.divisions,midi,measure,index:all.indexOf(g),tone};
-            const key=identity(n),previous=ties.get(key);
-            if(tied(n,'stop')&&previous&&Math.abs(previous.beat+previous.duration-event.beat)<1e-6)previous.duration+=event.duration;
+            const key=`${g.staff}:${g.voice}:${identity(n)}`,previous=ties.get(key);
+            const connected=tied(n,'stop')&&previous&&Math.abs(previous.beat+previous.duration-event.beat)<1e-6;
+            if(connected)previous.duration+=event.duration;
             else events.push(event);
-            if(tied(n,'start'))ties.set(key,tied(n,'stop')&&previous?previous:event);else ties.delete(key);
+            if(tied(n,'start'))ties.set(key,connected?previous:event);else ties.delete(key);
           }
-          const used=Math.max(0,...all.map(g=>g.beat+number(g.nodes[0],'duration')/g.divisions));
+          const used=writtenBeats(all);
           offset+=m.getAttribute('implicit')==='yes'?used:Math.max(beatsIn(ctx),used);
         });
+        if(selected){
+          const start=Math.min(...events.map(e=>e.beat));
+          for(const event of events)event.beat-=start;
+          return {events,duration:Math.max(0,...events.map(e=>e.beat+e.duration))};
+        }
         return {events,duration:offset};
       },
+      playbackSelection(part,selection){return api.playback(part,null,null,selection);},
       addMeasure(part) { change(() => {
         const list=measures(part), ctx=context(part,list.length-1), lanes=api.lanes(part), length=ctx.divisions*beatsIn(ctx);
         const m=make('measure');m.setAttribute('number',String(Number(list.at(-1)?.getAttribute('number'))+1 || list.length+1));
@@ -359,6 +503,16 @@
         if(values.clef !== undefined)setClef(part,measure,values.staff||'1',0,values.clef);
       }); }
     };
+    // Older photo imports omitted the pickup flag. Repair only our recognized
+    // scores with matching short opening staves and a later full measure.
+    const encoding=child(child(doc.documentElement,'identification'),'encoding');
+    if(parts().length===1&&children(encoding,'software').some(n=>n.textContent.trim()==='Sheet Music Practice / HOMR')){
+      const first=measures(0)[0],all=groups(0,0),length=writtenBeats(all),meter=beatsIn(context(0,0));
+      const staves=new Set(all.map(g=>g.staff)),expected=Math.max(1,...children(first,'attributes').map(a=>number(a,'staves',1)));
+      const aligned=staves.size===expected&&[...staves].every(staff=>Math.abs(writtenBeats(all.filter(g=>g.staff===staff))-length)<1e-7);
+      const laterFull=measures(0).slice(1).some((m,i)=>writtenBeats(groups(0,i+1))>=beatsIn(context(0,i+1))-1e-7);
+      if(first&&!first.hasAttribute('implicit')&&length>0&&length<meter-1e-7&&aligned&&laterFull&&all.some(g=>g.nodes.some(n=>child(n,'pitch'))))first.setAttribute('implicit','yes');
+    }
     // Compare canonical XML so opening the editor alone is not a change.
     original = serialize();
     return api;

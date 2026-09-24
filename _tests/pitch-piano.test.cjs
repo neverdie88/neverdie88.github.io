@@ -47,3 +47,25 @@ test('stopping during piano loading suppresses late notes and progress; a new ru
   loads[1].resolve({play(){played++;return {stop(){stopped++;}};}});await second;
   assert.equal(played,1);player.close();assert.equal(stopped,1);
 });
+test('playback highlights simultaneous and held notes on the audio clock, then clears rests and stop',async()=>{
+  const vm=require('node:vm'),ctx=audio(),changes=[],played=[];let tick,stops=0;
+  const runtime={PianoSamples:{},setTimeout(fn){tick=fn;return 1;},clearTimeout(){tick=null;}};
+  vm.runInNewContext(fs.readFileSync(`${__dirname}/../sheet-music/score-playback.js`,'utf8'),runtime);
+  const player=runtime.ScorePlayback.create({makeContext:()=>ctx,
+    loadInstrument:async()=>({play(midi){played.push(midi);return {stop(){}};}}),
+    onNotes:events=>changes.push(Array.from(events,e=>e.midi)),onStop(){stops++;}});
+  const score={events:[
+    {beat:0,duration:2,midi:60},{beat:0,duration:1,midi:64},{beat:0,duration:1,midi:48},
+    {beat:1,duration:.5,midi:50},{beat:3,duration:1,midi:67}
+  ],duration:4};
+  await player.start(score,60);
+  assert.deepEqual(played,[60,64,48]);assert.deepEqual(changes,[],'lookahead does not highlight before the notes start');
+  const at=(time,expected)=>{ctx.currentTime=time;tick();assert.deepEqual(changes.at(-1),expected);};
+  at(.06,[60,64,48]);at(1.06,[60,50]);at(1.56,[60]);at(2.06,[]);
+  at(3.06,[67]);at(4.06,[]);at(4.4,[]);assert.equal(player.active,false);
+  assert.deepEqual(changes,[[60,64,48],[60,50],[60],[],[67],[]]);
+  assert.deepEqual(played,[60,64,48,50,67]);assert.equal(tick,null);
+  await player.start(score,60);ctx.currentTime+=.06;tick();const pending=tick,count=changes.length;
+  player.stop();ctx.currentTime+=1;pending();assert.equal(changes.length,count,'a stopped run cannot restore highlights');
+  assert.equal(player.active,false);assert.equal(stops,4);
+});

@@ -38,10 +38,18 @@
     return layout.hits.map(n=>({...n,distance:Math.hypot((n.x-x)*1.2,n.y-y)}))
       .filter(n=>n.distance<=14).sort((a,b)=>a.distance-b.distance)[0];
   }
+  function symbolAt(layout,x,y){
+    return (layout.symbols||[]).filter(s=>x>=s.x-2&&x<=s.x+s.width+2&&y>=s.y-2&&y<=s.y+s.height+2)
+      .sort((a,b)=>Math.hypot(x-a.x-a.width/2,y-a.y-a.height/2)-Math.hypot(x-b.x-b.width/2,y-b.y-b.height/2))[0];
+  }
   function groupsInRect(layout,a,b){
     const left=Math.min(a.x,b.x),right=Math.max(a.x,b.x),top=Math.min(a.y,b.y),bottom=Math.max(a.y,b.y),groups=new Map();
     for(const n of layout.hits)if(n.x+7>=left&&n.x-7<=right&&n.y+6>=top&&n.y-6<=bottom)groups.set(`${n.measure}:${n.index}`,{measure:n.measure,index:n.index});
     return [...groups.values()];
   }
-  return {target,hit,pitchAt,stepOf,groupsInRect,xAt,contextAt};
+  function notesInRect(layout,a,b){
+    const left=Math.min(a.x,b.x),right=Math.max(a.x,b.x),top=Math.min(a.y,b.y),bottom=Math.max(a.y,b.y);
+    return layout.hits.filter(n=>!n.rest&&n.x>=left&&n.x<=right&&n.y>=top&&n.y<=bottom);
+  }
+  return {target,hit,symbolAt,pitchAt,stepOf,groupsInRect,notesInRect,xAt,contextAt};
 });

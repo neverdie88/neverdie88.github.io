@@ -79,16 +79,20 @@
       peaks.push(weighted / weight); y = end;
     }
     const candidates = [];
-    for (let i = 0; i < peaks.length; i++) for (let j = i + 1; j < peaks.length; j++) {
-      const gap = peaks[j] - peaks[i];
+    // Fit the spacing across all five lines. At reduced resolution, adjacent
+    // gaps can alternate (e.g. 9, 10, 9, 10 pixels); extrapolating the first
+    // gap alone rejects a perfectly regular printed staff.
+    for (let i = 0; i < peaks.length; i++) for (let j = i + 4; j < peaks.length; j++) {
+      const gap = (peaks[j] - peaks[i]) / 4;
       if (gap < 4 || gap > Math.min(65, h / 8)) continue;
-      const lines = [peaks[i], peaks[j]];
-      for (let k = 2; k < 5; k++) {
+      const lines = [peaks[i]];
+      for (let k = 1; k < 4; k++) {
         const expected = peaks[i] + k * gap;
-        const next = peaks.find(p => Math.abs(p - expected) < Math.max(1.8, gap * .12));
+        const next = peaks.slice(i + 1, j).filter(p => Math.abs(p - expected) < Math.max(1.8, gap * .12)).sort((a,b) => Math.abs(a - expected) - Math.abs(b - expected))[0];
         if (next === undefined) break;
         lines.push(next);
       }
+      if (lines.length === 4) lines.push(peaks[j]);
       if (lines.length === 5) candidates.push({ lines, gap, strength: lines.reduce((sum, y) => sum + best.rows[Math.round(y)], 0) });
     }
     const accepted = [];
@@ -110,9 +114,38 @@
         }
         if (ink >= 4) { left = Math.min(left, x); right = x; }
       }
+      const lineLeft=left/scale,lineRight=right/scale;
       left = Math.max(0, left - staff.gap); right = Math.min(w, right + staff.gap);
-      return { x: left / scale, y: top / scale, width: (right - left) / scale, height: (bottom - top) / scale, slope: best.slope };
+      return { x: left / scale, y: top / scale, width: (right - left) / scale, height: (bottom - top) / scale, slope: best.slope,
+        lineTop:staff.lines[0]/scale,lineBottom:staff.lines[4]/scale,gap:staff.gap/scale,lineLeft,lineRight };
     });
+  }
+  function findSystems(image, staves) {
+    // A shared barline/brace at the left joins simultaneous staves. Clef order
+    // alone is insufficient: a single instrument can change clef between rows.
+    function connected(a, b) {
+      const gap=(a.gap+b.gap)/2;
+      if(Math.abs(a.lineLeft-b.lineLeft)>gap*2||Math.max(a.gap,b.gap)>Math.min(a.gap,b.gap)*1.4)return false;
+      const top=a.lineBottom+gap*.5,bottom=b.lineTop-gap*.5;
+      if(bottom-top<gap)return false;
+      const left=Math.max(0,Math.floor(Math.min(a.lineLeft,b.lineLeft)-gap)),right=Math.min(image.width-1,Math.ceil(Math.max(a.lineLeft,b.lineLeft)+gap*.5));
+      for(let x=left;x<=right;x++){
+        let ink=0,total=0;
+        for(let y=top;y<bottom;y+=Math.max(1,gap/4)){
+          const py=y+a.slope*(x-image.width/2);
+          if(Math.min(sample(image,x-1,py),sample(image,x,py),sample(image,x+1,py))<160)ink++;
+          total++;
+        }
+        if(total&&ink/total>=.8)return true;
+      }
+      return false;
+    }
+    const systems=[];
+    staves.forEach((staff,index)=>{
+      if(index&&connected(staves[index-1],staff))systems.at(-1).push(index);
+      else systems.push([index]);
+    });
+    return systems;
   }
   async function recognize(ort, encoder, decoder, vocab, pixels, progress = () => {}) {
     const tensor = new ort.Tensor('float32', pixels, [1, 1, 256, 1280]);
@@ -155,5 +188,5 @@
       Object.values(encoded).forEach(value => value.dispose());
     }
   }
-  return { grayImage, inputPixels, findStaves, recognize };
+  return { grayImage, inputPixels, findStaves, findSystems, recognize };
 });

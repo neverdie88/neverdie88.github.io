@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const { DOMParser } = require('@xmldom/xmldom');
+const { DOMParser, XMLSerializer } = require('@xmldom/xmldom');
 const source = fs.readFileSync(`${__dirname}/../sheet-music/sheet-controller.js`,'utf8');
 const html = fs.readFileSync(`${__dirname}/../sheet-music/index.html`,'utf8');
 const xml = title => `<score-partwise><work><work-title>${title}</work-title></work><part-list><score-part id="P"><part-name>Violin</part-name></score-part></part-list><part id="P"><measure number="1"><attributes><divisions>1</divisions></attributes><note><pitch><step>A</step><octave>4</octave></pitch><duration>1</duration></note><note><pitch><step>B</step><octave>4</octave></pitch><duration>1</duration></note></measure></part></score-partwise>`;
@@ -17,7 +17,7 @@ function fixture() {
   elements.root=element('div');
   elements['recognition-line'].value='all';
   class Renderer {
-    constructor(){this.cursor={Iterator:{EndReached:false,CurrentMeasureIndex:0,CurrentRelativeInMeasureTimestamp:{RealValue:0}},reset(){this.Iterator.CurrentRelativeInMeasureTimestamp.RealValue=0;},next(){this.Iterator.CurrentRelativeInMeasureTimestamp.RealValue+=.25;},show(){},hide(){}};}
+    constructor(){this.Sheet={Instruments:[],SourceMeasures:[]};this.cursor={Iterator:{EndReached:false,CurrentMeasureIndex:0,CurrentRelativeInMeasureTimestamp:{RealValue:0}},reset(){this.Iterator.CurrentRelativeInMeasureTimestamp.RealValue=0;},next(){this.Iterator.CurrentRelativeInMeasureTimestamp.RealValue+=.25;},show(){},hide(){}};}
     setLogLevel(){} async load(value){loads.push(value);} render(){if(editor.failRender)throw Error('render failed');} clear(){}
   }
   const score=require('../sheet-music/music-score.js');
@@ -36,9 +36,10 @@ function fixture() {
     createImageBitmap:async()=>({width:2,height:2,close(){}}),
     Option:class{constructor(text,value){this.textContent=text;this.value=value;}},
     ResizeObserver:class{observe(){}},requestAnimationFrame:()=>1,cancelAnimationFrame(){},
-    queueMicrotask,Blob,URL,setTimeout,DOMParser
+    queueMicrotask,Blob,URL,setTimeout,DOMParser,XMLSerializer
   });
   vm.runInContext(fs.readFileSync(`${__dirname}/../music-shared/pitch-core.js`, 'utf8'), context);
+  vm.runInContext(fs.readFileSync(`${__dirname}/../sheet-music/score-editor-model.js`, 'utf8'), context);
   vm.runInContext(fs.readFileSync(`${__dirname}/../sheet-music/score-engraver.js`,'utf8'),context);
   vm.runInContext(source,context);
   return {elements,workers,loads,editor,published, get practice(){return published.filter(e=>e.type==='vp:practice').at(-1)?.detail;},
@@ -55,6 +56,17 @@ test('canceled conversion and late worker responses cannot replace a newer score
   await app.result(old,'Canceled photo');assert.equal(app.elements['score-title'].textContent,'My current score');
   await app.photo();const newest=app.workers[1];await app.result(newest,'New photo');
   assert.equal(app.elements['score-title'].textContent,'New photo');assert.equal(app.elements['digital-panel'].hidden,false);
+});
+test('photo recognition defaults to the complete score and retains explicit layout choices',async()=>{
+  const app=fixture();await app.photo();const worker=app.workers[0];
+  assert.equal(worker.sent.line,'all');await worker.onmessage({data:{type:'staves',count:4}});
+  assert.deepEqual(app.elements['recognition-line'].children.map(o=>o.value),['all','grand','sequential','0','1','2','3']);
+  app.elements['recognition-line'].value='grand';await app.elements.recognize.click();
+  const paired=app.workers[1];assert.equal(paired.sent.line,'grand');await paired.onmessage({data:{type:'staves',count:4}});
+  assert.equal(app.elements['recognition-line'].value,'grand');
+  await paired.onmessage({data:{type:'result',xml:xml('Complete score'),warnings:[],summary:'Recognized 4 staves in 2 grand-staff rows.'}});
+  assert.equal(app.elements['score-status'].textContent,'Recognized 4 staves in 2 grand-staff rows.');
+  await app.photo();assert.equal(app.workers[2].sent.line,'all','a new photo resets a previously selected subset');
 });
 test('failed or canceled photo conversion preserves the current edited sheet', async () => {
   const app = fixture(); await app.open('My edited sheet');

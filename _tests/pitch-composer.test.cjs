@@ -1,7 +1,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
-const {create,blank}=require('../sheet-music/score-editor-model.js');
+const {create,blank,template}=require('../sheet-music/score-editor-model.js');
 const {create:player}=require('../sheet-music/score-playback.js');
 const edit=xml=>create(xml,DOMParser,XMLSerializer);
 const C4={step:'C',octave:4,alter:0};
@@ -39,7 +39,8 @@ test('a new line starts at the same measure in every part and leaves existing mu
 test('staff-only editor opens, cancels and applies edits without removed panel elements',async()=>{
   const fs=require('node:fs'),vm=require('node:vm');
   const html=fs.readFileSync(`${__dirname}/../sheet-music/index.html`,'utf8'),elements={},saved=[];
-  const element=()=>({value:'',children:[],listeners:{},hidden:false,open:false,
+  const element=()=>({value:'',children:[],listeners:{},attributes:{},hidden:false,open:false,
+    setAttribute(name,value){this.attributes[name]=String(value);},getAttribute(name){return this.attributes[name]??null;},
     get options(){return this.children;},append(...nodes){this.children.push(...nodes);},replaceChildren(...nodes){this.children=nodes;},
     addEventListener(type,fn){this.listeners[type]=fn;},showModal(){this.open=true;},close(){this.open=false;},focus(){}});
   for(const [,id] of html.matchAll(/id="vp-editor-([^"]+)"/g))elements[id]=element();
@@ -96,6 +97,26 @@ test('preview preserves rests, ties, chord duration and instrument transposition
   const d=edit(source),p=d.playback();assert.equal(p.duration,8);
   assert.deepEqual(p.events.map(e=>[e.beat,e.duration,e.midi]),[[0,5,58],[6,2,62]]);
   d.addTone(0,1,2,{step:'G',octave:4,alter:0});assert.deepEqual(d.playback().events.map(e=>e.midi),[58,62,65]);
+});
+test('selection playback starts at the first selected note and preserves gaps and simultaneous staves',()=>{
+  const d=edit(template('piano'));
+  d.place(0,1,1,{pitch:C4});d.addTone(0,1,1,{step:'E',octave:4,alter:0});
+  d.place(0,1,1,{staff:'2',voice:'2',pitch:{step:'C',octave:3,alter:0}});
+  d.place(0,2,2,{pitch:{step:'G',octave:4,alter:0},type:'half'});
+  const refs=[{measure:1,index:1,tone:1},{measure:1,index:d.inspect(0,1).groups.find(g=>g.staff==='2'&&!g.rest).index,tone:0},{measure:2,index:1,tone:0}];
+  const before=d.xml(),selected=d.playbackSelection(0,refs);
+  assert.deepEqual(selected.events.map(e=>[e.midi,e.beat,e.duration]),[[64,0,1],[48,0,1],[67,5,2]]);assert.equal(selected.duration,7);
+  assert.deepEqual(d.playbackSelection(0,[refs[0]]).events.map(e=>e.midi),[64]);assert.deepEqual(d.playbackSelection(0,[]),{events:[],duration:0});assert.equal(d.xml(),before);
+});
+test('selection playback clips ties to selected notes and never joins different voices',()=>{
+  const notes=Array.from({length:4},(_,i)=>`<note><pitch><step>C</step><octave>4</octave></pitch><duration>16</duration><voice>1</voice><type>quarter</type>${i>0?'<tie type="stop"/>':''}${i<3?'<tie type="start"/>':''}</note>`).join('');
+  const d=edit(blank().replace('<note><rest/><duration>64</duration><type>whole</type></note>',notes));
+  const select=indices=>d.playbackSelection(0,indices.map(index=>({measure:0,index,tone:0})));
+  assert.deepEqual(select([2]).events.map(e=>[e.beat,e.duration]),[[0,1]]);
+  assert.deepEqual(select([1,2]).events.map(e=>[e.beat,e.duration]),[[0,2]]);
+  assert.deepEqual(select([0,2,3]).events.map(e=>[e.beat,e.duration]),[[0,1],[2,2]]);
+  const other=d.xml().replace('</measure>','<backup><duration>64</duration></backup>'+notes.replaceAll('<voice>1</voice>','<voice>2</voice>')+'</measure>');
+  const both=edit(other).playback(0,null,null);assert.equal(both.events.length,2);assert.deepEqual(both.events.map(e=>[e.beat,e.duration]),[[0,4],[0,4]]);
 });
 test('audio preview schedules piano notes and stops pending/resuming sessions',async t=>{
   let resolveResume,closed=false;const notes=[];

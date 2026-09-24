@@ -1,61 +1,154 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Engraved editor checks</title><style>body{margin:0;font:14px system-ui;background:#eee}header{padding:10px;display:flex;gap:8px;flex-wrap:wrap}button{padding:8px}#status{margin:0 10px 8px}iframe{width:100%;height:calc(100vh - 105px);border:0}</style></head><body>
-<header><button id="test" disabled>Check engraving and editing</button><button id="listen" disabled>Check piano playback</button><button id="narrow">390 px view</button><a href="sheet-browser.html">Sheet checks</a></header><p id="status">Loading…</p><iframe id="app" title="Production sheet editor" src="../sheet-music/"></iframe>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Direct score editing checks</title><style>body{margin:0;font:14px system-ui;background:#eee}header{padding:10px;display:flex;gap:8px;flex-wrap:wrap}button{padding:8px}#status{margin:0 10px 8px}iframe{width:100%;height:calc(100vh - 105px);border:0}</style></head><body>
+<header><button id="test" disabled>Check direct score editing</button><button id="properties" disabled>Check note properties</button><button id="listen" disabled>Check selected piano playback</button><button id="highlight" disabled>Check playback highlighting</button><button id="range" disabled>Check playback range</button><button id="pickup" disabled>Check pickup timing</button><button id="narrow">390 px view</button></header><p id="status">Loading…</p><iframe id="app" title="Production sheet editor" src="../sheet-music/"></iframe>
 <script>
-const frame=document.getElementById('app'),status=document.getElementById('status');let win,doc,saved,errors=[],sounded=[];
+const frame=document.getElementById('app'),status=document.getElementById('status');let win,doc,saved,errors=[],sounded=[],scheduled=[];
 const $=id=>doc.getElementById('vp-editor-'+id),check=(value,message)=>{if(!value)throw Error(message);};
 async function until(fn,message){const start=performance.now();while(!fn()){if(performance.now()-start>60000)throw Error(message);await new Promise(r=>setTimeout(r,20));}}
 const idle=()=>until(()=>$('canvas-scroll').getAttribute('aria-busy')!=='true','Engraving did not finish');
 async function click(id){doc.getElementById('vp-'+id).click();await idle();}
 async function key(key,mods={}){$('canvas').dispatchEvent(new win.KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,...mods}));await idle();}
 async function change(id,value){$(id).value=String(value);$(id).dispatchEvent(new win.Event('change',{bubbles:true}));await idle();}
-function position(measure,beat,step,staff='1'){
- const bar=$('canvas').querySelector(`[data-composer-measure="${measure}"][data-composer-staff="${staff}"]`);
- return {x:win.ScoreEngraver.xAt({points:JSON.parse(bar.dataset.beatPoints)},beat),y:+bar.dataset.bottom-step*+bar.dataset.halfGap};
-}
+async function tool(value){doc.querySelector(`[data-composer-tool="${value}"]`).click();await idle();}
+async function measure(value,staff='1'){await tool('select');const head=$('canvas').querySelector(`[data-composer-measure="${value}"][data-composer-staff="${staff}"] [data-composer-note]`);head.dispatchEvent(new win.MouseEvent('click',{bubbles:true,detail:0}));await idle();}
+const note=label=>$('canvas').querySelector(`[data-composer-note][aria-label^="${label},"]`);
+const point=el=>({x:+el.dataset.x,y:+el.dataset.y});
+const center=el=>({x:+el.getAttribute('x')+Number(el.getAttribute('width'))/2,y:+el.getAttribute('y')+Number(el.getAttribute('height'))/2});
 async function pointer(type,p){const svg=$('canvas'),point=svg.createSVGPoint();point.x=p.x;point.y=p.y;const screen=point.matrixTransform(svg.getScreenCTM());svg.dispatchEvent(new win.PointerEvent(type,{bubbles:true,button:0,buttons:type==='pointerup'?0:1,pointerId:1,pointerType:'mouse',clientX:screen.x,clientY:screen.y}));await idle();}
+async function tap(p){await pointer('pointerdown',p);await pointer('pointerup',p);}
+async function rectangle(a,b){await pointer('pointerdown',a);await pointer('pointermove',b);check($('canvas').querySelector('[data-composer-box]'),'No rectangle preview');await pointer('pointerup',b);}
+async function symbol(id){const el=$('canvas').querySelector(`[data-composer-symbol="${id}"]`);check(el,'Missing '+id);await tap(center(el));}
+const selected=()=>[...$('canvas').querySelectorAll('[data-composer-note][aria-pressed="true"]')];
 async function run(action){try{status.textContent='Checking…';await action();check(!errors.length,errors.join('; '));}catch(error){status.textContent='FAIL: '+[error.message,...errors,$('error')?.textContent].filter(Boolean).join('; ');}}
 frame.addEventListener('load',()=>{
  win=frame.contentWindow;doc=win.document;$('canvas').setPointerCapture=()=>{};
  win.addEventListener('error',e=>errors.push(e.message));win.addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
- const load=win.PianoSamples.load;win.PianoSamples.load=async(...args)=>{const instrument=await load(...args),play=instrument.play;instrument.play=(midi,...rest)=>{sounded.push(midi);return play(midi,...rest);};return instrument;};
+ const load=win.PianoSamples.load;win.PianoSamples.load=async(...args)=>{const instrument=await load(...args);if(!instrument.testCapture){const play=instrument.play;instrument.play=(midi,at,duration,...rest)=>{sounded.push(midi);scheduled.push({midi,at,duration});return play(midi,at,duration,...rest);};instrument.testCapture=true;}return instrument;};
  const make=win.URL.createObjectURL.bind(win.URL);win.URL.createObjectURL=blob=>{if(blob.type.includes('musicxml'))saved=blob;return make(blob);};
- const click=win.HTMLAnchorElement.prototype.click;win.HTMLAnchorElement.prototype.click=function(){if(!this.download)return click.call(this);};
- document.getElementById('test').disabled=false;document.getElementById('listen').disabled=false;status.textContent='Ready. Checks use production OSMD, direct editing, MusicXML export and real piano audio.';
+ const anchorClick=win.HTMLAnchorElement.prototype.click;win.HTMLAnchorElement.prototype.click=function(){if(!this.download)return anchorClick.call(this);};
+ document.getElementById('test').disabled=false;document.getElementById('properties').disabled=false;document.getElementById('pickup').disabled=false;document.getElementById('range').disabled=false;status.textContent='Ready. Checks exercise the production editor and sampled piano.';
+});
+document.getElementById('properties').onclick=()=>run(async()=>{
+ if($('dialog').open)await click('editor-cancel');
+ check(!doc.querySelector('.sheet-app-sidebar')&&!doc.body.textContent.includes('Thien’s Blog'),'The app still contains the blog shell');
+ check(doc.querySelector('body > main.vp-page'),'Standalone app main is missing');
+ doc.getElementById('vp-score-template').value='piano';await click('score-new');await key('n');await key('5');await key('c');await key('E',{shiftKey:true});await key('Escape');
+ const row=$('note-properties'),prop=async(kind,value)=>{const b=row.querySelector(`[data-${kind}="${value}"]`);check(!row.hidden&&b&&!b.disabled,'Property unavailable');b.click();await idle();};
+ check(row.hidden&&!doc.querySelector('.editor-shortcuts,.editor-property-group'),'Old panel remains or row shown without selection');
+ const pitch=point(note('E4')),top=$('canvas').getBoundingClientRect().top;
+ await pointer('pointerdown',pitch);check(row.hidden&&Math.abs($('canvas').getBoundingClientRect().top-top)<1,'Staff moved during pointerdown');await pointer('pointerup',pitch);
+ check(!row.hidden&&note('E4'),'Selecting a note did not reveal its properties');
+ check(row.getBoundingClientRect().top>=$('palette').getBoundingClientRect().bottom,'Properties are not below Notation');
+ for(const [value,label]of [[1,'E sharp4'],[-1,'E flat4'],[2,'E double sharp4'],[-2,'E double flat4'],[0,'E4'],['key','E4']]){
+  await prop('accidental',value);check(note(label)&&note('C4'),'Accidental changed the wrong chord tone: '+label);
+ }
+ for(const value of [1,2,0]){await prop('dots',value);check(row.querySelector(`[data-dots="${value}"]`).getAttribute('aria-pressed')==='true','Dots state is incorrect');}
+ await click('editor-clear-selection');const e=point(note('E4'));await rectangle({x:e.x-18,y:e.y-3},{x:e.x+12,y:e.y+3});await prop('accidental',-1);check(note('E flat4')&&note('C4'),'Single rectangle selection did not edit its tone');
+ await prop('dots',1);await click('editor-undo');check(note('E flat4'),'Undo changed the pitch');await click('editor-undo');check(note('E4'),'Undo did not restore the selected accidental');
+ await tap(point(note('E4')));await prop('dots',1);await change('title','Note properties');await click('editor-apply');await until(()=>!$('dialog').open,'Apply failed');await click('score-save');
+ const d=win.ScoreEditorModel.create(await saved.text());check(d.inspect().groups[0].dots===1&&d.playback().events.map(e=>e.midi).join(',')==='60,64','Properties did not survive export');
+ await click('score-edit');await tap(point(note('E4')));
+ status.textContent='PASS: standalone app, contextual symbol row, every accidental, dots, single-tone rectangle editing, Undo, export and reopen. Staff stays still during a tap.';
 });
 document.getElementById('test').onclick=()=>run(async()=>{
  if($('dialog').open)await click('editor-cancel');doc.getElementById('vp-score-template').value='piano';await click('score-new');
- check($('canvas').dataset.engraver==='osmd','Editor is not using OSMD');
- check($('canvas').querySelectorAll('[data-composer-measure]').length===16,'Piano staves or empty measures are missing');
- await key('n');await key('4');for(const note of ['c','d','e','f'])await key(note);
- check($('canvas').querySelector('.vf-beam'),'Eighth notes were not beamed');
- await key('G',{shiftKey:true});await key('Escape');
- await change('lane',1);await key('n');await key('5');await key('c');await key('Escape');
- const bass=$('canvas').querySelector('[data-composer-note][data-staff="2"][aria-label^="C3"]');
- check(bass,'Bass note was not entered');const p={x:+bass.dataset.x,y:+bass.dataset.y},up={x:p.x,y:p.y-5};
- await pointer('pointerdown',p);await pointer('pointermove',up);await pointer('pointerup',up);
- check($('canvas').querySelector('[data-composer-note][aria-label^="D3"]'),'Dragging missed the engraved bass note');
- await click('editor-undo');check($('canvas').querySelector('[data-composer-note][aria-label^="C3"]'),'Undo failed');
- await click('editor-redo');
- await click('editor-add-line');check($('measure').options.length===12,'Add line did not add four paired measures');
- await click('editor-undo');check($('measure').options.length===8,'Undo did not remove the whole line');await click('editor-redo');
- await change('lane',0);await change('measure',1);await change('clef','bass');await change('measure',2);await change('clef','treble');
- await change('title','Engraved piano test');await click('editor-apply');await until(()=>!$('dialog').open,'Apply failed');
- await click('score-save');const d=win.ScoreEditorModel.create(await saved.text());
- check(d.inspect().title==='Engraved piano test','Title was not exported');
- check(d.playback(0,'1','1').events.map(e=>e.midi).join(',')==='60,62,64,65,67','Treble notes/chord changed');
- check(d.playback(0,'2','2').events[0].midi===50,'Bass edit was not exported');
- check(d.context(0,1,'1',0).clef==='bass'&&d.context(0,2,'1',0).clef==='treble','Clef changes were not exported');
- await click('score-edit');check($('canvas').querySelector('[data-engraved-note]'),'Reopened score is missing notation');
- check($('dialog').scrollWidth<=$('dialog').clientWidth+1,'Dialog overflows');
- status.textContent='PASS: shared engraving, grand-staff lines, clef changes, keyboard input, beams, chords, bass drag, Undo/Redo, apply, export, reopen and dialog width.';
+ for(const id of ['lane','measure','previous','next','add-measure','clef','clef-position'])check(!$(id),'Removed control still exists: '+id);
+ check($('palette').querySelectorAll('[data-composer-tool^="clef-"]').length===2,'Clef palette buttons missing');
+ await key('n');await key('5');await key('c');await key('E',{shiftKey:true});await key('d');await key('Escape');
+ await measure(0,'2');await key('n');await key('c');await key('Escape');
+ check(note('C4')&&note('E4')&&note('D4')&&note('C3'),'Keyboard input did not create the two-staff fixture');
+ check(!$('pitch-up')&&!$('pitch-down'),'Old pitch buttons remain');
+ await tap(point(note('E4')));await click('editor-transpose-up');check(note('D flat4')&&note('F4')&&note('E flat4')&&note('D flat3'),'Transpose + did not move every note up one semitone');
+ check(!selected().length&&$('key').value==='major:-5','Transpose selection or key signature is wrong');
+ await click('editor-transpose-up');check(note('D4')&&note('F sharp4')&&note('E4')&&note('D3'),'Repeated Transpose + failed');
+ await click('editor-undo');check(note('D flat4')&&$('key').value==='major:-5','Undo did not restore the previous transposition');
+ await click('editor-transpose-down');check(note('C4')&&note('E4')&&note('D4')&&note('C3')&&$('key').value==='major:0','Transpose − did not lower the whole score');
+ await measure(0,'1');await symbol('clef:0:1:0');check($('canvas').querySelector('[data-composer-symbol="clef:0:1:0"]').getAttribute('aria-label').startsWith('bass'),'Tap did not switch G to F');
+ await symbol('clef:0:1:0');check($('canvas').querySelector('[data-composer-symbol="clef:0:1:0"]').getAttribute('aria-label').startsWith('treble'),'Tap did not switch F to G');
+ await tool('clef-bass');await tap(point(note('D4')));check($('canvas').querySelector('[data-composer-symbol="clef:0:1:1"]'),'Palette did not insert a mid-measure clef');
+ await tool('select');await symbol('clef:0:1:1');check($('canvas').querySelector('[data-composer-symbol="clef:0:1:1"]').getAttribute('aria-label').startsWith('treble'),'Mid-measure clef did not toggle');
+ await tool('erase');await symbol('clef:0:1:1');check(!$('canvas').querySelector('[data-composer-symbol="clef:0:1:1"]'),'Eraser did not remove clef');await click('editor-undo');await click('editor-redo');
+ await measure(1,'2');await tool('clef-treble');const bar=$('canvas').querySelector('[data-composer-measure-area="1:2"]');await tap({x:+bar.getAttribute('x')+2,y:+bar.getAttribute('y')+20});
+ const clef=$('canvas').querySelector('[data-composer-symbol="clef:1:2:0"]'),updatedBar=$('canvas').querySelector('[data-composer-measure-area="1:2"]');check(clef&&+clef.getAttribute('x')+2>+updatedBar.getAttribute('x'),'Inserted clef is outside its measure');await tool('erase');await symbol('clef:1:2:0');
+ await tool('select');const e=point(note('E4'));await rectangle({x:e.x-18,y:e.y-3},{x:e.x+12,y:e.y+3});check(selected().length===1&&selected()[0].getAttribute('aria-label').startsWith('E4'),'Rectangle selected an extra chord tone');
+ await click('editor-delete-selected');check(!note('E4')&&note('C4'),'Deleting selected tone removed its chord partner');await click('editor-undo');
+ await tool('select');const c=point(note('C4')),b=point(note('C3')),top=point(note('E4'));
+ await rectangle({x:c.x-18,y:top.y-16},{x:c.x+12,y:b.y+16});check(selected().length===3,'Rectangle did not select across both staves');
+ await click('editor-clear-selection');await click('editor-add-line');check($('canvas').querySelectorAll('[data-composer-measure]').length===24,'Add line failed');await click('editor-undo');check($('canvas').querySelectorAll('[data-composer-measure]').length===16,'Undo Add line failed');
+ await change('title','Direct score editing');await click('editor-apply');await until(()=>!$('dialog').open,'Apply failed');await click('score-save');const d=win.ScoreEditorModel.create(await saved.text());
+ check(d.playback(0,null,null).events.map(e=>e.midi).join(',')==='60,64,62,48','Edits changed the original notes');
+ await click('score-edit');check($('canvas').querySelector('[data-engraved-note]'),'Reopened notation missing');
+ document.getElementById('listen').disabled=false;document.getElementById('highlight').disabled=false;status.textContent='PASS: whole-score Transpose − / + and key signatures, rectangle selection, clef editing, Undo/Redo, Add line, apply, export and reopen.';
 });
 document.getElementById('listen').onclick=()=>run(async()=>{
- check($('dialog').open,'Run the engraving check first');await change('lane',0);await change('tempo',240);sounded=[];
- await click('editor-play');await until(()=>sounded.length>0,'No piano notes were scheduled');
- await until(()=>$('play').textContent.includes('Play'),'Preview did not finish');
- check(sounded.join(',')==='60,62,64,65,67','Preview played different notes: '+sounded);
- await click('editor-play');await click('editor-play');check($('play').textContent.includes('Play'),'Stop did not work');
- status.textContent='PASS: actual grand piano preview matches the engraved treble notes and Stop works.';
+ check($('dialog').open&&note('E4'),'Run the editing check first');await change('tempo',240);await tool('select');
+ const e=point(note('E4'));await tap(e);sounded=[];await click('editor-play');await until(()=>sounded.length>0,'No piano notes scheduled');await until(()=>$('play').textContent.includes('Play'),'Single-note preview did not finish');
+ check(sounded.join(',')==='64','Single-note playback included other notes: '+sounded);check(selected().length===1,'Single-note selection disappeared after playback');
+ const c=point(note('C4')),b=point(note('C3'));await rectangle({x:c.x-18,y:e.y-16},{x:c.x+12,y:b.y+16});check(selected().length===3,'Selection fixture failed');
+ sounded=[];await click('editor-play');await until(()=>sounded.length===3,'Selected chord was not scheduled');await until(()=>$('play').textContent.includes('Play'),'Selection preview did not finish');
+ check(sounded.join(',')==='60,64,48','Piano played notes outside selection: '+sounded);check(selected().length===3,'Playback cleared rectangle selection');
+ await click('editor-play');await click('editor-play');check($('play').textContent==='▶ Play selection','Stop did not preserve selection');
+ status.textContent='PASS: actual sampled piano played E4 alone, then only selected C4/E4/C3 together. Selection remains after playback and Stop.';
+});
+document.getElementById('highlight').onclick=()=>run(async()=>{
+ check($('dialog').open&&note('E4'),'Run the editing check first');await change('tempo',120);await tool('select');await click('editor-clear-selection');
+ const green=()=>[...$('canvas').querySelectorAll('[data-engraved-note]')].filter(n=>n.querySelector('path[fill="#15803d"]')).map(n=>n.dataset.engravedNote).sort().join(',');
+ const chord=['C4','E4','C3'].map(label=>note(label).dataset.composerNote).sort().join(','),next=note('D4').dataset.composerNote;
+ check(!selected().length,'The full-score test has selected notes');sounded=[];await click('editor-play');
+ await until(()=>green()===chord,'The simultaneous upper chord and bass note did not all turn green');
+ await until(()=>green()===next,'The next note did not replace the finished chord highlights');
+ await until(()=>!green(),'Finished notes stayed green through the rest');
+ check(sounded.join(',')==='60,64,48,62','Full-score piano notes changed: '+sounded);await click('editor-play');
+ await tap(point(note('E4')));await click('editor-play');await until(()=>green()===note('E4').dataset.composerNote,'Selected tone did not turn green');await click('editor-play');
+ check(!green()&&selected().length===1,'Stop did not restore the selected note');
+ check($('canvas').querySelector(`[data-engraved-note="${note('E4').dataset.composerNote}"] path[fill="#2563eb"]`),'Stop did not restore the blue selection');
+ status.textContent='PASS: with no selection, simultaneous notes on both staves all turn green. Highlights advance and clear during rests; Stop restores blue selection. Actual piano notes verified.';
+});
+document.getElementById('range').onclick=()=>run(async()=>{
+ if($('dialog').open)await click('editor-cancel');
+ const n=(step,octave,duration,staff,rest=false)=>`<note>${rest?'<rest/>':`<pitch><step>${step}</step><octave>${octave}</octave></pitch>`}<duration>${duration}</duration><voice>${staff}</voice><type>${duration===4?'whole':duration===2?'half':'quarter'}</type><staff>${staff}</staff></note>`;
+ const notes=(step,octave,staff)=>n(step,octave,4,staff);
+ const bars=[notes('C',4,1)+'<backup><duration>4</duration></backup>'+notes('C',3,2),n('C',4,1,1,true)+n('D',4,1,1)+n('E',4,2,1)+'<backup><duration>4</duration></backup>'+n('C',3,1,2,true)+n('D',3,1,2)+n('E',3,2,2),notes('F',4,1)+'<backup><duration>4</duration></backup>'+notes('F',3,2)];
+ const xml=`<score-partwise><work><work-title>Playback range check</work-title></work><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list><part id="P1">${bars.map((bar,i)=>`<measure number="${i+1}">${i?'':'<attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time><staves>2</staves><clef number="1"><sign>G</sign><line>2</line></clef><clef number="2"><sign>F</sign><line>4</line></clef></attributes>'}${bar}</measure>`).join('')}</part></score-partwise>`;
+ const fetch=win.fetch;win.fetch=(url,...args)=>String(url).endsWith('/samples/notes-and-chords.musicxml')?Promise.resolve(new win.Response(xml)):fetch.call(win,url,...args);
+ try{await click('score-sample');await until(()=>doc.getElementById('vp-score-title').textContent==='Playback range check','Range fixture did not load');}finally{win.fetch=fetch;}
+ await click('score-edit');await tap(point(note('C4')));check(selected().length===1,'Note selection failed');
+ const area=$('canvas').querySelector('[data-composer-measure-area="2:2"]');await tap({x:+area.getAttribute('x')+Number(area.getAttribute('width'))*.8,y:+area.getAttribute('y')+4});
+ check(!selected().length&&!$('canvas').querySelector('[data-measure-selection]')&&!$('canvas').querySelector('[aria-label^="Select measure"]'),'Blank tap still selects a measure');
+ const c=point(note('C4'));await rectangle({x:c.x-18,y:c.y-8},{x:c.x+14,y:c.y+8});check(selected().length===1,'Rectangle selection no longer works');
+ const boundary=async(kind,m,staff='1')=>{await click('editor-play-'+kind);const target=$('canvas').querySelector(`[data-playback-measure="${m}"][aria-label$="staff ${staff}"]`);check(target,'Missing clickable measure');await tap(center(target));};
+ await boundary('start',1,'2');await click('editor-play-end');await tap(point(note('E4')));await change('tempo',240);check(!selected().length,'Choosing boundaries did not clear selected notes');
+ check($('canvas').querySelector('[data-playback-boundary="start"][data-measure="1"]')&&$('canvas').querySelector('[data-playback-boundary="end"][data-measure="1"]'),'Visible range markers are missing');
+ sounded=[];scheduled=[];await click('editor-play');await until(()=>$('play').textContent==='▶ Play range','Range playback did not stop');
+ check(sounded.join(',')==='62,50,64,52','Editor played outside measure 2: '+sounded);check(Math.abs(scheduled[2].at-scheduled[0].at-.25)<.015,'Range rhythm changed');
+ await click('editor-cancel');
+ for(const kind of ['start','end']){await click('score-play-'+kind);const target=doc.getElementById('vp-score-render').querySelector('[data-playback-measure="1"]');check(target,'Main score has no measure targets');target.dispatchEvent(new win.MouseEvent('click',{bubbles:true,detail:1}));}
+ const bpm=doc.getElementById('vp-score-tempo');bpm.value='240';bpm.dispatchEvent(new win.Event('change',{bubbles:true}));
+ check(doc.getElementById('vp-score-render').querySelector('[data-playback-boundary="start"][data-measure="1"]'),'Main score start marker missing');
+ sounded=[];await click('score-play');await until(()=>doc.getElementById('vp-score-play').textContent==='▶ Play sheet','Main player did not stop at End');check(sounded.join(',')==='62,50,64,52','Main player ignored its range: '+sounded);
+ await click('score-edit');await boundary('start',1);await boundary('end',1);
+ status.textContent='PASS: blank taps clear notes without selecting measures; rectangles still select notes. Clicking Set start / Set end on measure 2 showed markers and played only that measure on both staves, in both players.';
+});
+document.getElementById('pickup').onclick=()=>run(async()=>{
+ if($('dialog').open)await click('editor-cancel');
+ const response=await fetch('./editor-pickup-source.musicxml');check(response.ok,'Pickup fixture missing');const xml=await response.text();
+ const originalFetch=win.fetch;win.fetch=(url,...args)=>String(url).endsWith('/samples/notes-and-chords.musicxml')?Promise.resolve(new win.Response(xml)):originalFetch.call(win,url,...args);
+ try{
+  await click('score-sample');const title=win.ScoreEditorModel.create(xml).inspect().title;
+  await until(()=>doc.getElementById('vp-score-title').textContent===title,'Fixture did not finish loading');check(doc.getElementById('vp-score-error').hidden,'Score import failed');
+ }finally{win.fetch=originalFetch;}
+ const score=win.ScoreEditorModel.create(xml).playback(0,null,null),events=score.events.filter(e=>e.beat<=1.5).sort((a,b)=>a.beat-b.beat);
+ check(Math.max(...score.events.filter(e=>e.measure===0).map(e=>e.beat+e.duration))===1.5,'Pickup length is wrong');
+ check(Math.min(...score.events.filter(e=>e.measure===1).map(e=>e.beat))===1.5,'Measure 2 has padding');
+ async function verifyTiming(){
+  await until(()=>scheduled.length>=events.length,'The second measure did not play');
+  const start=scheduled[0].at,actual=scheduled.slice(0,events.length);
+  check(actual.map(e=>e.midi).join(',')===events.map(e=>e.midi).join(','),'Scheduled notes differ from score');
+  actual.forEach((e,i)=>check(Math.abs(e.at-start-events[i].beat*.5)<.015,'Piano timing drift at note '+i));
+  const next=actual[events.findIndex(e=>e.measure===1)].at-start;check(Math.abs(next-.75)<.015,'Unwanted pause before measure 2: '+next+' seconds');
+ }
+ doc.getElementById('vp-score-tempo').value='120';scheduled=[];await click('score-play');await verifyTiming();await click('score-play');
+ await click('score-edit');await change('tempo',120);await click('editor-clear-selection');scheduled=[];await click('editor-play');await verifyTiming();await click('editor-play');
+ status.textContent='PASS: original imported hymn plays through the first bar without padding. Actual sampled piano starts measure 2 at 0.75 s in both sheet playback and editor preview.';
 });
 document.getElementById('narrow').onclick=()=>{frame.style.width=frame.style.width==='390px'?'100%':'390px';};
 </script></body></html>

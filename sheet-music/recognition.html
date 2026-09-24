@@ -1,20 +1,50 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>About sheet recognition</title>
-<style>body{font:17px/1.6 system-ui,sans-serif;max-width:720px;margin:40px auto;padding:0 24px;color:#222}a{color:#075baa}li{margin:8px 0}code{font-size:.9em}</style></head><body>
-<main><h1>About sheet recognition</h1>
-<p>Your photo is processed in this browser. It is never uploaded. The first conversion downloads about 100 MB of recognition models, plus the WebAssembly runtime. The browser caches the models when storage is available; your photos and scores are kept in memory until you close or reload the page. Use Save MusicXML to keep a score.</p>
-<p>This is experimental recognition for clear printed music. Use a flat, evenly lit page photographed straight on. Staff lines are read from top to bottom as one instrument. For piano or ensemble scores, choose a single staff line. Handwriting, curved pages, severe perspective, and dense notation may not work. Time signatures are estimated; notes, accidentals, rhythm, ornaments, and ties need review. Use Edit sheet to correct the recognized notes, or Open MusicXML for an existing score.</p>
-<p>Edit sheet opens a staff composer: choose a note length, tap to write, drag pitches, stack chords, or erase. Apply changes updates the displayed score; Cancel discards a draft. Play sheet listens to all parts or a selected staff/voice. Play preview inside the editor listens to that draft. Save MusicXML keeps applied edits on your device. The separate <a href="../pitch-visualizer/">Pitch Visualizer</a> provides microphone feedback.</p>
-<h2>Recognition source and licenses</h2>
-<p>Recognition uses <a href="https://github.com/liebharc/homr">HOMR</a> checkpoint 426, based on <a href="https://github.com/NetEase/Polyphonic-TrOMR">Polyphonic-TrOMR</a>. The models and browser adapters use <a href="./models/LICENSE.txt">AGPL-3.0</a>. The adapters were added on 17 September 2026. Their complete editable source is served with the app; no compilation is needed:</p>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:,">
+<title>About sheet recognition · Sheet Music Editor</title>
+<style>
+:root { color-scheme: light; }
+body { margin: 0; background: #fff; color: #1f2937; font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+main { max-width: 760px; margin: 36px auto; padding: 0 24px 32px; }
+nav { margin-bottom: 26px; font-size: 14px; }
+h1 { margin: 0 0 10px; font-size: 32px; line-height: 1.2; letter-spacing: -.6px; }
+h2 { margin: 28px 0 10px; font-size: 20px; line-height: 1.3; }
+p { margin: 10px 0; }
+a { color: #2563eb; text-underline-offset: 3px; }
+li { margin: 7px 0; }
+.intro { color: #64748b; }
+footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 14px; }
+code { font-size: .85em; overflow-wrap: anywhere; }
+details { margin-top: 28px; }
+summary { cursor: pointer; font-weight: 600; }
+@media (max-width: 440px) { main { margin-top: 24px; padding: 0 18px 24px; } h1 { font-size: 28px; } }
+</style>
+</head>
+<body><main>
+<nav aria-label="App navigation"><a href="./">← Sheet Music Editor</a></nav>
+<h1>About sheet recognition</h1>
+<p class="intro">Turn a photo of printed sheet music into a score you can edit, play, and save.</p>
+<h2>Getting a good result</h2>
 <ul>
-<li><a href="./omr-engine.js">Image preprocessing, staff detection, and model inference</a></li>
-<li><a href="./omr-musicxml.js">Recognized symbols to MusicXML</a></li>
-<li><a href="./omr-worker.js">Worker, model loading, and caching</a></li>
-<li><a href="./models/vocabulary.json">Model vocabulary</a> and <a href="./models/manifest.json">model file hashes</a></li>
-<li><a href="./sheet-photo.js">Photo and camera controls</a>, <a href="./music-score.js">score parsing</a>, <a href="./sheet-controller.js">sheet display controls</a>, and <a href="./sheet-photo.css">styles</a>. <a href="./sheet-player.js">Sheet playback controls</a> use local synthesized audio.</li>
+<li>Use a clear photo of a flat page, taken straight on.</li>
+<li>Light the page evenly and avoid shadows or glare.</li>
+<li>Keep all staff lines and barlines visible.</li>
 </ul>
-<p>The model protocol and vocabulary are from HOMR commit <code>5e51b434b3149286dae1448603527923b62ef9f2</code>. The weights are from its <a href="https://github.com/liebharc/homr/releases/tag/onnx_checkpoints">ONNX checkpoint release</a>, checkpoint identifier <code>426-b6fd20809a8dcaf10dfd39a4ca4f64c6f056e644</code>.</p>
-<p><a href="https://onnxruntime.ai/docs/tutorials/web/">ONNX Runtime Web</a> 1.23.2 runs the models using WebAssembly (<a href="./lib/ort/LICENSE.txt">MIT license</a>). <a href="https://opensheetmusicdisplay.org/">OpenSheetMusicDisplay</a> 2.1.2 draws the notation (<a href="./lib/OSMD-LICENSE.txt">BSD-3-Clause license</a>).</p>
-<p>Retained legacy chord-listening modules (not loaded by this app) use <a href="https://github.com/spotify/basic-pitch">Basic Pitch</a>, Copyright Spotify AB, under the <a href="./models/basic-pitch/LICENSE.txt">Apache-2.0 license</a>. The ICASSP 2022 ONNX model is pinned to commit <code>fa5997af0a8210982619003269994a1be25eddf3</code>; see its <a href="./models/basic-pitch/manifest.json">source and hash</a>. Their browser adapters are <a href="./chord-engine.js">audio processing and inference</a>, <a href="./chord-worker.js">the worker</a>, and <a href="./chord-listener.js">the live listener</a>.</p>
-<p><a href="./">Back to Sheet Music Editor</a></p></main></body></html>
+<p>Recognition works best with clear printed music. Handwriting, curved pages, angled photos, and dense notation may not be read correctly.</p>
+<h2>Choosing a layout</h2>
+<p><strong>All staves · auto layout</strong> reads the page and keeps connected pairs of staves together, such as the right and left hands of a piano score.</p>
+<p>If a connecting brace is faint or missing, choose <strong>Grand staff · paired rows</strong>. For one instrument continuing down the page, choose <strong>Single-staff rows in sequence</strong>. You can also recognize an individual staff.</p>
+<p>For scores with more than two simultaneous staves, use <strong>Open MusicXML</strong>. Lyrics and chord names are not imported from photos.</p>
+<h2>Reviewing your score</h2>
+<p>Recognition is experimental and may miss or misread symbols. Check the notes, accidentals, rests, rhythm, and time signature against the original photo. Ornaments and ties may also need correction.</p>
+<p>Choose <strong>Edit sheet</strong> to make corrections, then <strong>Apply changes</strong> to update the score. <strong>Discard</strong> leaves the original score unchanged. Use <strong>Play sheet</strong> to hear the result on a grand piano.</p>
+<h2>Privacy and saving</h2>
+<p>Your photo is processed on your device and is never uploaded. The first conversion downloads about 100 MB of recognition data, plus the software needed to run it. Your browser can cache these downloads for later use when storage is available.</p>
+<p>Photos and scores are kept in memory and are lost when you close or reload the page. Use <strong>Save MusicXML</strong> after applying your edits to keep a copy. You can reopen that file later.</p>
+<footer><a href="./credits.html">Credits, licenses, and source code</a></footer>
+</main></body>
+</html>

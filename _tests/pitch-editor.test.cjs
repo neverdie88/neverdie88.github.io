@@ -45,6 +45,24 @@ test('pitch corrections follow ties; deleting a continuation cleans the survivin
   d.undo();assert.equal(d.inspect(0,0).groups[0].notes[0].tied,true);
 });
 
+test('moving selected chord tones captures original ties once and undoes as one edit',()=>{
+  const tiedChord=kind=>note('C',`<tie type="${kind}"/>`)+note('D',`<chord/><tie type="${kind}"/>`);
+  const d=edit(score(`<measure number="1"><attributes><divisions>4</divisions></attributes>${tiedChord('start')}</measure><measure number="2">${tiedChord('stop')}</measure>`)),before=d.xml();
+  const refs=[0,1].flatMap(measure=>[0,1].map(tone=>({measure,index:0,tone})));
+  d.shiftPitch(0,refs,1);
+  for(const measure of [0,1])assert.deepEqual(d.inspect(0,measure).groups[0].notes.map(n=>[n.step,n.octave,n.tied]),[['D',4,true],['E',4,true]]);
+  const shifted=d.xml();d.undo();assert.equal(d.xml(),before);assert.equal(d.canUndo,false);d.redo();assert.equal(d.xml(),shifted);
+  d.shiftPitch(0,[{measure:0,index:0,tone:0}],-1);
+  for(const measure of [0,1])assert.deepEqual(d.inspect(0,measure).groups[0].notes.map(n=>n.step),['C','E']);
+});
+test('pitch shifts preserve alterations and roll back the whole selection at the pitch limit',()=>{
+  const d=edit(score(`<measure number="1">${note('C')}${note('C').replace('<octave>4</octave>','<octave>8</octave>')}</measure>`)),before=d.xml();
+  assert.throws(()=>d.shiftPitch(0,[{measure:0,index:0},{measure:0,index:1}],1),/A0 and C8/);
+  assert.equal(d.xml(),before);assert.equal(d.canUndo,false);
+  d.pitch(0,0,0,0,{step:'B',alter:-1,octave:4});d.shiftPitch(0,[{measure:0,index:0}],1);
+  assert.deepEqual(d.inspect().groups[0].notes[0],{step:'C',alter:-1,octave:5,tied:false});
+  d.shiftPitch(0,[{measure:0,index:0}],-7);assert.equal(d.inspect().groups[0].notes[0].octave,4);
+});
 test('new sheets support rests, notes, chord lengths, measures and signature changes', () => {
   const d=edit(blank());assert.equal(d.inspect().groups[0].rest,true);
   d.rest(0,0,0,false);d.length(0,0,0,'half',0);d.addTone(0,0,0);
@@ -128,4 +146,24 @@ test('added measures preserve additive meters and reject empty time signatures',
   const d=edit(blank().replace('<beats>4</beats><beat-type>4</beat-type>','<beats>3+2</beats><beat-type>8</beat-type>'));
   d.addMeasure(0);assert.equal(d.inspect(0,1).groups[0].duration,2.5);
   const before=d.xml();assert.throws(()=>d.settings(0,0,{time:'0/4'}),/time signature/);assert.equal(d.xml(),before);
+});
+test('erasing a clef restores the previous clef on that staff and keeps timing and pitches intact',()=>{
+  const {template}=require('../sheet-music/score-editor-model.js'),d=edit(template('piano'));
+  d.place(0,1,0,{staff:'2',voice:'2',pitch:{step:'C',octave:3,alter:0}});
+  d.place(0,1,2,{staff:'2',voice:'2',pitch:{step:'E',octave:3,alter:0}});
+  d.changeClef(0,1,'2',0,'treble');d.changeClef(0,1,'2',2,'bass');
+  const before=d.xml(),playback=d.playback(0,'2','2');
+  d.removeClef(0,1,'2',2);assert.equal(d.context(0,1,'2',3).clef,'treble');assert.equal(d.context(0,1,'1',3).clef,'treble');
+  assert.deepEqual(d.playback(0,'2','2'),playback);d.undo();assert.equal(d.xml(),before);
+  assert.throws(()=>d.removeClef(0,0,'2',0),/first clef is required/);assert.equal(d.xml(),before);
+});
+test('erasing a chord accidental restores its key signature and preserves chord tones and ties',()=>{
+  const d=edit(blank());d.settings(0,0,{key:'major:1'});
+  d.place(0,0,0,{pitch:{step:'F',octave:4,alter:0}});d.addTone(0,0,0,{step:'A',octave:4,alter:0});
+  const before=d.xml();d.removeAccidental(0,0,0,0);
+  assert.deepEqual(d.inspect().groups[0].notes.map(n=>[n.step,n.alter]),[['F',1],['A',0]]);
+  assert.equal(d.inspect().groups[0].duration,1);d.undo();assert.equal(d.xml(),before);
+  const tied=edit(score(`<measure number="1"><attributes><divisions>4</divisions></attributes>${note('C','<tie type="start"/><notations><tied type="start"/></notations>')}</measure><measure number="2">${note('C','<tie type="stop"/><notations><tied type="stop"/></notations>')}</measure>`));
+  tied.pitch(0,0,0,0,{step:'C',octave:4,alter:1});tied.removeAccidental(0,0,0,0);
+  assert.equal(tied.inspect(0,1).groups[0].notes[0].alter,0);assert.equal(tied.inspect(0,1).groups[0].notes[0].tied,true);
 });

@@ -27,7 +27,7 @@
     }
     return groups;
   }
-  function convert(lines, title = 'Scanned sheet') {
+  function analyze(lines) {
     const groups = lines.flatMap((symbols, i) => i ? [[{ rhythm: 'newline' }], ...group(symbols)] : group(symbols));
     let division = 1, length = 0;
     const lengths = [];
@@ -42,18 +42,27 @@
     if (!lengths.length) throw new Error('No notes were recognized. Try a closer photo of a printed staff.');
     lengths.sort((a, b) => a - b);
     const typicalBeats = lengths[Math.floor(lengths.length / 2)] || 4;
+    return {groups,division,typicalBeats};
+  }
+  function documentXML(title, body) {
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<score-partwise version="4.0"><work><work-title>${escape(title)}</work-title></work><identification><encoding><software>Sheet Music Practice / HOMR</software></encoding></identification><part-list><score-part id="P1"><part-name>Scanned music</part-name></score-part></part-list><part id="P1">${body}</part></score-partwise>`;
+  }
+  function compile(lines, options={}) {
+    const analysis=analyze(lines),groups=analysis.groups,division=options.division||analysis.division,typicalBeats=options.typicalBeats||analysis.typicalBeats;
     // Quarter-note divisions are an integer multiple for every predicted tuplet.
     const types = { 1: 'whole', 2: 'half', 4: 'quarter', 8: 'eighth', 16: '16th', 32: '32nd', 64: '64th', 128: '128th' };
     const measures = [], warnings = new Set(['Photo recognition can be wrong. Check notes, accidentals, rhythm, and ties against the photo before practicing.', 'The time signature is estimated from the recognized measure lengths.']);
-    let body = '', cursor = 0, position = 0, hasNotes = false, number = 1, noteCount = 0;
-    let clef = 'G2', fifths = 0, meter = 4, first = true;
+    let body = '', cursor = 0, position = 0, extent = 0, hasNotes = false, number = 1, noteCount = 0;
+    let clef = options.context?.clef || 'G2', fifths = options.context?.fifths || 0, meter = options.context?.meter || 4, first = !options.continuation;
+    const previous={clef,fifths,meter};
+    const staffNumber=options.staff?` number="${options.staff}"`:'';
     function attributes(extra = '') {
       return `<attributes>${first ? `<divisions>${division}</divisions>` : ''}${extra}</attributes>`;
     }
     function flush() {
       if (!hasNotes) return;
-      measures.push(`<measure number="${number++}">${body}</measure>`);
-      body = ''; cursor = position = 0; hasNotes = false; first = false;
+      measures.push({body,cursor,length:extent,meter:Math.max(1,Math.round(typicalBeats*meter/4))*4/meter,number:number++});
+      body = ''; cursor = position = extent = 0; hasNotes = false; first = false;
     }
     function move(to) {
       const delta = Math.round((to - cursor) * division);
@@ -78,14 +87,17 @@
         else if (mark && mark !== '.') warnings.add('Some ornament details need manual correction in a notation editor.');
       }
       if (articulations.length) markings.push(`<articulations>${articulations.join('')}</articulations>`);
-      return `<note>${chord ? '<chord/>' : ''}${d.grace ? '<grace/>' : ''}${pitch}${d.grace ? '' : `<duration>${Math.round(d.beats * division)}</duration>`}<voice>${voice}</voice><type>${types[d.normal] || 'quarter'}</type>${'<dot/>'.repeat(d.dots)}${tuple}${markings.length ? `<notations>${markings.join('')}</notations>` : ''}</note>`;
+      return `<note>${chord ? '<chord/>' : ''}${d.grace ? '<grace/>' : ''}${pitch}${d.grace ? '' : `<duration>${Math.round(d.beats * division)}</duration>`}<voice>${options.staff?2*(voice-1)+options.staff:voice}</voice><type>${types[d.normal] || 'quarter'}</type>${'<dot/>'.repeat(d.dots)}${tuple}${options.staff?`<staff>${options.staff}</staff>`:''}${markings.length ? `<notations>${markings.join('')}</notations>` : ''}</note>`;
     }
     const firstSymbols = groups.slice(0, groups.findIndex(g => /^(note|rest)_/.test(g[0].rhythm))).flat();
     clef = firstSymbols.find(s => s.rhythm.startsWith('clef_'))?.rhythm.slice(5) || clef;
-    fifths = Number(firstSymbols.find(s => s.rhythm.startsWith('keySignature_'))?.rhythm.split('_')[1] || 0);
-    meter = Number(firstSymbols.find(s => s.rhythm.startsWith('timeSignature/'))?.rhythm.split('/')[1] || 4);
+    fifths = Number(firstSymbols.find(s => s.rhythm.startsWith('keySignature_'))?.rhythm.split('_')[1] ?? fifths);
+    meter = Number(firstSymbols.find(s => s.rhythm.startsWith('timeSignature/'))?.rhythm.split('/')[1] ?? meter);
     if (!/^[GFC][1-5]$/.test(clef)) throw new Error('Tablature is not supported. Use a score with a five-line staff.');
-    body = attributes(`<key><fifths>${fifths}</fifths></key><time><beats>${Math.max(1, Math.round(typicalBeats * meter / 4))}</beats><beat-type>${meter}</beat-type></time><clef><sign>${clef[0]}</sign><line>${clef[1]}</line></clef>`);
+    const initial=(first||fifths!==previous.fifths?`<key${staffNumber}><fifths>${fifths}</fifths></key>`:'')+
+      (first||meter!==previous.meter?`<time><beats>${Math.max(1, Math.round(typicalBeats * meter / 4))}</beats><beat-type>${meter}</beat-type></time>`:'')+
+      (first||clef!==previous.clef?`<clef${staffNumber}><sign>${clef[0]}</sign><line>${clef[1]}</line></clef>`:'');
+    body=initial?attributes(initial):'';
     for (const symbols of groups) {
       const rhythm = symbols[0].rhythm;
       if (/^(note|rest)_/.test(rhythm)) {
@@ -102,7 +114,7 @@
         for (const notes of layers) {
           move(position);
           notes.forEach(({ symbol, d }, i) => { body += makeNote(symbol, d, i > 0, voice); if (symbol.rhythm.startsWith('note')) noteCount++; });
-          cursor = position + notes[0].d.beats; voice++;
+          cursor = position + notes[0].d.beats; extent=Math.max(extent,cursor); voice++;
         }
         position += Math.min(...layers.map(notes => notes[0].d.beats));
         hasNotes = true;
@@ -117,17 +129,43 @@
       else if (rhythm.startsWith('clef_') && rhythm.slice(5) !== clef) {
         clef = rhythm.slice(5);
         if (!/^[GFC][1-5]$/.test(clef)) throw new Error('This clef is not supported. Open MusicXML for this score instead.');
-        body += `<attributes><clef><sign>${clef[0]}</sign><line>${clef[1]}</line></clef></attributes>`;
+        body += `<attributes><clef${staffNumber}><sign>${clef[0]}</sign><line>${clef[1]}</line></clef></attributes>`;
       } else if (rhythm.startsWith('keySignature_') && Number(rhythm.split('_')[1]) !== fifths) {
-        fifths = Number(rhythm.split('_')[1]); body += `<attributes><key><fifths>${fifths}</fifths></key></attributes>`;
+        fifths = Number(rhythm.split('_')[1]); body += `<attributes><key${staffNumber}><fifths>${fifths}</fifths></key></attributes>`;
       } else if (rhythm.startsWith('timeSignature/') && Number(rhythm.split('/')[1]) !== meter) {
         meter = Number(rhythm.split('/')[1]); body += `<attributes><time><beats>${Math.max(1, Math.round(typicalBeats * meter / 4))}</beats><beat-type>${meter}</beat-type></time></attributes>`;
       } else if (rhythm.startsWith('volta')) warnings.add('Repeat endings need manual correction in a notation editor.');
     }
     flush();
+    return {measures,warnings:[...warnings],noteCount,context:{clef,fifths,meter}};
+  }
+  function convert(lines, title = 'Scanned sheet') {
+    const result=compile(lines),{warnings,noteCount}=result;
     if (!noteCount) throw new Error('No pitched notes were recognized. Try a clearer photo.');
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<score-partwise version="4.0"><work><work-title>${escape(title)}</work-title></work><identification><encoding><software>Sheet Music Practice / HOMR</software></encoding></identification><part-list><score-part id="P1"><part-name>Scanned music</part-name></score-part></part-list><part id="P1">${measures.join('\n')}</part></score-partwise>`;
+    const first=result.measures[0],pickup=first.length>0&&first.length<first.meter-1e-7&&result.measures.slice(1).some(m=>m.length>=m.meter-1e-7);
+    const xml=documentXML(title,result.measures.map((m,i)=>`<measure number="${m.number}"${i===0&&pickup?' implicit="yes"':''}>${m.body}</measure>`).join('\n'));
     return { xml, warnings: [...warnings], noteCount };
   }
-  return { convert, duration, group };
+  function convertGrandStaff(systems, title = 'Scanned sheet') {
+    if(!systems.length||systems.some(s=>s.length!==2))throw new Error('Grand staff recognition needs an upper and lower staff in every row. Choose individual staves or crop to complete pairs.');
+    const {division,typicalBeats}=analyze(systems.flat()),measures=[],spans=[],warnings=new Set();
+    let contexts=[{clef:'G2'},{clef:'F4'}],noteCount=0;
+    systems.forEach((system,row)=>{
+      const pair=system.map((symbols,i)=>compile([symbols],{staff:i+1,division,typicalBeats,context:contexts[i],continuation:row>0}));
+      if(pair[0].measures.length!==pair[1].measures.length)throw new Error(`The two staves in row ${row+1} have different recognized bar counts. Try a clearer crop of that row or recognize one staff at a time.`);
+      pair.forEach((staff,i)=>{contexts[i]=staff.context;noteCount+=staff.noteCount;staff.warnings.forEach(w=>warnings.add(w));});
+      pair[0].measures.forEach((upper,i)=>{
+        const lower=pair[1].measures[i],rewind=Math.round(upper.cursor*division);
+        spans.push({length:Math.max(upper.length,lower.length),meter:Math.max(upper.meter,lower.meter),aligned:Math.abs(upper.length-lower.length)<1e-7});
+        const start=!measures.length?`<attributes><divisions>${division}</divisions><staves>2</staves><part-symbol top-staff="1" bottom-staff="2">brace</part-symbol></attributes>`:'';
+        const line=row&&i===0?'<print new-system="yes"/>':'';
+        measures.push(`<measure number="${measures.length+1}">${line}${start}${upper.body}${rewind?`<backup><duration>${rewind}</duration></backup>`:''}${lower.body}</measure>`);
+      });
+    });
+    if(!noteCount)throw new Error('No pitched notes were recognized. Try a clearer photo.');
+    const first=spans[0];
+    if(first.aligned&&first.length>0&&first.length<first.meter-1e-7&&spans.slice(1).some(m=>m.length>=m.meter-1e-7))measures[0]=measures[0].replace('<measure number="1">','<measure number="1" implicit="yes">');
+    return {xml:documentXML(title,measures.join('\n')),warnings:[...warnings],noteCount};
+  }
+  return { convert, convertGrandStaff, duration, group };
 });

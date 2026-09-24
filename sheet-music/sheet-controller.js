@@ -30,15 +30,16 @@
     if (revision !== state.revision) return;
     const candidate = document.createElement('div');
     const renderer = ScoreEngraver.create(candidate);
-    try { await renderer.load(new DOMParser().parseFromString(xml,'application/xml')); }
+    try { await ScoreEngraver.loadScore(renderer,new DOMParser().parseFromString(xml,'application/xml')); }
     catch { renderer.clear(); throw new Error('This score could not be displayed. Try exporting it as uncompressed MusicXML from a notation editor.'); }
     if (revision !== state.revision) { renderer.clear(); return; }
     // Finish rendering before replacing the current score. Failed edits leave
     // the previous score and export available.
     const stage = document.createElement('div');
-    stage.setAttribute('style', `position:fixed;left:-100000px;top:0;visibility:hidden;width:${$('score-render').clientWidth || document.getElementById('sheet-music').clientWidth || 900}px`);
+    const availableWidth=$('score-render').clientWidth || document.getElementById('sheet-music').clientWidth || 900;
+    stage.setAttribute('style', `position:fixed;left:-100000px;top:0;visibility:hidden;width:${availableWidth}px`);
     document.body.append(stage); stage.append(candidate);
-    try { renderer.render(); }
+    try { ScoreEngraver.fitToWidth(renderer,availableWidth); }
     catch { renderer.clear(); stage.remove(); throw new Error('This score could not be rendered. Try another MusicXML file or a clearer photo.'); }
     clearScore();
     $('score-render').replaceChildren(candidate); stage.remove();
@@ -50,7 +51,7 @@
     message('score-status', '');
     return true;
   }
-  const player = SheetPlayer.mount();
+  const player = SheetPlayer.mount({onRangeChange(range){if(state.renderer)ScoreEngraver.markPlaybackRange(state.renderer,$('score-render'),range);}});
   const editor = ScoreEditor.mount({
     async apply(xml) {
       stopRecognition();
@@ -83,7 +84,7 @@
       const context = canvas.getContext('2d', { willReadFrequently: true });
       context.drawImage(bitmap, 0, 0); bitmap.close();
       const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
-      const worker = new Worker('./omr-worker.js'); state.worker = worker;
+      const worker = new Worker('./omr-worker.js?v=e38d2011facd'); state.worker = worker;
       const fail = text => { if (revision !== state.revision) return; stopRecognition(); message('score-status', ''); message('score-error', text); };
       worker.onerror = () => fail('Recognition could not start in this browser. Try a current browser, or open a MusicXML score.');
       worker.onmessage = async ({ data }) => {
@@ -91,16 +92,15 @@
         if (data.type === 'progress') message('score-status', data.text);
         if (data.type === 'staves') {
           const value = $('recognition-line').value;
-          $('recognition-line').replaceChildren(...Array.from({ length: data.count + 1 }, (_, i) => {
-            const option = document.createElement('option'); option.value = i ? String(i - 1) : 'all'; option.textContent = i ? `Staff line ${i}` : 'All lines, top to bottom'; return option;
-          }));
-          $('recognition-line').value = value;
+          const choices=[['all','All staves · auto layout'],['grand','Grand staff · paired rows'],['sequential','Single-staff rows in sequence'],...Array.from({length:data.count},(_,i)=>[String(i),`Staff ${i+1} only`])];
+          $('recognition-line').replaceChildren(...choices.map(([value,label])=>new Option(label,value)));
+          $('recognition-line').value = choices.some(([v])=>v===value)?value:'all';
         }
         if (data.type === 'error') fail(data.message);
         if (data.type === 'result') {
           worker.terminate(); state.worker = null;
           message('score-status', 'Drawing the recognized score…');
-          try { await loadScore(data.xml, data.warnings, revision); }
+          try { if(await loadScore(data.xml, data.warnings, revision))message('score-status',data.summary||''); }
           catch (error) { fail(error.message); }
           if (revision === state.revision) { $('recognize').disabled = false; $('recognition-cancel').hidden = true; }
         }
@@ -118,7 +118,7 @@
     message('score-error', ''); message('score-status', '');
     displayUI();
     if (state.photo) {
-      $('recognition-line').replaceChildren(new Option('All lines, top to bottom', 'all'));
+      $('recognition-line').replaceChildren(new Option('All staves · auto layout', 'all'));
       convertPhoto();
     }
   });
@@ -160,6 +160,6 @@
     const nextWidth = Math.round(entries[0].contentRect.width);
     if (!state.renderer || $('score-scroll').hidden || nextWidth === width || nextWidth < 1) return;
     width = nextWidth; cancelAnimationFrame(resizeFrame);
-    resizeFrame = requestAnimationFrame(() => { if (state.renderer) { state.renderer.render(); state.renderer.cursor.hide(); } });
+    resizeFrame = requestAnimationFrame(() => { if (state.renderer) { ScoreEngraver.fitToWidth(state.renderer,nextWidth); state.renderer.cursor.hide();player.refreshRange(); } });
   }).observe($('score-render'));
 })();
