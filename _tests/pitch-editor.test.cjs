@@ -65,6 +65,32 @@ test('staff clef changes leave the other staff intact and preserve unedited nota
   d.pitch(0,0,1,0,{step:'F',alter:0,octave:3});assert.match(d.xml(),/<staccato\/>/);
   assert.equal(read(d.xml()).lanes[1].events[0].notes[0].midi,51);
 });
+test('clefs change at a selected beat and back without changing earlier notes, the other staff or playback',()=>{
+  const {template}=require('../sheet-music/score-editor-model.js'),d=edit(template('piano'));
+  for(let beat=0;beat<4;beat++){
+    d.place(0,0,beat,{pitch:{step:'C',alter:0,octave:4}});
+    d.place(0,0,beat,{staff:'2',voice:'2',pitch:{step:'C',alter:0,octave:3}});
+  }
+  const before=d.xml(),treble=d.playback(0,'1','1'),bass=d.playback(0,'2','2');
+  d.changeClef(0,0,'1',1,'bass');d.changeClef(0,0,'1',3,'treble');
+  assert.deepEqual([0,1,2,3].map(beat=>d.context(0,0,'1',beat).clef),['treble','bass','bass','treble']);
+  assert.equal(d.context(0,1,'1',0).clef,'treble');
+  assert.deepEqual([0,1,2,3].map(beat=>d.context(0,0,'2',beat).clef),['bass','bass','bass','bass']);
+  assert.deepEqual(d.playback(0,'1','1'),treble);assert.deepEqual(d.playback(0,'2','2'),bass);
+  const saved=d.xml();d.undo();assert.equal(d.context(0,0,'1',3).clef,'bass');d.undo();assert.equal(d.xml(),before);
+  d.redo();d.redo();assert.equal(d.xml(),saved);
+  const reopened=edit(saved);assert.equal(reopened.context(0,0,'1',2).clef,'bass');assert.equal(reopened.context(0,0,'1',3).clef,'treble');
+  // Replacing a clef at the same beat updates that point rather than adding
+  // conflicting symbols. Later changes remain in place.
+  reopened.changeClef(0,0,'1',1,'treble');
+  assert.equal(reopened.context(0,0,'1',2).clef,'treble');
+  assert.equal(new DOMParser().parseFromString(reopened.xml(),'application/xml').getElementsByTagName('clef').length,4);
+});
+test('mid-measure attributes use musical time when a later XML voice goes back to an earlier beat',()=>{
+  const original=score(`<measure number="1"><attributes><divisions>4</divisions><clef><sign>G</sign><line>2</line></clef></attributes>${note('C','<voice>1</voice>',8)}<attributes><clef><sign>F</sign><line>4</line></clef></attributes>${note('D','<voice>1</voice>',8)}<backup><duration>16</duration></backup>${note('G','<voice>2</voice>')}<attributes><clef><sign>G</sign><line>2</line></clef></attributes>${note('A','<voice>2</voice>',12)}</measure>`);
+  const d=edit(original);
+  assert.equal(d.context(0,0,'1',1).clef,'treble');assert.equal(d.context(0,0,'1',2).clef,'bass');assert.equal(d.context(0,0).clef,'bass');
+});
 
 test('unsupported rhythm edits and invalid pitches roll back without consuming undo', () => {
   const d=edit(score(`<measure number="1">${note('C','<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>')}</measure>`));

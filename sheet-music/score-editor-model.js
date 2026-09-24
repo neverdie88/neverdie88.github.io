@@ -10,6 +10,7 @@
   const text = (node, name, fallback = '') => child(node, name)?.textContent.trim() || fallback;
   const number = (node, name, fallback = 0) => Number(text(node, name, String(fallback)));
   const TYPES = { whole: 4, half: 2, quarter: 1, eighth: .5, '16th': .25, '32nd': .125, '64th': .0625, '128th': .03125 };
+  const MEASURES_PER_LINE = 4;
   const ORDER = ['grace','cue','chord','pitch','unpitched','rest','duration','tie','instrument','footnote','level','voice','type','dot','accidental','time-modification','stem','notehead','notehead-text','staff','beam','notations','lyric','play','listen'];
   const blank = () => '<?xml version="1.0" encoding="UTF-8"?><score-partwise version="4.0"><work><work-title>New sheet</work-title></work><part-list><score-part id="P1"><part-name>Practice</part-name></score-part></part-list><part id="P1"><measure number="1"><attributes><divisions>16</divisions><key><fifths>0</fifths><mode>major</mode></key><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes><note><rest/><duration>64</duration><type>whole</type></note></measure></part></score-partwise>';
   function create(xml = blank(), Parser = globalThis.DOMParser, Serializer = globalThis.XMLSerializer) {
@@ -44,10 +45,27 @@
       const after = serialize();
       if (after !== before) { undo.push(before); if (undo.length > 50) undo.shift(); redo = []; }
     }
-    function context(part, measure, staff = '1') {
+    function attributeEvents(measure, divisions) {
+      let beat=0;
+      const events=[];
+      for(const node of children(measure)){
+        if(node.localName==='attributes'){
+          events.push({node,beat});
+          if(child(node,'divisions'))divisions=number(node,'divisions',1);
+        }
+        if(node.localName==='backup')beat-=number(node,'duration')/divisions;
+        if(node.localName==='forward'||node.localName==='note'&&!child(node,'chord')&&!child(node,'grace'))beat+=number(node,'duration')/divisions;
+      }
+      return events.sort((a,b)=>a.beat-b.beat);
+    }
+    function context(part, measure, staff = '1', beat = Infinity) {
       const result = { divisions: 1, fifths: 0, mode: 'major', beats: '4', beatType: '4', clef: 'treble', transpose: 0 };
-      for (const m of measures(part).slice(0, measure + 1)) {
-        for (const a of children(m, 'attributes')) {
+      for (const [index,m] of measures(part).slice(0, measure + 1).entries()) {
+        for (const event of attributeEvents(m,result.divisions)) {
+          // Attributes affect score time, including voices encoded after a
+          // backup. A mid-measure clef must not affect earlier notes.
+          if(index===measure&&event.beat>beat+1e-7)continue;
+          const a=event.node;
           if (child(a, 'divisions')) result.divisions = number(a, 'divisions', 1);
           const transpose=children(a,'transpose').filter(n=>!n.getAttribute('number') || n.getAttribute('number')===staff).at(-1);
           if(transpose)result.transpose=number(transpose,'chromatic')+12*number(transpose,'octave-change');
@@ -60,6 +78,25 @@
         }
       }
       return result;
+    }
+    function setClef(part, measure, staff, beat, value) {
+      if(!['treble','bass'].includes(value))throw new Error('Choose treble or bass clef.');
+      const m=measures(part)[measure];
+      if(!m||!Number.isFinite(beat)||beat<0)throw new Error('Choose a note, rest or measure for the clef change.');
+      const events=attributeEvents(m,measure?context(part,measure-1).divisions:1).filter(e=>Math.abs(e.beat-beat)<1e-7);
+      let attributes=events[0]?.node;
+      if(!attributes){
+        const before=beat===0?children(m).find(n=>!['print','barline'].includes(n.localName)):groups(part,measure).find(g=>g.staff===staff&&Math.abs(g.beat-beat)<1e-7)?.nodes[0];
+        if(beat>0&&!before)throw new Error('Select a note or rest where the clef should change.');
+        attributes=make('attributes');m.insertBefore(attributes,before||null);
+      }
+      for(const {node} of events){
+        for(const clef of children(node,'clef'))if((clef.getAttribute('number')||'1')===staff)remove(clef);
+        if(node!==attributes&&!children(node).length)remove(node);
+      }
+      const clef=make('clef');if(staff!=='1')clef.setAttribute('number',staff);
+      put(clef,'sign',value==='bass'?'F':'G');put(clef,'line',value==='bass'?4:2);
+      attributes.insertBefore(clef,children(attributes).find(n=>['staff-details','transpose','for-part','directive','measure-style'].includes(n.localName))||null);
     }
     function groups(part, measure) {
       const m = measures(part)[measure]; if (!m) throw new Error('Select an existing measure.');
@@ -156,6 +193,11 @@
     const api = {
       xml: serialize,
       context,
+      contexts(part, measure, staff='1') {
+        const events=attributeEvents(measures(part)[measure],measure?context(part,measure-1).divisions:1);
+        return [...new Set([0,...events.map(e=>e.beat)])].sort((a,b)=>a-b).map(beat=>({beat,ctx:context(part,measure,staff,beat)}));
+      },
+      changeClef(part, measure, staff, beat, value) { change(()=>setClef(part,measure,staff,beat,value)); },
       transaction(action) { change(() => { changeDepth++; try { action(); } finally { changeDepth--; } }); },
       lanes(part=0) {
         const lanes=new Map();
@@ -278,6 +320,20 @@
         });
         parts()[part].appendChild(m);
       }); },
+      addLine(part=0) {
+        if(!parts()[part])throw new Error('Choose a score part.');
+        const start=Math.max(...parts().map((_,index)=>measures(index).length));
+        api.transaction(()=>{
+          // A system spans every part. Keep imported scores aligned as well as
+          // the two staves of a piano part, and undo the whole row in one step.
+          parts().forEach((_,index)=>{
+            while(measures(index).length<start+MEASURES_PER_LINE)api.addMeasure(index);
+            const first=measures(index)[start],line=make('print');
+            line.setAttribute('new-system','yes');first.insertBefore(line,first.firstChild);
+          });
+        });
+        return start;
+      },
       settings(part, measure, values) { change(() => {
         const m=measures(part)[measure]; let a=children(m).find(n=>!['print','barline'].includes(n.localName)); if(a?.localName!=='attributes') { a=make('attributes'); m.insertBefore(a,m.firstChild); }
         if(values.key !== undefined) {
@@ -300,7 +356,7 @@
           put(k,'fifths',Number(fifths));put(k,'mode',mode);
         }
         if(values.time !== undefined) { if(!/^[1-9]\d*(?:\+[1-9]\d*)*\/(2|4|8|16)$/.test(values.time)) throw new Error('Choose a time signature.'); let t=child(a,'time'); if(!t){t=make('time');a.insertBefore(t,children(a).find(n=>!['footnote','level','divisions','key'].includes(n.localName))||null);} while(t.firstChild)t.removeChild(t.firstChild); const [beats,unit]=values.time.split('/');put(t,'beats',beats);put(t,'beat-type',unit); }
-        if(values.clef !== undefined) { if(!['treble','bass'].includes(values.clef)) throw new Error('Choose treble or bass clef.'); const staff=values.staff || '1'; let c=children(a,'clef').find(n=>(n.getAttribute('number')||'1')===staff); if(!c){c=make('clef'); if(staff!=='1')c.setAttribute('number',staff);a.insertBefore(c,children(a).find(n=>['staff-details','transpose','directive','measure-style'].includes(n.localName))||null);} put(c,'sign',values.clef==='bass'?'F':'G');put(c,'line',values.clef==='bass'?4:2); }
+        if(values.clef !== undefined)setClef(part,measure,values.staff||'1',0,values.clef);
       }); }
     };
     // Compare canonical XML so opening the editor alone is not a change.
@@ -313,7 +369,7 @@
     if(kind!=='piano')throw new Error('Choose a piano, treble or bass score.');
     const rest=staff=>`<note><rest measure="yes"/><duration>64</duration><voice>${staff}</voice><staff>${staff}</staff></note>`;
     const attributes='<attributes><divisions>16</divisions><key><fifths>0</fifths><mode>major</mode></key><time><beats>4</beats><beat-type>4</beat-type></time><staves>2</staves><clef number="1"><sign>G</sign><line>2</line></clef><clef number="2"><sign>F</sign><line>4</line></clef></attributes>';
-    return `<?xml version="1.0" encoding="UTF-8"?><score-partwise version="4.0"><work><work-title>Untitled piano score</work-title></work><part-list><score-part id="P1"><part-name>Piano</part-name><score-instrument id="P1-I1"><instrument-name>Grand Piano</instrument-name></score-instrument><midi-instrument id="P1-I1"><midi-channel>1</midi-channel><midi-program>1</midi-program></midi-instrument></score-part></part-list><part id="P1">${Array.from({length:4},(_,i)=>`<measure number="${i+1}">${i===0?attributes:''}${rest('1')}<backup><duration>64</duration></backup>${rest('2')}</measure>`).join('')}</part></score-partwise>`;
+    return `<?xml version="1.0" encoding="UTF-8"?><score-partwise version="4.0"><work><work-title>Untitled piano score</work-title></work><part-list><score-part id="P1"><part-name>Piano</part-name><score-instrument id="P1-I1"><instrument-name>Grand Piano</instrument-name></score-instrument><midi-instrument id="P1-I1"><midi-channel>1</midi-channel><midi-program>1</midi-program></midi-instrument></score-part></part-list><part id="P1">${Array.from({length:MEASURES_PER_LINE*2},(_,i)=>`<measure number="${i+1}">${i===0?attributes:i===MEASURES_PER_LINE?'<print new-system="yes"/>':''}${rest('1')}<backup><duration>64</duration></backup>${rest('2')}</measure>`).join('')}</part></score-partwise>`;
   }
   return { create, blank, template, TYPES };
 });

@@ -23,13 +23,14 @@ globalThis.ScoreEditor = {
       if(!draft) return;
       const initial=draft.inspect(0,0);part=Math.min(part,initial.parts.length-1);measure=Math.min(measure,initial.parts[part].measures.length-1);
       const snapshot=draft.inspect(part,measure);selected=Math.max(-1,Math.min(selected,snapshot.groups.length-1));
-      const group=snapshot.groups[selected],ctx=draft.context(part,measure,group?.staff || composer.currentLane?.().staff || '1');
+      const group=snapshot.groups[selected],staff=group?.staff || composer.currentLane?.().staff || '1',beat=group?.beat||0,ctx=draft.context(part,measure,staff,beat);
       selectedTone=Math.max(0,Math.min(selectedTone,(group?.notes.length||1)-1));
       $('title').value=snapshot.title;
       if($('document-title'))$('document-title').textContent=snapshot.title;
       $('part').replaceChildren(...snapshot.parts.map((p,i)=>option(i,p.name)));$('part').value=String(part);
       $('measure').replaceChildren(...snapshot.parts[part].measures.map((m,i)=>option(i,m)));$('measure').value=String(measure);
       $('clef').value=ctx.clef;$('key').value=`${ctx.mode}:${ctx.fifths}`;
+      $('clef-position').textContent=`From measure ${snapshot.parts[part].measures[measure]}, beat ${+(beat+1).toFixed(3)} · staff ${staff}. Select a later note to change back.`;
       const meter=`${ctx.beats}/${ctx.beatType}`;
       if(!Array.from($('time').options).some(o=>o.value===meter))$('time').append(option(meter,meter));$('time').value=meter;
       $('undo').disabled=!draft.canUndo;$('redo').disabled=!draft.canRedo;
@@ -48,10 +49,11 @@ globalThis.ScoreEditor = {
     $('title').addEventListener('change',()=>mutate(()=>draft.title($('title').value)));
     $('part').addEventListener('change',()=>{composer.stop();part=Number($('part').value);measure=selectedTone=0;selected=-1;composer.clearSelection?.();render();});
     $('measure').addEventListener('change',()=>{composer.stop();measure=Number($('measure').value);selected=-1;selectedTone=0;composer.clearSelection?.();render();composer.reveal?.(measure);});
-    $('clef').addEventListener('change',()=>mutate(()=>draft.settings(part,measure,{clef:$('clef').value,staff:draft.inspect(part,measure).groups[selected]?.staff || composer.currentLane?.().staff || '1'})));
+    $('clef').addEventListener('change',()=>mutate(()=>{const group=draft.inspect(part,measure).groups[selected];draft.changeClef(part,measure,group?.staff || composer.currentLane?.().staff || '1',group?.beat||0,$('clef').value);}));
     $('key').addEventListener('change',()=>mutate(()=>draft.settings(part,measure,{key:$('key').value,staff:composer.currentLane?.().staff || '1'})));
     $('time').addEventListener('change',()=>mutate(()=>draft.settings(part,measure,{time:$('time').value})));
     $('add-measure').addEventListener('click',()=>{mutate(()=>{draft.addMeasure(part);measure=draft.inspect(part,measure).parts[part].measures.length-1;selected=-1;composer.clearSelection?.();});composer.reveal?.(measure);});
+    $('add-line').addEventListener('click',()=>{mutate(()=>{measure=draft.addLine(part);selected=-1;selectedTone=0;composer.clearSelection?.();});composer.reveal?.(measure);});
     $('undo').addEventListener('click',()=>mutate(()=>{draft.undo();composer.clearSelection?.();}));$('redo').addEventListener('click',()=>mutate(()=>{draft.redo();composer.clearSelection?.();}));
     $('cancel').addEventListener('click',close);
     $('dialog').addEventListener('cancel',event=>{event.preventDefault();composer.exitInput?.();});

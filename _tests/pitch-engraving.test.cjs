@@ -21,7 +21,7 @@ test('edit and applied views use identical engraving, with beams and two piano s
   const a=await fixture(t,model.template('piano'));
   for(let i=0;i<8;i++)a.draft.place(0,0,i/2,{type:'eighth',pitch:{step:'CDEFGABC'[i],octave:i===7?5:4,alter:0}});
   a.draw();await a.ready();
-  assert.equal(a.geometry.bars.length,8,'empty measures remain individually editable');
+  assert.equal(a.geometry.bars.length,16,'empty measures remain individually editable');
   assert.ok(a.svg.querySelector('.vf-beam'));
   assert.equal(a.svg.querySelectorAll('.vf-modifiers path').length,0,'natural pitches do not get redundant natural signs');
   const host=a.win.document.createElement('div');a.win.document.body.append(host);
@@ -32,6 +32,17 @@ test('edit and applied views use identical engraving, with beams and two piano s
   a.draft.place(0,1,0,{pitch:{step:'C',octave:4,alter:0}});a.draw();await a.ready();
   assert.equal(host.innerHTML,applied,'editor SVG ids never interfere with the applied score');
   renderer.clear();
+});
+test('new grand-staff scores have two rows and an added line stays separate at wide widths',async t=>{
+  const a=await fixture(t,model.template('piano'),1600);
+  assert.equal(new Set(a.geometry.bars.map(b=>b.row)).size,2);
+  a.draft.addLine(0);a.draw();await a.ready();
+  assert.equal(new Set(a.geometry.bars.map(b=>b.row)).size,3);
+  for(let row=0;row<3;row++){
+    const bars=a.geometry.bars.filter(b=>b.row===row);
+    assert.equal(bars.length,8);assert.deepEqual([...new Set(bars.map(b=>b.staff))].sort(),['1','2']);
+    for(let m=row*4;m<row*4+4;m++)assert.equal(bars.filter(b=>b.measure===m).length,2);
+  }
 });
 test('each displaced chord head is clickable at its actual ink position',async t=>{
   const a=await fixture(t),index=a.draft.place(0,0,0,{pitch:{step:'G',octave:4,alter:0},type:'eighth'});
@@ -49,6 +60,20 @@ test('each displaced chord head is clickable at its actual ink position',async t
       assert.ok(Math.abs(note.y-(top+bottom)/2)<1);
       assert.equal(a.win.ComposerStaff.hit(a.geometry,note.x,note.y).tone,note.tone);
     }
+  }
+});
+test('notes and input targets follow treble-bass-treble clefs within one measure',async t=>{
+  const a=await fixture(t);
+  for(let beat=0;beat<4;beat++)a.draft.place(0,0,beat,{pitch:{step:'C',octave:4,alter:0}});
+  a.draft.changeClef(0,0,'1',1,'bass');a.draft.changeClef(0,0,'1',3,'treble');a.draw();await a.ready();
+  const notes=a.geometry.hits.filter(h=>!h.rest);
+  for(const [index,hit] of notes.entries()){
+    const clef=index===1||index===2?'bass':'treble';
+    assert.equal(hit.ctx.clef,clef);
+    assert.ok(Math.abs(hit.y-(hit.bar.bottom-a.win.ComposerStaff.stepOf(hit.note,clef)*hit.bar.halfGap))<1);
+    const target=a.win.ComposerStaff.target(a.geometry,hit.x,hit.y);
+    assert.equal(target.ctx.clef,clef);assert.equal(target.pitch.midi,60);
+    assert.equal(a.win.ComposerStaff.pitchAt(hit.y-5,hit.bar,a.geometry,'key',hit.group.beat).midi,62);
   }
 });
 test('wrapped systems map clicks and box selection to engraved measures and bass pitches',async t=>{

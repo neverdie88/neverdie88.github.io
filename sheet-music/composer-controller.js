@@ -65,7 +65,7 @@ globalThis.ScoreComposer={
     $('accidental').addEventListener('change',()=>{
       inputAccidental=$('accidental').value;
       const {d,s,g}=selected();if(!g||g.rest||tool==='multi'||keyboardEntry)return;
-      const note=g.notes[s.tone]||g.notes[0],choice=$('accidental').value,fifths=d.context(s.part,s.measure,g.staff).fifths;
+      const note=g.notes[s.tone]||g.notes[0],choice=$('accidental').value,fifths=d.context(s.part,s.measure,g.staff,g.beat).fifths;
       const alter=choice==='key'?((fifths<0?'BEADGCF':'FCGDAEB').slice(0,Math.abs(fifths)).includes(note.step)?Math.sign(fifths):0):Number(choice);
       mutate(()=>d.pitch(s.part,s.measure,s.index,s.tone,{...note,alter}));
     });
@@ -125,8 +125,9 @@ globalThis.ScoreComposer={
     function ghost(p){
       svg.querySelector('[data-composer-ghost]')?.remove();const target=locate(p);if(!target)return;
       const g=document.createElementNS(svg.namespaceURI,'g');g.dataset.composerGhost='true';g.setAttribute('pointer-events','none');
-      const bar=gesture?.hit?.bar||target.bar,pitch=ComposerStaff.pitchAt(p.y,bar,geometry,gesture?.hit?$('accidental').value:inputAccidental);
-      const x=gesture?.hit&&!gesture.hit.rest?gesture.hit.x:target.x,y=bar.bottom-ComposerStaff.stepOf(pitch,bar.ctx.clef)*(bar.halfGap||geometry.halfGap);
+      const bar=gesture?.hit?.bar||target.bar,beat=gesture?.hit?.group.beat??target.beat,ctx=ComposerStaff.contextAt(bar,beat);
+      const pitch=ComposerStaff.pitchAt(p.y,bar,geometry,gesture?.hit?$('accidental').value:inputAccidental,beat);
+      const x=gesture?.hit&&!gesture.hit.rest?gesture.hit.x:target.x,y=bar.bottom-ComposerStaff.stepOf(pitch,ctx.clef)*(bar.halfGap||geometry.halfGap);
       const head=document.createElementNS(svg.namespaceURI,'path'),glyph=ViolinMusicGlyphs.noteheadBlack,scale=10/ViolinMusicGlyphs.staffSpace;
       for(const [k,v] of Object.entries({d:glyph.path,transform:`translate(${x-glyph.width*scale/2} ${y}) scale(${scale} ${-scale})`,fill:'#1479dd',opacity:.6}))head.setAttribute(k,v);g.append(head);svg.append(g);
       $('hint').textContent=`${pitch.step}${pitch.alter>0?'♯':pitch.alter<0?'♭':''}${pitch.octave} · measure ${bar.number}, beat ${+(target.beat+1).toFixed(3)}`;
@@ -172,8 +173,8 @@ globalThis.ScoreComposer={
       if(!target)return;
       if(action.moved){
         if(action.hit&&!action.hit.rest&&['select','note'].includes(tool)) {
-          if(!['treble','bass'].includes(action.hit.bar.ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}
-          const value=ComposerStaff.pitchAt(p.y,action.hit.bar,geometry,$('accidental').value);
+          if(!['treble','bass'].includes(action.hit.ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}
+          const value=ComposerStaff.pitchAt(p.y,action.hit.bar,geometry,$('accidental').value,action.hit.group.beat);
           mutate(()=>d.pitch(s.part,action.hit.measure,action.hit.index,action.hit.tone,value));
         }
         return;
@@ -181,7 +182,7 @@ globalThis.ScoreComposer={
       if(tool==='erase'){if(action.hit)erase(action.hit);return;}
       if(tool==='select')return;
       if(tool==='chord'){
-        if(!['treble','bass'].includes(target.bar.ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}
+        if(!['treble','bass'].includes(target.ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}
         const column=geometry.hits.filter(n=>n.measure===target.measure&&n.staff===lane.staff&&n.voice===lane.voice&&!n.rest&&Math.abs(n.column-p.x)<20).sort((a,b)=>Math.abs(a.column-p.x)-Math.abs(b.column-p.x))[0];
         if(!column){$('hint').textContent='Tap above or below an existing note to build a chord.';return;}
         const g=d.inspect(s.part,column.measure).groups[column.index];
@@ -189,12 +190,12 @@ globalThis.ScoreComposer={
         mutate(()=>{d.addTone(s.part,column.measure,column.index,target.pitch);select({measure:column.measure,index:column.index,tone:g.notes.length},false);});return;
       }
       if(action.hit&&!action.hit.rest){if(tool==='rest')mutate(()=>d.rest(s.part,action.hit.measure,action.hit.index,true));return;}
-      if(!['treble','bass'].includes(target.bar.ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}
+      if(!['treble','bass'].includes(target.ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}
       const input={type,dots:Number($('input-dots').value),pitch:tool==='rest'?null:target.pitch,...lane};
       mutate(()=>{const index=d.place(s.part,target.measure,target.beat,input);select({measure:target.measure,index,tone:0},false);});
     });
     function beginInput(){
-      const {d,s,g}=selected(),ctx=d.context(s.part,s.measure,lane.staff);
+      const {d,s,g}=selected(),ctx=d.context(s.part,s.measure,lane.staff,g?.beat||0);
       const start={measure:s.measure,beat:g?.beat??0},note=g&&!g.rest?(g.notes[s.tone]||g.notes[0]):null;
       lastMidi=note?noteMidi(note):ctx.clef==='bass'?48:60;
       setTool('note');keyboardEntry=true;inputCursor=start;draw();
@@ -205,9 +206,9 @@ globalThis.ScoreComposer={
       const point=chord?{measure:s.measure,beat:g?.beat??0}:{...inputCursor};
       if(chord&&(!g||g.rest)){$('hint').textContent='Select a note before adding a chord tone.';return;}
       if(chord&&!keyboardEntry)lastMidi=noteMidi(g.notes[s.tone]||g.notes[0]);
-      let ctx=d.context(s.part,Math.min(point.measure,d.inspect().parts[s.part].measures.length-1),lane.staff);
+      let ctx=d.context(s.part,Math.min(point.measure,d.inspect().parts[s.part].measures.length-1),lane.staff,point.beat);
       const meter=()=>ctx.beats.split('+').reduce((a,b)=>a+Number(b),0)*4/Number(ctx.beatType);
-      if(!chord&&point.beat>=meter()-1e-7){point.measure++;point.beat=0;ctx=d.context(s.part,Math.min(point.measure,d.inspect().parts[s.part].measures.length-1),lane.staff);}
+      if(!chord&&point.beat>=meter()-1e-7){point.measure++;point.beat=0;ctx=d.context(s.part,Math.min(point.measure,d.inspect().parts[s.part].measures.length-1),lane.staff,0);}
       let pitch=null,midi=lastMidi;
       if(letter){
         const alter=inputAccidental==='key'?((ctx.fifths<0?'BEADGCF':'FCGDAEB').slice(0,Math.abs(ctx.fifths)).includes(letter)?Math.sign(ctx.fifths):0):Number(inputAccidental);
@@ -254,7 +255,7 @@ globalThis.ScoreComposer={
       }
       if(['Delete','Backspace'].includes(event.key)){event.preventDefault();deleteSelected();return;}
       const {d,s,g}=selected();if(!g||tool==='multi')return;
-      if(['ArrowUp','ArrowDown'].includes(event.key)&&!g.rest){event.preventDefault();const ctx=d.context(s.part,s.measure,g.staff);if(!['treble','bass'].includes(ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}const note=g.notes[s.tone]||g.notes[0],step=ComposerStaff.stepOf(note,ctx.clef)+(event.key==='ArrowUp'?1:-1);mutate(()=>d.pitch(s.part,s.measure,s.index,s.tone,ComposerStaff.pitchAt(-step,{bottom:0,halfGap:1,ctx},{halfGap:1},$('accidental').value)));}
+      if(['ArrowUp','ArrowDown'].includes(event.key)&&!g.rest){event.preventDefault();const ctx=d.context(s.part,s.measure,g.staff,g.beat);if(!['treble','bass'].includes(ctx.clef)){$('hint').textContent='Pitch editing supports treble and bass clefs.';return;}const note=g.notes[s.tone]||g.notes[0],step=ComposerStaff.stepOf(note,ctx.clef)+(event.key==='ArrowUp'?1:-1);mutate(()=>d.pitch(s.part,s.measure,s.index,s.tone,ComposerStaff.pitchAt(-step,{bottom:0,halfGap:1,ctx},{halfGap:1},$('accidental').value)));}
     });
     svg.addEventListener('click',event=>{
       if(event.detail!==0)return;const item=event.target.closest('[data-composer-note]');if(!item)return;

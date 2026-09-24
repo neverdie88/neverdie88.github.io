@@ -14,7 +14,7 @@
   }
   const options={backend:'svg',autoResize:false,drawingParameters:'default',drawTitle:false,
     drawComposer:false,drawPartNames:false,drawPartAbbreviations:false,autoBeam:true,
-    followCursor:false,autoGenerateMultipleRestMeasuresFromRestMeasures:false,newPageFromXML:false,stretchLastSystemLine:true,
+    followCursor:false,autoGenerateMultipleRestMeasuresFromRestMeasures:false,newPageFromXML:false,newSystemFromXML:true,stretchLastSystemLine:true,
     cursorsOptions:[{type:0,color:'#43b581',alpha:.35,follow:false}]};
   function create(host){
     const renderer=new root.opensheetmusicdisplay.OpenSheetMusicDisplay(host,{...options});
@@ -35,12 +35,12 @@
       const snapshot=draft.inspect(part,measure);
       for(const graphical of staffs){
         if(!graphical||graphical.ParentStaff.ParentInstrument!==instrument)continue;
-        const staff=String(graphical.ParentStaff.Id),ctx=draft.context(part,measure,staff),v=graphical.getVFStave();
+        const staff=String(graphical.ParentStaff.Id),contexts=draft.contexts(part,measure,staff),ctx=contexts[0].ctx,v=graphical.getVFStave();
         const bottom=v.getYForLine(4),halfGap=(bottom-v.getYForLine(0))/8;
         const groups=snapshot.groups.filter(g=>g.staff===staff),meter=ctx.beats.split('+').reduce((a,b)=>a+Number(b),0)*4/Number(ctx.beatType);
         const beats=Math.max(meter,...groups.map(g=>g.beat+g.duration));
         if(!rows.has(graphical.ParentMusicSystem))rows.set(graphical.ParentMusicSystem,rows.size);
-        const bar={measure,number:snapshot.parts[part].measures[measure],staff,ctx,groups,meter,beats,halfGap,
+        const bar={measure,number:snapshot.parts[part].measures[measure],staff,ctx,contexts,groups,meter,beats,halfGap,
           row:rows.get(graphical.ParentMusicSystem),left:v.getX(),end:v.getX()+v.getWidth(),bottom,
           top:v.getYForLine(0)-30,height:100,points:[],start:v.getNoteStartX()+12};
         const matched=new Map();
@@ -60,8 +60,9 @@
           const id=`${measure}:${group.index}:${tone}`;
           const element=note.getNoteheadSVGs()[index];
           element?.setAttribute('data-engraved-note',id);
-          const hit={measure,index:group.index,tone,staff,voice:group.voice,bar,group,rest:group.rest,note:group.notes[tone],
-            step:group.rest?4:ComposerStaff.stepOf(group.notes[tone],ctx.clef),x,y,column:(vf.getNoteHeadBeginX()+vf.getNoteHeadEndX())/2};
+          const noteContext=ComposerStaff.contextAt(bar,beat);
+          const hit={measure,index:group.index,tone,staff,voice:group.voice,bar,group,ctx:noteContext,rest:group.rest,note:group.notes[tone],
+            step:group.rest?4:ComposerStaff.stepOf(group.notes[tone],noteContext.clef),x,y,column:(vf.getNoteHeadBeginX()+vf.getNoteHeadEndX())/2};
           hits.push(hit);
           if(!(group.rest&&group.duration>=meter)&&!bar.points.some(p=>Math.abs(p.beat-beat)<1e-6))bar.points.push({beat,x:hit.column});
         }

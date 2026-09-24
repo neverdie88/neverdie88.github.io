@@ -60,6 +60,26 @@ test('clicking and dragging on the engraved bass staff edits that staff only',as
   const d=await a.apply();assert.equal(d.playback(0,'1','1').events.length,0);
   assert.deepEqual(Array.from(d.playback(0,'2','2').events,e=>e.midi),[50]);a.dom.window.close();
 });
+test('the clef control switches at the chosen note and back, with correct dragging and export',async()=>{
+  const model=require('../sheet-music/score-editor-model.js'),{DOMParser,XMLSerializer}=require('@xmldom/xmldom');
+  const original=model.create(model.template('piano'),DOMParser,XMLSerializer);
+  for(let beat=0;beat<4;beat++)original.place(0,0,beat,{pitch:{step:'C',octave:4,alter:0}});
+  const a=await fixture(900,original.xml());
+  await a.pick(0,1);await a.change('clef','bass');assert.match(a.$('clef-position').textContent,/measure 1, beat 2 · staff 1/);
+  await a.pick(0,3);await a.change('clef','treble');
+  await a.pick(0,0);assert.equal(a.$('clef').value,'treble');
+  await a.pick(0,1);assert.equal(a.$('clef').value,'bass');await press(a,'ArrowUp');
+  const p=a.point(a.note(0,1));a.pointer('pointerdown',p);a.pointer('pointermove',{x:p.x,y:p.y-5});a.pointer('pointerup',{x:p.x,y:p.y-5});await a.editor.ready();
+  // Measure navigation chooses the start of the measure for a clef change.
+  await a.change('measure',1);await a.change('clef','bass');
+  await a.change('measure',2);await a.change('clef','treble');
+  const d=await a.apply();
+  assert.deepEqual(Array.from(d.playback(0,'1','1').events,e=>e.midi),[60,64,60,60]);
+  assert.equal(d.context(0,0,'2').clef,'bass');assert.equal(d.playback(0,'2','2').events.length,0);
+  assert.equal(d.context(0,1,'1',0).clef,'bass');assert.equal(d.context(0,2,'1',0).clef,'treble');
+  a.editor.open(d.xml());await a.editor.ready();await a.pick(0,1);assert.equal(a.$('clef').value,'bass');
+  await a.pick(0,3);assert.equal(a.$('clef').value,'treble');a.dom.window.close();
+});
 test('staff and voice switching survives stopping playback and edits only the chosen lane',async()=>{
   const {DOMParser,XMLSerializer}=require('@xmldom/xmldom');
   const d=require('../sheet-music/score-editor-model.js').create(undefined,DOMParser,XMLSerializer);
@@ -83,6 +103,21 @@ test('adding a measure reveals its row and the composer can return to the first 
   const a=await fixture(350,undefined,120);for(let i=0;i<5;i++)await a.click('add-measure');
   assert.ok(a.$('canvas-scroll').scrollTop>0);
   await a.change('measure',0);assert.ok(a.$('canvas-scroll').scrollTop<=a.pos(0,0,8).y,'first staff is visible');a.dom.window.close();
+});
+test('Add line reveals a new grand-staff row, supports editing both staves, and survives apply/reopen',async()=>{
+  const model=require('../sheet-music/score-editor-model.js'),a=await fixture(900,model.template('piano'),220);
+  const rows=()=>new Set([...a.svg.querySelectorAll('[data-composer-row]')].map(n=>n.dataset.composerRow));
+  assert.equal(rows().size,2);await a.click('add-line');
+  assert.equal(a.$('measure').value,'8');assert.equal(a.$('measure').options.length,12);assert.equal(rows().size,3);
+  assert.ok(a.$('canvas-scroll').scrollTop>0);
+  await a.click('undo');assert.equal(a.$('measure').options.length,8);assert.equal(rows().size,2);
+  await a.click('redo');assert.equal(a.$('measure').options.length,12);
+  await a.tool('note');await a.length('quarter');await a.tap(a.pos(8,0,-2,'1'));await a.tap(a.pos(8,0,3,'2'));
+  const d=await a.apply();
+  assert.deepEqual(Array.from(d.playback(0,'1','1').events,e=>[e.midi,e.beat]),[[60,32]]);
+  assert.deepEqual(Array.from(d.playback(0,'2','2').events,e=>[e.midi,e.beat]),[[48,32]]);
+  a.editor.open(d.xml());await a.editor.ready();assert.equal(rows().size,3);
+  assert.ok(a.note(8,0));assert.ok(a.note(8,2));a.dom.window.close();
 });
 test('half rests sit above the middle staff line',async()=>{
   const a=await fixture();await a.tool('rest');await a.length('half');await a.tap(a.pos(0,0,4));

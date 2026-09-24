@@ -7,10 +7,34 @@ const edit=xml=>create(xml,DOMParser,XMLSerializer);
 const C4={step:'C',octave:4,alter:0};
 test('piano templates and appended measures preserve independent treble and bass timelines',()=>{
   const {template}=require('../sheet-music/score-editor-model.js'),d=edit(template('piano'));
-  assert.equal(d.inspect().parts[0].measures.length,4);assert.equal(d.lanes().length,2);
-  d.addMeasure(0);assert.deepEqual(d.inspect(0,4).groups.map(g=>[g.staff,g.voice,g.beat,g.duration]),[['1','1',0,4],['2','2',0,4]]);
-  d.place(0,4,0,{pitch:C4,staff:'1',voice:'1'});d.place(0,4,0,{pitch:{step:'C',alter:0,octave:3},staff:'2',voice:'2'});
-  assert.equal(d.playback(0,'1','1').events[0].beat,16);assert.equal(d.playback(0,'2','2').events[0].beat,16);
+  assert.equal(d.inspect().parts[0].measures.length,8);assert.equal(d.lanes().length,2);
+  d.addMeasure(0);assert.deepEqual(d.inspect(0,8).groups.map(g=>[g.staff,g.voice,g.beat,g.duration]),[['1','1',0,4],['2','2',0,4]]);
+  d.place(0,8,0,{pitch:C4,staff:'1',voice:'1'});d.place(0,8,0,{pitch:{step:'C',alter:0,octave:3},staff:'2',voice:'2'});
+  assert.equal(d.playback(0,'1','1').events[0].beat,32);assert.equal(d.playback(0,'2','2').events[0].beat,32);
+});
+test('adding a grand-staff line preserves meter, clefs and both voices with atomic undo',()=>{
+  const {template}=require('../sheet-music/score-editor-model.js'),d=edit(template('piano'));
+  d.settings(0,7,{time:'6/8',key:'major:2'});const before=d.xml();
+  assert.equal(d.addLine(0),8);assert.equal(d.inspect().parts[0].measures.length,12);
+  for(let m=8;m<12;m++){
+    assert.deepEqual(d.inspect(0,m).groups.map(g=>[g.staff,g.voice,g.beat,g.duration,g.rest]),[['1','1',0,3,true],['2','2',0,3,true]]);
+    assert.equal(d.context(0,m,'1').clef,'treble');assert.equal(d.context(0,m,'2').clef,'bass');assert.equal(d.context(0,m).fifths,2);
+  }
+  const after=d.xml();d.undo();assert.equal(d.xml(),before);d.redo();assert.equal(d.xml(),after);
+  const reopened=edit(after),xml=new DOMParser().parseFromString(reopened.xml(),'application/xml');
+  assert.equal(xml.getElementsByTagName('measure')[8].firstChild.getAttribute('new-system'),'yes');
+});
+test('a new line starts at the same measure in every part and leaves existing music intact',()=>{
+  const second=blank().match(/<part id="P1">[\s\S]*?<\/part>/)[0].replace('id="P1"','id="P2"');
+  const d=edit(blank().replace('</part-list>','<score-part id="P2"><part-name>Second part</part-name></score-part></part-list>').replace('</score-partwise>',second+'</score-partwise>'));
+  d.place(0,0,0,{pitch:C4});d.addMeasure(1);const before=d.xml(),events=d.playback().events;
+  assert.equal(d.addLine(1),2);assert.deepEqual(d.inspect().parts.map(p=>p.measures.length),[6,6]);
+  assert.deepEqual(d.playback().events,events);
+  const xml=new DOMParser().parseFromString(d.xml(),'application/xml');
+  for(const part of Array.from(xml.getElementsByTagName('part'))){
+    const measures=part.getElementsByTagName('measure');assert.equal(measures[2].firstChild.getAttribute('new-system'),'yes');
+  }
+  d.undo();assert.equal(d.xml(),before);
 });
 test('staff-only editor opens, cancels and applies edits without removed panel elements',async()=>{
   const fs=require('node:fs'),vm=require('node:vm');

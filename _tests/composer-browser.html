@@ -25,7 +25,7 @@ frame.addEventListener('load',()=>{
 document.getElementById('test').onclick=()=>run(async()=>{
  if($('dialog').open)await click('editor-cancel');doc.getElementById('vp-score-template').value='piano';await click('score-new');
  check($('canvas').dataset.engraver==='osmd','Editor is not using OSMD');
- check($('canvas').querySelectorAll('[data-composer-measure]').length===8,'Piano staves or empty measures are missing');
+ check($('canvas').querySelectorAll('[data-composer-measure]').length===16,'Piano staves or empty measures are missing');
  await key('n');await key('4');for(const note of ['c','d','e','f'])await key(note);
  check($('canvas').querySelector('.vf-beam'),'Eighth notes were not beamed');
  await key('G',{shiftKey:true});await key('Escape');
@@ -35,14 +35,19 @@ document.getElementById('test').onclick=()=>run(async()=>{
  await pointer('pointerdown',p);await pointer('pointermove',up);await pointer('pointerup',up);
  check($('canvas').querySelector('[data-composer-note][aria-label^="D3"]'),'Dragging missed the engraved bass note');
  await click('editor-undo');check($('canvas').querySelector('[data-composer-note][aria-label^="C3"]'),'Undo failed');
- await click('editor-redo');await change('title','Engraved piano test');await click('editor-apply');await until(()=>!$('dialog').open,'Apply failed');
+ await click('editor-redo');
+ await click('editor-add-line');check($('measure').options.length===12,'Add line did not add four paired measures');
+ await click('editor-undo');check($('measure').options.length===8,'Undo did not remove the whole line');await click('editor-redo');
+ await change('lane',0);await change('measure',1);await change('clef','bass');await change('measure',2);await change('clef','treble');
+ await change('title','Engraved piano test');await click('editor-apply');await until(()=>!$('dialog').open,'Apply failed');
  await click('score-save');const d=win.ScoreEditorModel.create(await saved.text());
  check(d.inspect().title==='Engraved piano test','Title was not exported');
  check(d.playback(0,'1','1').events.map(e=>e.midi).join(',')==='60,62,64,65,67','Treble notes/chord changed');
  check(d.playback(0,'2','2').events[0].midi===50,'Bass edit was not exported');
+ check(d.context(0,1,'1',0).clef==='bass'&&d.context(0,2,'1',0).clef==='treble','Clef changes were not exported');
  await click('score-edit');check($('canvas').querySelector('[data-engraved-note]'),'Reopened score is missing notation');
  check($('dialog').scrollWidth<=$('dialog').clientWidth+1,'Dialog overflows');
- status.textContent='PASS: shared engraving, grand staff, keyboard input, beams, chords, bass drag, Undo/Redo, apply, export, reopen and dialog width.';
+ status.textContent='PASS: shared engraving, grand-staff lines, clef changes, keyboard input, beams, chords, bass drag, Undo/Redo, apply, export, reopen and dialog width.';
 });
 document.getElementById('listen').onclick=()=>run(async()=>{
  check($('dialog').open,'Run the engraving check first');await change('lane',0);await change('tempo',240);sounded=[];

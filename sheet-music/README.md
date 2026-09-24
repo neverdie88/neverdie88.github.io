@@ -7,7 +7,7 @@ Both apps use `../music-shared/`; publish all three directories together.
 ## Using the app
 
 - Choose **Piano · grand staff**, **Single treble staff**, or **Single bass staff**
-  and click **New sheet**. The piano template has four measures and two staves;
+  and click **New sheet**. The piano template has eight measures across two lines;
   the editor works on the staff/voice selected above the page. **Open MusicXML** accepts
   uncompressed score-partwise `.musicxml` or `.xml` files up to 10 MB.
 - **Upload sheet photo** or **Take photo** imports a printed sheet and starts
@@ -27,7 +27,17 @@ Both apps use `../music-shared/`; publish all three directories together.
   proper noteheads, rests, chord spacing, automatic beams and accidentals.
   Both piano staves appear together; clicking a note or entering on a staff
   selects that staff/voice. Empty measures remain separate and editable.
-- Staff, scale, part/staff/voice, measures, zoom and preview controls are in the
+- New piano scores start with two grand-staff lines of four measures each.
+  **Add line** appends four measures on a new line, keeping all staves and parts
+  together. It selects the new line and can be undone in one step. Explicit
+  line breaks survive Apply, MusicXML export and reopening; narrow screens may
+  wrap a line further so the notation still fits.
+- Select a note or rest and choose **Clef → Treble / Bass** to change clef from
+  that beat onward on its staff. Select a later note and choose the original
+  clef to change back. With no note selected, the change starts at the selected
+  measure. The hint beside the control shows the exact point and staff.
+  Clef changes preserve sounding pitches and the other staff.
+- Clef, scale, part/staff/voice, measures, zoom and preview controls are in the
   editor. Its **Play preview** plays only the selected staff/voice in the draft.
   It is separate from **Play sheet**, which plays the applied score.
 - Select multiple supports taps, box selection and Shift-click ranges.
@@ -103,6 +113,8 @@ are unsupported. See `recognition.html` for source attribution and limits.
 - `score-editor.js`: draft lifecycle, settings, apply/cancel and keyboard undo.
 - `score-editor-model.js`: MusicXML-preserving edits, rest splitting, note timing,
   ties, staff signatures, transposition, history and playback timelines.
+  Attribute context follows musical time across voices; clefs can change within
+  a measure. Added lines write matching MusicXML system breaks in every part.
 - `score-engraver.js`: shared lazy OSMD loading and rendering options, full-part
   editor engraving, note-to-model coordinate mapping and selection overlays.
   Render requests are serialized and stale results cannot replace newer edits.
@@ -132,8 +144,10 @@ Jekyll copies the static files without an app build and excludes `_tests`.
 The tests cover model inference, editing, playback, media lifecycle and both apps.
 Engraving tests use the actual bundled OSMD and native Canvas font/raster support
 in Node, including engraved-note hit positions, grand staves, chord displacement,
-rests, beams, cancellation and identical paths in edit/display modes. These are
-headless SVG/interaction tests, not a browser audio or physical-webcam playtest.
+  rests, beams, cancellation and identical paths in edit/display modes. These are
+  headless SVG/interaction tests, not a browser audio or physical-webcam playtest.
+  They also cover grand-staff rows, line export/undo, mid-measure clefs and input
+  pitch mapping on each side of a clef change.
 `_tests/composer-browser.html` exercises the actual sheet editor and export;
 `_tests/sheet-browser.html` checks loading and the applied-sheet transport.
 The pitch-specific browser harness is `_tests/editor-browser.html`.
