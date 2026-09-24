@@ -15,7 +15,7 @@ description: "Thien's tools for productivity, music, and games."
 <section class="content-section" aria-labelledby="category-{{ category | slugify }}">
   <div class="section-heading"><h2 id="category-{{ category | slugify }}">{{ category }}</h2></div>
   {% if category == 'Games' %}
-    <p class="section-description">I created a collection of fun motion tracking games for kids to enjoy with friends.</p>
+    <p class="section-description">Just a collection of fun motion tracking games for my kids to enjoy with friends.</p>
   {% endif %}
   {% assign category_tools = site.data.tools | where: 'category', category %}
   {% for tool in category_tools %}
