@@ -27,8 +27,8 @@
 - name: Sheet Music Editor
   category: Music
   description: >-
-    Create and edit sheet music, convert a printed sheet photo, and hear your
-    score on a grand piano. Open, save, and print MusicXML in your browser.
+    I built this tool to help my daughter learn to play the piano. It gives her
+    a simple way to read, edit, and listen to sheet music as she practises.
   url: /sheet-music/
   action: Open tool
 
