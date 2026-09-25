@@ -3,20 +3,17 @@ layout: workspace
 title: Tools
 permalink: /tools/
 nav_section: tools
-description: "Thien's tools for productivity, music, and games."
+description: "Thien's tools for productivity and music."
 ---
 
 <div class="page-header">
   <h1>Tools</h1>
 </div>
 
-{% assign categories = 'Productivity,Music,Games' | split: ',' %}
+{% assign categories = 'Productivity,Music' | split: ',' %}
 {% for category in categories %}
 <section class="content-section" aria-labelledby="category-{{ category | slugify }}">
   <div class="section-heading"><h2 id="category-{{ category | slugify }}">{{ category }}</h2></div>
-  {% if category == 'Games' %}
-    <p class="section-description">Just a collection of fun motion tracking games for my kids to enjoy with friends.</p>
-  {% endif %}
   {% assign category_tools = site.data.tools | where: 'category', category %}
   {% for tool in category_tools %}
     <div class="tool">
@@ -25,7 +22,7 @@ description: "Thien's tools for productivity, music, and games."
           <h3>{{ tool.name | escape }}</h3>
           {% if tool.private %}<span class="private-badge">Private repository</span>{% endif %}
         </div>
-        {% if category != 'Games' and tool.description %}
+        {% if tool.description %}
         <p>{{ tool.description | escape }}</p>
         {% endif %}
         {% if tool.url %}

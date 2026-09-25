@@ -31,33 +31,3 @@
     a simple way to read, edit, and listen to sheet music as she practises.
   url: /sheet-music/
   action: Open tool
-
-- name: Orchard Sparks
-  category: Games
-  url: /orchard-sparks/
-  action: Play game
-
-- name: Dragon Race
-  category: Games
-  url: /dragon-race/
-  action: Play game
-
-- name: Ice Bump Rally
-  category: Games
-  url: /ice-bump-rally/
-  action: Play game
-
-- name: Wingbeat Rally
-  category: Games
-  url: /wingbeat-rally/
-  action: Play game
-
-- name: Star Sentinel
-  category: Games
-  url: /star-sentinel/
-  action: Play game
-
-- name: Mole Mayhem
-  category: Games
-  url: /mole-mayhem/
-  action: Play game

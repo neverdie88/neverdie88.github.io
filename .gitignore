@@ -11,14 +11,6 @@ _site/
 vendor/
 vendor/bundle/
 
-# Browser game libraries and tracking model are deployed static assets.
-!fruit-ninja/vendor/
-!dragon-race/vendor/
-!ice-bump-rally/vendor/
-!flappy-birds/vendor/
-!star-sentinel/vendor/
-!mole-mayhem/vendor/
-
 # macOS
 .DS_Store
 

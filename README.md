@@ -7,37 +7,9 @@ The homepage lists **Blogs** and `/tools/` lists the published apps. Both use
 sidebar, blue accents and LinkedIn icon selected from the local Tools preview.
 Shared navigation is in `_includes/navigation-links.html`; tools and concise
 blog descriptions are in `_data/tools.yml` and `_data/blog_summaries.yml`.
-Tools are grouped in order into Productivity, Music and Games using each entry's
-`category` field. The motion games are standalone static bundles, listed below.
+Tools are grouped into Productivity and Music using each entry's `category` field.
 `/blogs/` redirects to the homepage. Existing article URLs and content remain
 in place, with shared styles under `assets/css/`.
-
-## Motion games
-
-All six games are linked from `/tools/#category-games` and support 1–4 local
-players. Camera tracking runs on the player's device; GitHub Pages supplies
-HTTPS for camera access. Keyboard, mouse or touch alternatives are available
-within each game.
-
-| Game | Published path | Source project in Playground |
-| --- | --- | --- |
-| Orchard Sparks | `/orchard-sparks/` | `fruit-ninja/` |
-| Dragon Race | `/dragon-race/` | `dragon-race/` |
-| Ice Bump Rally | `/ice-bump-rally/` | `ice-race/` |
-| Wingbeat Rally | `/wingbeat-rally/` | `flappy-birds/` |
-| Star Sentinel | `/star-sentinel/` | `star-sentinel/` |
-| Mole Mayhem | `/mole-mayhem/` | `whack-a-mole/` |
-
-To update a game, run `npm test` and `npm run build` in its source project, then
-copy the contents of `dist/` to its published directory. Copy `THIRD_PARTY.md`
-when supplied. Keep the bundled `vendor/` directory, tracking model, both WASM
-variants, fonts and license notices. The `.gitignore` exceptions ensure each
-game's runtime libraries are committed alongside its code.
-
-Build the complete Jekyll site before publishing and confirm the game bundles
-are unchanged in `_site/`. After the Pages deployment, verify all six routes,
-the Games list and the runtime assets. Automated tests cover simulated motion;
-they do not replace a physical-camera playtest.
 
 ## Markup Studio
 
@@ -103,5 +75,3 @@ Keep all three directories together. Each app README documents its source and
 behavior. The pitch app does not load the editor, score renderer or OMR models.
 Run `npm ci --prefix _tests` and `node --test _tests/pitch-*.test.cjs`, then the
 normal Jekyll build. The browser harnesses in `_tests` are excluded from Pages.
-
-The two retired game URLs contain redirects only. Ship the six current game directories above; do not restore previous character assets from Git history. Each game includes a Credits page, original character art and `third-party.json` with dependency hashes and source/licensing references. The legacy source-directory names in this table are local development paths, not current game branding.
