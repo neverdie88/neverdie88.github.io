@@ -17,7 +17,11 @@
 .vp-playback-range [role="status"] { max-width: 230px; font-size: 12px; }
 [data-playback-measure] { cursor: crosshair; }
 [data-playback-measure]:hover, [data-playback-measure]:focus { fill-opacity: .12; outline: none; }
-@media print { [data-playback-range] { display: none; } }
+[data-playback-position] { cursor: text; }
+[data-playback-position]:focus { fill: #2563eb; fill-opacity: .1; }
+[data-sheet-cursor] { stroke: #2563eb; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+[data-sheet-cursor][data-playing="true"] { stroke: #15803d; }
+@media print { [data-playback-range], [data-sheet-playback] { display: none; } }
 .vp-composer-paper { overflow: auto; max-height: 55dvh; min-height: 260px; background: #fff; color: #172033; border: 1px solid #cbd5e1; border-radius: 8px; overscroll-behavior: contain; }
 .vp-composer-canvas { display: block; max-width: none; touch-action: pan-x pan-y; user-select: none; -webkit-user-select: none; }
 .vp-composer-canvas[data-tool="note"], .vp-composer-canvas[data-tool="rest"], .vp-composer-canvas[data-tool="chord"] { cursor: crosshair; }

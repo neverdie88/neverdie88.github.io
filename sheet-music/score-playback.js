@@ -1,6 +1,6 @@
 /* Short-lookahead sampled piano playback. Nothing is recorded or uploaded. */
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./piano-samples.js'):root.PianoSamples);if(typeof module==='object'&&module.exports)module.exports=api;else root.ScorePlayback=api;})(globalThis,function(samples){
-  function create({makeContext=()=>new (globalThis.AudioContext||globalThis.webkitAudioContext)(),loadInstrument=(context,progress)=>samples.load(context,progress),onStep=()=>{},onNotes=()=>{},onStop=()=>{},onLoading=()=>{}}={}) {
+  function create({makeContext=()=>new (globalThis.AudioContext||globalThis.webkitAudioContext)(),loadInstrument=(context,progress)=>samples.load(context,progress),onStep=()=>{},onNotes=()=>{},onPosition=()=>{},onStop=()=>{},onLoading=()=>{}}={}) {
     let context,instrument,nodes=new Set(),timer,run=0,active=false;
     function stop(){run++;active=false;clearTimeout(timer);for(const node of nodes){try{node.stop();}catch{}}nodes.clear();onStop();}
     function tone(midi,at,duration) {
@@ -22,6 +22,8 @@
       function tick(){
         if(token!==run)return;
         const now=context.currentTime;
+        // Follow the audio clock, including rests, held notes and release time.
+        onPosition(Math.max(0,Math.min(score.duration,(now-start)/seconds)));
         while(index<events.length&&start+events[index].beat*seconds<now+.12){const e=events[index++];tone(e.midi,Math.max(now,start+e.beat*seconds),Math.max(.04,e.duration*seconds));}
         let current=-1;const notes=[];
         for(let i=0;i<index;i++)if(start+events[i].beat*seconds<=now){

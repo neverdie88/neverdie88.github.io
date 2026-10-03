@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const $ = id => document.getElementById('vp-' + id);
-  const state = { photo: null, worker: null, revision: 0, score: null, xml: '', renderer: null, warnings: [] };
+  const state = { photo: null, worker: null, revision: 0, score: null, xml: '', renderer: null, playbackView: null, warnings: [] };
   function message(id, text) { $(id).textContent = text; $(id).hidden = !text; }
   function stopRecognition() {
     state.revision++;
@@ -51,7 +51,20 @@
     message('score-status', '');
     return true;
   }
-  const player = SheetPlayer.mount({onRangeChange(range){if(state.renderer)ScoreEngraver.markPlaybackRange(state.renderer,$('score-render'),range);}});
+  const player = SheetPlayer.mount({
+    onLoad(timeline){
+      state.playbackView?.destroy();state.playbackView=null;
+      if(state.renderer&&timeline.length)state.playbackView=ScoreEngraver.createPlayback(state.renderer,$('score-render'),$('score-scroll'),timeline);
+    },
+    onPosition(position){state.playbackView?.update(position);},
+    onRangeChange(range){
+      for(const target of $('score-render').querySelectorAll('[data-playback-position]')){
+        target.setAttribute('tabindex',range.setting?'-1':'0');
+        target.setAttribute('aria-disabled',String(!!range.setting));
+      }
+      if(state.renderer)ScoreEngraver.markPlaybackRange(state.renderer,$('score-render'),range);
+    }
+  });
   const editor = ScoreEditor.mount({
     async apply(xml) {
       stopRecognition();
@@ -160,6 +173,6 @@
     const nextWidth = Math.round(entries[0].contentRect.width);
     if (!state.renderer || $('score-scroll').hidden || nextWidth === width || nextWidth < 1) return;
     width = nextWidth; cancelAnimationFrame(resizeFrame);
-    resizeFrame = requestAnimationFrame(() => { if (state.renderer) { ScoreEngraver.fitToWidth(state.renderer,nextWidth); state.renderer.cursor.hide();player.refreshRange(); } });
+    resizeFrame = requestAnimationFrame(() => { if (state.renderer) { ScoreEngraver.fitToWidth(state.renderer,nextWidth); state.renderer.cursor.hide();state.playbackView?.refresh();player.refreshRange(); } });
   }).observe($('score-render'));
 })();

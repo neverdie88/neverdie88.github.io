@@ -178,6 +178,7 @@
       for (const n of children(measures(part)[measure],'note')) { n.removeAttribute('default-x'); children(n,'beam').forEach(remove); }
     }
     const beatsIn = ctx => ctx.beats.split('+').reduce((sum,n)=>sum+Number(n),0)*4/Number(ctx.beatType);
+    const measureDuration=(m,ctx,all)=>m.getAttribute('implicit')==='yes'?writtenBeats(all):Math.max(beatsIn(ctx),writtenBeats(all));
     function makeTimedNote(value, type, dots, divisions, voice, staff) {
       const n=make('note');
       if(value) pitch(n,value); else put(n,'rest');
@@ -196,6 +197,13 @@
     const api = {
       xml: serialize,
       context,
+      measureTimeline(part=0) {
+        let beat=0;
+        return measures(part).map((m,measure)=>{
+          const duration=measureDuration(m,context(part,measure),groups(part,measure));
+          const entry={measure,beat,duration};beat+=duration;return entry;
+        });
+      },
       contexts(part, measure, staff='1') {
         const events=attributeEvents(measures(part)[measure],measure?context(part,measure-1).divisions:1);
         return [...new Set([0,...events.map(e=>e.beat)])].sort((a,b)=>a-b).map(beat=>({beat,ctx:context(part,measure,staff,beat)}));
@@ -444,8 +452,7 @@
             else events.push(event);
             if(tied(n,'start'))ties.set(key,connected?previous:event);else ties.delete(key);
           }
-          const used=writtenBeats(all);
-          offset+=m.getAttribute('implicit')==='yes'?used:Math.max(beatsIn(ctx),used);
+          offset+=measureDuration(m,ctx,all);
         });
         if(selected){
           const start=Math.min(...events.map(e=>e.beat));

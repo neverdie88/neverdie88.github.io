@@ -16,6 +16,15 @@ test('whole-sheet playback combines parts with simultaneous starts and preserves
   assert.equal(all.duration,8);
   assert.deepEqual(Player.sequence(model,tracks,'1').events.map(n=>n.midi),[55,57]);
 });
+test('seeking trims held and tied notes, preserves upcoming rests and leaves the score unchanged',()=>{
+  const model=Model.create(xml,DOMParser,XMLSerializer),score=Player.sequence(model,Player.tracks(model)),before=model.xml();
+  assert.deepEqual(Player.timeline(model),[{measure:0,beat:0,duration:4},{measure:1,beat:4,duration:4}]);
+  const from=Player.fromBeat(score,5);
+  assert.deepEqual(from.events.map(e=>[e.beat,e.duration,e.midi]),[[0,1,60],[0,3,57]]);
+  assert.equal(from.duration,3);assert.equal(model.xml(),before);
+  assert.deepEqual(Player.fromBeat(score,8),{events:[],duration:0});
+  assert.equal(score.events[0].duration,6,'seeking does not shorten the original tie');
+});
 test('inclusive measure ranges reattack incoming ties, cut outgoing ties and keep both parts aligned',()=>{
   const model=Model.create(xml,DOMParser,XMLSerializer),tracks=Player.tracks(model),before=model.xml();
   const first=Player.sequence(model,tracks,'all',{start:0,end:0});
@@ -34,20 +43,22 @@ test('ranges preserve leading rests and changing meters after a pickup, includin
   assert.deepEqual(middle.events.map(e=>[e.measure,e.beat,e.duration]),[[1,1,1],[2,3,1]]);assert.equal(middle.duration,6);
   assert.deepEqual(Player.sequence(model,tracks,'1',{start:1,end:2}),{events:[],duration:0});
   const pickup=Player.sequence(model,tracks,'all',{start:0,end:0});assert.equal(pickup.duration,1);
+  assert.deepEqual(Player.timeline(model).map(m=>[m.beat,m.duration]),[[0,1],[1,3],[4,3]]);
 });
 const flush=async()=>{for(let i=0;i<10;i++)await Promise.resolve();};
 function fixture(t){
   const dom=new JSDOM(fs.readFileSync(`${__dirname}/../sheet-music/index.html`,'utf8'),{runScripts:'outside-only'}),win=dom.window,doc=win.document;
-  const audio={starts:[],stops:0,contexts:0,resume:async()=>{}};
+  const audio={starts:[],stops:0,contexts:0,positions:[],resume:async()=>{}};
+  win.setTimeout=fn=>{audio.tick=fn;return 1;};win.clearTimeout=()=>{audio.tick=null;};
   win.AudioContext=class{
-    constructor(){audio.contexts++;this.currentTime=0;this.destination={};}
+    constructor(){audio.contexts++;audio.context=this;this.currentTime=0;this.destination={};}
     resume(){return audio.resume();}close(){}
     createOscillator(){const node={frequency:{value:0},connect(){},disconnect(){},start(at){audio.starts.push([node.frequency.value,at]);},stop(){audio.stops++;}};return node;}
     createGain(){return {gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};}
   };
   win.PianoSamples={load:async()=>({play(midi,at){audio.starts.push([440*2**((midi-69)/12),at]);return {stop(){audio.stops++;}};}})};
   for(const file of ['score-editor-model.js','score-playback.js','sheet-player.js'])win.eval(fs.readFileSync(`${__dirname}/../sheet-music/${file}`,'utf8'));
-  const player=win.SheetPlayer.mount({onRangeChange(range){
+  const player=win.SheetPlayer.mount({onPosition(position){audio.positions.push(position);},onRangeChange(range){
     const host=doc.getElementById('vp-score-render');host.replaceChildren();
     // UI fixture targets; the actual engraved positions are covered by the
     // engraving tests and the browser playback-range check.
@@ -57,6 +68,45 @@ function fixture(t){
   const $=id=>doc.getElementById('vp-score-'+id);
   return {win,doc,player,audio,$};
 }
+test('the external Play button follows the audio clock, seeks from score clicks and resumes from Stop',async t=>{
+  const a=fixture(t),click=(measure,beat,keyboard=false)=>{
+    const target=a.doc.createElement('button');Object.assign(target.dataset,{playbackPosition:'true',measure,beat});a.$('render').append(target);
+    if(keyboard)target.dispatchEvent(new a.win.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));else target.click();
+  };
+  click(1,1,true);assert.equal(a.audio.contexts,0,'placing the cursor does not start audio');
+  assert.equal(a.audio.positions.at(-1).measure,1);assert.equal(a.audio.positions.at(-1).beat,1);
+  a.$('tempo').value='60';a.$('play').click();await flush();
+  assert.equal(a.audio.starts.length,2,'a seek inside a tie reattacks the remaining tone and bass');
+  a.audio.context.currentTime=1.55;a.audio.tick();
+  assert.equal(a.audio.positions.at(-1).measure,1);assert.ok(Math.abs(a.audio.positions.at(-1).beat-2.5)<1e-6);
+  a.$('play').click();assert.equal(a.audio.positions.at(-1).playing,false);
+  a.audio.starts=[];a.$('play').click();await flush();
+  assert.equal(a.audio.starts.length,1,'the ended tie is not replayed when resuming in the rest');
+  const oldStops=a.audio.stops;click(0,0);await flush();
+  assert.equal(a.$('play').textContent,'■ Stop');assert.ok(a.audio.stops>oldStops);
+  assert.equal(a.audio.positions.at(-1).measure,0);assert.equal(a.audio.positions.at(-1).beat,0);
+  a.$('play-all').click();assert.equal(a.audio.positions.at(-1).beat,0);assert.equal(a.$('play').textContent,'▶ Play sheet');
+});
+test('cursor advances through a rest-only sheet and restarts after the end; ranges and reload reset it',async t=>{
+  const a=fixture(t);a.player.load(Model.blank());a.$('tempo').value='60';
+  a.$('play').click();await flush();assert.equal(a.$('play').textContent,'■ Stop');assert.equal(a.audio.starts.length,0);
+  a.audio.context.currentTime=2.05;a.audio.tick();assert.ok(Math.abs(a.audio.positions.at(-1).beat-2)<1e-6);
+  a.audio.context.currentTime=4.4;a.audio.tick();assert.equal(a.$('play').textContent,'▶ Play sheet');
+  a.$('play').click();await flush();assert.equal(a.audio.positions.at(-1).beat,0);
+  a.player.load(xml);a.$('play-start').click();a.$('render').querySelector('[data-playback-measure="1"]').click();
+  assert.equal(a.audio.positions.at(-1).measure,1);
+  a.player.seek({measure:0,beat:0});assert.equal(a.audio.positions.at(-1).measure,1);assert.match(a.$('play-status').textContent,/within the playback range/);
+  a.player.clear();assert.equal(a.audio.positions.at(-1),null);
+});
+test('seeking while samples are loading cancels the old start and keeps only the latest cursor',async t=>{
+  const a=fixture(t),loads=[];
+  a.win.PianoSamples.load=()=>new Promise(resolve=>loads.push(resolve));
+  a.$('play').click();await flush();a.player.seek({measure:1,beat:0});await flush();
+  assert.equal(loads.length,2);
+  loads[0]({play(){assert.fail('Canceled seek played an old note');}});await flush();
+  loads[1]({play(midi){a.audio.starts.push(midi);return {stop(){}};}});await flush();
+  assert.deepEqual(a.audio.starts,[60,57]);assert.equal(a.audio.positions.at(-1).measure,1);
+});
 test('sheet app plays both parts without microphone access and changing selection stops playback',async t=>{
   const a=fixture(t);assert.equal(a.doc.getElementById('vp-mic'),null);assert.equal(a.audio.contexts,0);
   a.$('play').click();await flush();

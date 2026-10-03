@@ -18,6 +18,13 @@ Both apps use `../music-shared/`; publish all three directories together.
   sampled grand piano. **Listen to** selects a particular part/staff/voice; BPM
   accepts 30–240. Stop, changing the selection or tempo, editing, closing a sheet,
   backgrounding, and leaving the page cancel pending or active playback.
+- In the applied sheet, the playback cursor follows the audio through notes,
+  rests and ties, and the sheet scrolls to keep it visible. Click a note or rest
+  to place the cursor before pressing **Play sheet**, or click while playing to
+  jump there and continue. Tab to a score position and press Enter/Space for the
+  same action. Stop retains the cursor for resuming; after the end, Play starts
+  the range again. **Whole sheet** also resets the cursor to the beginning.
+  Positions outside a marked Start/End range are ignored with an inline message.
 - Playback honors written order, rests, chords, ties and transposing instruments.
   Recognized pickup measures use their written length without an extra pause
   before measure 2. Older photo imports are repaired when both opening staves

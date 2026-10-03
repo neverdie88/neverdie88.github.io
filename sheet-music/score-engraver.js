@@ -98,6 +98,73 @@
     // VexFlow's SVG viewBox already accounts for zoom and page offsets.
     for(const [svg,bars]of pages)rangeOverlay(svg,bars,state);
   }
+  function createPlayback(renderer,host,scroller,timeline){
+    let position=null,markers=new Map(),active=null;
+    function update(next){
+      position=next;
+      const marker=next?markers.get(next.measure):null;
+      if(active&&active!==marker)active.line.setAttribute('visibility','hidden');
+      active=marker;
+      if(marker){
+        const {line,bar}=marker;
+        line.setAttribute('visibility','visible');
+        const x=xAt(bar,next.beat);
+        line.setAttribute('x1',x);line.setAttribute('x2',x);
+        line.dataset.beat=String(next.beat);
+        line.dataset.playing=String(!!next.playing);
+        if(next.follow&&scroller){
+          // Scroll the sheet pane only when the current system leaves view.
+          const view=scroller.getBoundingClientRect(),rect=line.getBoundingClientRect();
+          if(view.height>0&&rect.height>0){
+            if(rect.top<view.top+16||rect.bottom>view.bottom-16)scroller.scrollTop+=rect.top-view.top-24;
+            if(rect.left<view.left+16||rect.right>view.right-16)scroller.scrollLeft+=rect.left-view.left-24;
+          }
+        }
+      }
+    }
+    function refresh(){
+      host.querySelectorAll('[data-sheet-playback]').forEach(n=>n.remove());markers=new Map();active=null;
+      for(const [measure,staves]of renderer.GraphicSheet.MeasureList.entries()){
+        const duration=timeline[measure]?.duration;if(!(duration>0))continue;
+        const bars=staves.filter(Boolean).map(graphical=>({graphical,v:graphical.getVFStave()}));
+        if(!bars.length)continue;
+        const svg=bars[0].v.context.svg;if(!svg)continue;
+        const columns=[];let top=Infinity,bottom=-Infinity;
+        for(const {graphical,v}of bars){
+          top=Math.min(top,v.getYForLine(0)-18);bottom=Math.max(bottom,v.getYForLine(4)+18);
+          for(const entry of graphical.staffEntries)for(const voice of entry.graphicalVoiceEntries)for(const note of voice.notes){
+            if(!note.vfnote)continue;
+            const vf=note.vfnote[0],head=vf.note_heads?.[note.vfnote[1]],beat=entry.relInMeasureTimestamp.RealValue*4;
+            const y=head?.getY()??vf.getYs()[note.vfnote[1]];
+            if(Number.isFinite(y)){top=Math.min(top,y-16);bottom=Math.max(bottom,y+16);}
+            if(beat<duration)columns.push({beat,x:(vf.getNoteHeadBeginX()+vf.getNoteHeadEndX())/2,rest:note.sourceNote.isRest()});
+          }
+        }
+        const beats=[...new Set([0,...columns.map(p=>p.beat)])].sort((a,b)=>a-b);
+        const start=Math.max(...bars.map(({v})=>v.getNoteStartX()+12));
+        const points=beats.map(beat=>{
+          const at=columns.filter(p=>Math.abs(p.beat-beat)<1e-7),pitched=at.filter(p=>!p.rest),chosen=pitched.length?pitched:at;
+          return {beat,x:chosen.length?Math.min(...chosen.map(p=>p.x)):start};
+        });
+        const left=Math.min(...bars.map(({v})=>v.getX()+1)),end=Math.max(...bars.map(({v})=>v.getX()+v.getWidth()-1));
+        const layer=add(svg,'g',{'data-sheet-playback':'true'});
+        for(const [index,point]of points.entries()){
+          const x=index?(points[index-1].x+point.x)/2:left;
+          const right=index+1<points.length?(point.x+points[index+1].x)/2:end;
+          add(layer,'rect',{'data-playback-position':'true','data-measure':measure,'data-beat':point.beat,
+            x,y:top,width:Math.max(1,right-x),height:bottom-top,fill:'transparent',role:'button',tabindex:0,
+            'aria-label':`Start playback at measure ${renderer.Sheet.SourceMeasures[measure]?.MeasureNumber??measure+1}, beat ${+(point.beat+1).toFixed(3)}`});
+        }
+        const line=add(layer,'line',{'data-sheet-cursor':'true','data-measure':measure,x1:points[0].x,x2:points[0].x,
+          y1:top,y2:bottom,'pointer-events':'none','aria-hidden':'true',visibility:'hidden'});
+        points.push({beat:duration,x:Math.max(points.at(-1).x+1,end-10)});
+        markers.set(measure,{line,bar:{points}});
+      }
+      update(position);
+    }
+    refresh();
+    return {update,refresh,destroy(){host.querySelectorAll('[data-sheet-playback]').forEach(n=>n.remove());markers.clear();}};
+  }
   function geometry(renderer,draft,part,width){
     const bars=[],hits=[],symbols=[],rows=new Map(),instrument=renderer.Sheet.Instruments[part],clefs=draft.clefs(part);
     const glyphBox=(glyph,x,y)=>({x:x+glyph.bbox.x+(glyph.originShift?.x||0),y:y+glyph.bbox.y+(glyph.originShift?.y||0),width:glyph.bbox.w,height:glyph.bbox.h});
@@ -245,5 +312,5 @@
       close(){this.reset();}
     };
   }
-  root.ScoreEngraver={loadLibrary,loadScore,create,fitToWidth,options,createEditor,xAt,markPlaybackRange};
+  root.ScoreEngraver={loadLibrary,loadScore,create,fitToWidth,options,createEditor,createPlayback,xAt,markPlaybackRange};
 })(globalThis);

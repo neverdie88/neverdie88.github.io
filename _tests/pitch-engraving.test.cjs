@@ -81,6 +81,50 @@ test('clickable playback boundaries align with engraved measures across staves, 
     a.win.ScoreEngraver.markPlaybackRange(renderer,host,{...range,markedStart:false,markedEnd:false,setting:null});assert.equal(host.querySelector('[data-playback-boundary]'),null);
   }
 });
+test('applied playback cursor and seek targets follow real notation across piano staves and reflows',async t=>{
+  const a=await fixture(t,model.template('piano')),host=a.win.document.createElement('div');a.win.document.body.append(host);
+  for(let beat=0;beat<4;beat++)a.draft.place(0,0,beat,{pitch:{step:'CDEF'[beat],octave:5,alter:0}});
+  a.draft.place(0,0,.5,{staff:'2',voice:'2',type:'eighth',pitch:{step:'G',octave:2,alter:0}});
+  const renderer=a.win.ScoreEngraver.create(host);t.after(()=>renderer.clear());
+  await a.win.ScoreEngraver.loadScore(renderer,new a.win.DOMParser().parseFromString(a.draft.xml(),'application/xml'));
+  const timeline=require('../sheet-music/sheet-player.js').timeline(a.draft);
+  let view;
+  for(const width of [1000,390,700]){
+    host.style.width=width+'px';a.win.ScoreEngraver.fitToWidth(renderer,width);
+    if(view)view.refresh();else view=a.win.ScoreEngraver.createPlayback(renderer,host,null,timeline);
+    const v=renderer.GraphicSheet.MeasureList[0][0].getVFStave();
+    const first=host.querySelector('[data-sheet-cursor][data-measure="0"]');
+    assert.equal(first.ownerSVGElement,v.context.svg);
+    assert.ok(+first.getAttribute('y1')<v.getYForLine(0));
+    assert.ok(+first.getAttribute('y2')>renderer.GraphicSheet.MeasureList[0][1].getVFStave().getYForLine(4));
+    assert.ok(host.querySelector('[data-playback-position][data-measure="0"][data-beat="0.5"]'),'either staff can choose a bass-only onset');
+    for(const graphical of renderer.GraphicSheet.MeasureList[0])for(const entry of graphical.staffEntries)for(const voice of entry.graphicalVoiceEntries)for(const note of voice.notes){
+      if(note.sourceNote.isRest()||!note.vfnote)continue;
+      const vf=note.vfnote[0],x=(vf.getNoteHeadBeginX()+vf.getNoteHeadEndX())/2,beat=entry.relInMeasureTimestamp.RealValue*4;
+      const target=host.querySelector(`[data-playback-position][data-measure="0"][data-beat="${beat}"]`);
+      assert.ok(+target.getAttribute('x')<=x&&+target.getAttribute('x')+Number(target.getAttribute('width'))>=x,'click region contains the engraved notehead');
+      view.update({measure:0,beat,playing:true});assert.ok(Math.abs(+first.getAttribute('x1')-x)<2,'cursor crosses the sounding note column');
+    }
+    view.update({measure:0,beat:0,playing:true});const start=+first.getAttribute('x1');
+    view.update({measure:0,beat:.25,playing:true});assert.ok(+first.getAttribute('x1')>start,'cursor moves between onsets');
+    view.update({measure:4,beat:2,playing:false});
+    const visible=host.querySelectorAll('[data-sheet-cursor][visibility="visible"]');assert.equal(visible.length,1);assert.equal(visible[0].dataset.measure,'4');assert.equal(visible[0].dataset.playing,'false');
+    assert.equal(host.querySelectorAll('[data-sheet-playback]').length,8,'reflow does not accumulate targets');
+  }
+  view.destroy();assert.equal(host.querySelector('[data-sheet-cursor]'),null);
+});
+test('applied cursor scrolls its sheet pane when the current system leaves view',async t=>{
+  const a=await fixture(t),host=a.win.document.createElement('div'),scroller=a.win.document.createElement('div');
+  a.win.document.body.append(scroller);scroller.append(host);
+  const renderer=a.win.ScoreEngraver.create(host);t.after(()=>renderer.clear());
+  await renderer.load(new a.win.DOMParser().parseFromString(a.draft.xml(),'application/xml'));renderer.render();
+  const view=a.win.ScoreEngraver.createPlayback(renderer,host,scroller,a.draft.measureTimeline());
+  scroller.getBoundingClientRect=()=>({top:0,bottom:200,left:0,right:500,height:200});
+  const line=host.querySelector('[data-sheet-cursor]');line.getBoundingClientRect=()=>({top:320,bottom:400,left:100,right:100,height:80});
+  view.update({measure:0,beat:1,playing:true,follow:true});assert.equal(scroller.scrollTop,296);
+  line.getBoundingClientRect=()=>({top:30,bottom:110,left:100,right:100,height:80});
+  view.update({measure:0,beat:2,playing:true,follow:true});assert.equal(scroller.scrollTop,296,'visible systems do not repeatedly scroll');
+});
 test('each displaced chord head is clickable at its actual ink position',async t=>{
   const a=await fixture(t),index=a.draft.place(0,0,0,{pitch:{step:'G',octave:4,alter:0},type:'eighth'});
   for(const [step,octave]of [['C',4],['F',4],['A',4],['C',5]])a.draft.addTone(0,0,index,{step,octave,alter:0});
