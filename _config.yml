@@ -1,8 +1,8 @@
-title: "Thien's Blog"
-description: "A personal blog powered by GitHub Pages and Jekyll."
+title: "Thien's Playground"
+description: "Games and tools for learning, music, and making things."
 author:
   name: "Thien"
-baseurl: "" # the subpath, e.g. /blog
+baseurl: "" # this site is hosted at the domain root
 url: "https://neverdie88.github.io"
 markdown: kramdown
 plugins: []
@@ -15,3 +15,10 @@ exclude:
   - vendor
   - node_modules
   - _tests
+  # Keep retired articles and their reference material in Git, off the public site.
+  - _posts
+  - _drafts
+  - pages/blogs.html
+  - pages/github-pages-tips.md
+  - pages/understanding-gpt5.html
+  - docs/sources

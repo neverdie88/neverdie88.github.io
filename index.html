@@ -1,27 +1,13 @@
 ---
 layout: workspace
-title: Blogs
-nav_section: blogs
-description: "Thien's articles and guides on AI, software, and the systems behind them."
+title: Home
+nav_section: home
+description: "Play Sunny Bites, learn music, and explore Thien's tools."
 ---
 
 <div class="page-header">
-  <h1>Blogs</h1>
+  <p class="section-label">Thien's Playground</p>
+  <h1>Play, learn, and make.</h1>
 </div>
 
-<div class="content-section">
-  <div class="posts">
-    {% for post in site.posts %}
-      {% assign post_summary = site.data.blog_summaries[post.slug] | default: post.excerpt %}
-      <article class="post">
-        <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%b %-d, %Y' }}</time>
-        <div>
-          <h2><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a></h2>
-          {% if post_summary %}<p>{{ post_summary | strip_html | strip | truncate: 200 | escape }}</p>{% endif %}
-        </div>
-      </article>
-    {% else %}
-      <p class="empty-state">No blog posts yet. Stay tuned!</p>
-    {% endfor %}
-  </div>
-</div>
+{% include tools-catalogue.html %}

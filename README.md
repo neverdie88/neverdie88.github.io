@@ -2,14 +2,28 @@
 
 ## Site layout
 
-The homepage lists **Blogs** and `/tools/` lists the published apps. Both use
+The homepage features **Sunny Bites** and the published tools; `/tools/` lists
+the same catalogue. Both use
 `_layouts/workspace.html` and `assets/css/workspace.css`: the Reader workspace
 sidebar, blue accents and LinkedIn icon selected from the local Tools preview.
-Shared navigation is in `_includes/navigation-links.html`; tools and concise
-blog descriptions are in `_data/tools.yml` and `_data/blog_summaries.yml`.
-Tools are grouped into Productivity and Music using each entry's `category` field.
-`/blogs/` redirects to the homepage. Existing article URLs and content remain
-in place, with shared styles under `assets/css/`.
+Shared navigation is in `_includes/navigation-links.html`; the catalogue is in
+`_data/tools.yml` and rendered by `_includes/tools-catalogue.html`.
+Entries are grouped into Games, Productivity and Music using each entry's
+`category` field. The public site is titled **Thien's Playground**.
+
+Retired articles remain archived in this repository. `_config.yml` excludes
+`_posts/`, `_drafts/`, `pages/blogs.html`, `pages/github-pages-tips.md`,
+`pages/understanding-gpt5.html`, and `docs/sources/` from Jekyll output. The old
+blog listing and article URLs are no longer published. Do not enable those
+sources when deploying unless the articles are intentionally being restored.
+
+## Sunny Bites
+
+[Play Sunny Bites](https://neverdie88.github.io/games/sunny-bites/).
+
+A restaurant cashier game for practising multiplication, counting money, and
+giving change. Its static bundle is hosted under `/games/sunny-bites/`, with
+bundled Kokoro character voices. The homepage and Tools page link to the game.
 
 ## Markup Studio
 

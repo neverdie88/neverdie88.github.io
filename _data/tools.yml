@@ -1,3 +1,11 @@
+- name: Sunny Bites
+  category: Games
+  description: >-
+    Run a cheerful restaurant with animal customers. Practise multiplication,
+    count money, and give the right change before your shift ends.
+  url: /games/sunny-bites/
+  action: Play Sunny Bites
+
 - name: Markup Studio
   category: Productivity
   description: >-
