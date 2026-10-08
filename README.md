@@ -2,7 +2,7 @@
 
 ## Site layout
 
-The homepage features **Sunny Bites** and the published tools; `/tools/` lists
+The homepage features **Little Table**, **Sunny Bites** and the published tools; `/tools/` lists
 the same catalogue. Both use
 `_layouts/workspace.html` and `assets/css/workspace.css`: the Reader workspace
 sidebar, blue accents and LinkedIn icon selected from the local Tools preview.
@@ -16,6 +16,21 @@ Retired articles remain archived in this repository. `_config.yml` excludes
 `pages/understanding-gpt5.html`, and `docs/sources/` from Jekyll output. The old
 blog listing and article URLs are no longer published. Do not enable those
 sources when deploying unless the articles are intentionally being restored.
+
+## Little Table
+
+[Play Little Table](https://neverdie88.github.io/games/little-table/).
+
+A restaurant waiter game for remembering orders, writing a physical paper
+notebook, sending kitchen tickets, serving one dish at a time, and calculating
+the final bill. The static bundle in `games/little-table/` includes the generated
+Kokoro customer voices and original Blender-rendered clay artwork. Music and
+voices have separate controls, and progress is saved in the browser.
+
+Build the development project with `npm test` and `npm run build`, then copy its
+complete `dist/` contents into this route. Preserve its `THIRD_PARTY.md`,
+`licenses/`, and audio notices. Run the Jekyll build and verify the game route,
+catalogue link, and deployed assets after GitHub Pages finishes.
 
 ## Sunny Bites
 

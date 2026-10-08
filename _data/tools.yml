@@ -1,3 +1,11 @@
+- name: Little Table
+  category: Games
+  description: >-
+    Run a cosy café with animal guests. Write orders in a paper notebook,
+    send dishes to the kitchen, serve the right table, and add up each bill.
+  url: /games/little-table/
+  action: Play Little Table
+
 - name: Sunny Bites
   category: Games
   description: >-
