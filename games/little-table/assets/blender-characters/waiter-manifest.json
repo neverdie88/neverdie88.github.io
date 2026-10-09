@@ -1,0 +1,706 @@
+{
+  "generator": "blender/characters/waiter-generator.py",
+  "renderer": "blender/characters/waiter-render.py",
+  "editableBlend": "blender/characters/waiter.blend",
+  "tool": "mcp__blender_official__execute_blender_code_for_cli",
+  "blenderVersion": "5.2.2 LTS",
+  "renderEngine": "CYCLES",
+  "samples": 48,
+  "resolution": [
+    780,
+    1008
+  ],
+  "logicalCanvas": [
+    130,
+    168
+  ],
+  "footBaseline": 153.04,
+  "servingAnchor": [
+    107,
+    85
+  ],
+  "freeHandIdle": [
+    26,
+    100
+  ],
+  "freeHandWalk": "x=26-6*sin(2*pi*f/24), y=100+8*cos(2*pi*f/24)",
+  "objectCount": 66,
+  "meshCount": 46,
+  "curveCount": 16,
+  "vertexCount": 41258,
+  "poses": 25,
+  "rendered": [
+    "blender/characters/waiter-renders/waiter.png",
+    "blender/characters/waiter-renders/waiter-walk-0.png",
+    "blender/characters/waiter-renders/waiter-walk-1.png",
+    "blender/characters/waiter-renders/waiter-walk-2.png",
+    "blender/characters/waiter-renders/waiter-walk-3.png",
+    "blender/characters/waiter-renders/waiter-walk-4.png",
+    "blender/characters/waiter-renders/waiter-walk-5.png",
+    "blender/characters/waiter-renders/waiter-walk-6.png",
+    "blender/characters/waiter-renders/waiter-walk-7.png",
+    "blender/characters/waiter-renders/waiter-walk-8.png",
+    "blender/characters/waiter-renders/waiter-walk-9.png",
+    "blender/characters/waiter-renders/waiter-walk-10.png",
+    "blender/characters/waiter-renders/waiter-walk-11.png",
+    "blender/characters/waiter-renders/waiter-walk-12.png",
+    "blender/characters/waiter-renders/waiter-walk-13.png",
+    "blender/characters/waiter-renders/waiter-walk-14.png",
+    "blender/characters/waiter-renders/waiter-walk-15.png",
+    "blender/characters/waiter-renders/waiter-walk-16.png",
+    "blender/characters/waiter-renders/waiter-walk-17.png",
+    "blender/characters/waiter-renders/waiter-walk-18.png",
+    "blender/characters/waiter-renders/waiter-walk-19.png",
+    "blender/characters/waiter-renders/waiter-walk-20.png",
+    "blender/characters/waiter-renders/waiter-walk-21.png",
+    "blender/characters/waiter-renders/waiter-walk-22.png",
+    "blender/characters/waiter-renders/waiter-walk-23.png"
+  ],
+  "originalSourcePreserved": true,
+  "noImportedIllustrations": true,
+  "previewOnly": false,
+  "allFramesComplete": true,
+  "lastBatch": [
+    21,
+    22,
+    23,
+    24
+  ],
+  "format": "lossless WebP, native6x Blender render, not upscaled",
+  "outline": {
+    "color": "#735b42",
+    "logicalWidth": 0.7,
+    "nativeDilationRadius": 4,
+    "nativeAntialiasBlur": 0.2
+  },
+  "publishedFiles": [
+    {
+      "name": "waiter.webp",
+      "frame": 0,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 215456,
+      "sha256": "5436547d2fd052a39d8df4b0d255ecb6b86e82cbfd5297dffba2898c3bc14e59",
+      "rawSha256": "07b7cfaa8804053fe5a34194da33a06f4b352ff1ee913d6b83328c72897f7029",
+      "alphaBounds": [
+        115,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        26,
+        100
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-0.webp",
+      "frame": 1,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 212324,
+      "sha256": "103e04452d8951cfb5ff80f59993504c4b621f6d98112e3dc99deb0a02cf576b",
+      "rawSha256": "da96df64078bf382f7b84e261a29e7e60b0da8eecac74b76ba635c3941a554da",
+      "alphaBounds": [
+        115,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        26.0,
+        108.0
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-1.webp",
+      "frame": 2,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 212742,
+      "sha256": "229f53ca64a0d06955b16bca5c8b23522fb662a1b1e3a6213fdef3dda42595e0",
+      "rawSha256": "c837c59a26b688e20a7968e63c4b073bea4baf180998bd361f6e2a0672750220",
+      "alphaBounds": [
+        105,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        24.447085729384874,
+        107.72740661031254
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-2.webp",
+      "frame": 3,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 213760,
+      "sha256": "9f8330cdd9d0acad122fc495eea8b0cefa15d191876418e344035e857848fa79",
+      "rawSha256": "db76ccfa61ec04bb4d2e6c342e37abc6686f5a1231863f3feac929666f891fa1",
+      "alphaBounds": [
+        97,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        23.0,
+        106.92820323027551
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-3.webp",
+      "frame": 4,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 214404,
+      "sha256": "931926b7d7ce9ed22db8c8bd5feec33ae6414d3d1a9e4da02aa62d1a329e27cb",
+      "rawSha256": "6adbfc3dc5401adfe301cbb0c983e54011eb99fe52f5ef248fae9c7b0d1c06bd",
+      "alphaBounds": [
+        89,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        21.757359312880716,
+        105.65685424949238
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-4.webp",
+      "frame": 5,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 215002,
+      "sha256": "12f98c4eb19a850ec6412cdcd8650dc0fbfb931b344f3ba1e5729ff26ebef7b5",
+      "rawSha256": "2fc6e4b10e4ea413faf9c23e98810a08819c4f6b8801e3f4a011d9377e5034ce",
+      "alphaBounds": [
+        84,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        20.803847577293368,
+        104.0
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-5.webp",
+      "frame": 6,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 215620,
+      "sha256": "0be2aa4fc493b40f22d7e2322b88470c20fc6beeafc559cf13d1836984f23982",
+      "rawSha256": "872d2c56cfd08158c53aa98e3375a97603c0734be448ca4e6a80b44305565b72",
+      "alphaBounds": [
+        80,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        20.20444504226559,
+        102.07055236082016
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-6.webp",
+      "frame": 7,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 216388,
+      "sha256": "4cb461e093edc60be7f44bb4bdc33c26ebe982349e0d6592ecb9c9b774ed4f80",
+      "rawSha256": "8465c7de88fcc9b9a781c5176b3efb245fb877159f98856f470a1dbba2f1a54c",
+      "alphaBounds": [
+        79,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        20.0,
+        100.0
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-7.webp",
+      "frame": 8,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 216640,
+      "sha256": "105f686c2389509ddd6fdeea9fc903170a5f21cf15e51aed783f71810f117f93",
+      "rawSha256": "b168a8ec767eef55498107ae8ebf935167a726194ca67d4992ad9d1945e118fa",
+      "alphaBounds": [
+        80,
+        79,
+        764,
+        923
+      ],
+      "freeHand": [
+        20.20444504226559,
+        97.92944763917984
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-8.webp",
+      "frame": 9,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 216180,
+      "sha256": "10db3f41e8033f0405c052a86915a1aaeff7c1fd819f68c41f1a69ae57048a56",
+      "rawSha256": "9614759b0258b8e28f7f745a1e0803c319bb3a118af8318e17a624cef45fa89d",
+      "alphaBounds": [
+        84,
+        79,
+        764,
+        923
+      ],
+      "freeHand": [
+        20.803847577293368,
+        96.0
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-9.webp",
+      "frame": 10,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 216812,
+      "sha256": "5d393411e86f4e12833cd2cac2a5d5472c84f87c6a8b3facb1b19ef7293cf6d9",
+      "rawSha256": "1196cc544853f9202897b221ad9c51011a7786f1cb9563580ef4ca81c4551688",
+      "alphaBounds": [
+        89,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        21.757359312880716,
+        94.34314575050762
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-10.webp",
+      "frame": 11,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 216498,
+      "sha256": "692059dcc0dc083afbf9b208edd4d2c4cdbe35020c5a02b87c628b0e9bfb9771",
+      "rawSha256": "76b41ec17eb140bfd11e142356d95b1d45df962d2e213bffb7d01307219e8986",
+      "alphaBounds": [
+        97,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        23.0,
+        93.07179676972449
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-11.webp",
+      "frame": 12,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 216006,
+      "sha256": "8410fcefe77155cf91b138fd8583041ac02fd6d6dc1a6011cd44225c814cd607",
+      "rawSha256": "d3b4a7a90041b8d734af52b68e9cb522f704f4128372eb365fd7e7d84c978a65",
+      "alphaBounds": [
+        105,
+        79,
+        764,
+        923
+      ],
+      "freeHand": [
+        24.447085729384874,
+        92.27259338968746
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-12.webp",
+      "frame": 13,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 215530,
+      "sha256": "3914b38cf4cd5f4be5b3028e6a364e38cfad1598a52d4a02cf0e97b802143dcf",
+      "rawSha256": "2448e423c39aec7d79b5e4a294f55d92f43f6d4439f115a296bfb810c98a7d1a",
+      "alphaBounds": [
+        115,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        26.0,
+        92.0
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-13.webp",
+      "frame": 14,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 215416,
+      "sha256": "c7331a2fcd23f9d2f97d5af0cc235b0f925326534699581b1ed585301e432abc",
+      "rawSha256": "d641b13cc5444781bfb8b7e79aa3eeb4c3c6e09818dd34df42655a1604eccf88",
+      "alphaBounds": [
+        124,
+        79,
+        764,
+        923
+      ],
+      "freeHand": [
+        27.552914270615126,
+        92.27259338968746
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-14.webp",
+      "frame": 15,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 215578,
+      "sha256": "043b6ae271d865befc6f1ef0ffeb14b3423a704220a2446ce2a5f3588b686a29",
+      "rawSha256": "a23f61ec1f67e2961c65a3ab753f4bc0ff4817014e5d9dc0ff326182dfeefa4b",
+      "alphaBounds": [
+        133,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        29.0,
+        93.07179676972449
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-15.webp",
+      "frame": 16,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 215560,
+      "sha256": "7e6b807f4cbacbb387963b6f54f6d936fcc426662b837117de5ab7741f7db988",
+      "rawSha256": "86de4e2247f9ed2972144b45a2c385c20bc7c62d9e71ae9aa2118b51ab2f595f",
+      "alphaBounds": [
+        140,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        30.242640687119284,
+        94.34314575050762
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-16.webp",
+      "frame": 17,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 215630,
+      "sha256": "bf7725e6e2a30033db944287b745ea124582daf93627d291ef03f138e49d9e10",
+      "rawSha256": "65a10ef2cd724bf9859c4b094778b30eb36c7d2ae5529fc32206084798f89a14",
+      "alphaBounds": [
+        146,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        31.196152422706632,
+        96.0
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-17.webp",
+      "frame": 18,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 216074,
+      "sha256": "42f211ef0c21d5fd236c3c0ae7f702e5a1295f97d5e9244f955b8e599e39b811",
+      "rawSha256": "87c9a9df474ed47a4cb0bad405ee3d175fdf0bcc9fef4973993c460a62a05d70",
+      "alphaBounds": [
+        149,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        31.79555495773441,
+        97.92944763917984
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-18.webp",
+      "frame": 19,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 215808,
+      "sha256": "961d7318ae2cbd4fb777b5355040c6c0efade8aee55df3596f8e995335985593",
+      "rawSha256": "13d35b08f95bd279111a67a67aca8f68d6c67785d25fcad0f7646226fa1fdcf9",
+      "alphaBounds": [
+        151,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        32.0,
+        100.0
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-19.webp",
+      "frame": 20,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 214458,
+      "sha256": "c43c04510dcd3d9cfdba9784a347e2d507132d2f31f9492a13c2873cbcc4169a",
+      "rawSha256": "ba01ee220b2e214fcfb64f79535062d1bc4c30443887b638515d502b961c7182",
+      "alphaBounds": [
+        150,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        31.79555495773441,
+        102.07055236082016
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-20.webp",
+      "frame": 21,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 213388,
+      "sha256": "a713c4fc6d1245611f51b0d0c2ac53143c7a30ce6cd5e5dc770600e13f31e3c5",
+      "rawSha256": "6fda5881b15c840f5f70fb62ab696c199334bb8f952017be17b672a72b7f80d8",
+      "alphaBounds": [
+        146,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        31.196152422706632,
+        104.0
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-21.webp",
+      "frame": 22,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 212388,
+      "sha256": "123dd978dce7d88267084be7ff481d8b28a3fe35590b0f86f1b012d1b17a3bf8",
+      "rawSha256": "fde70c17ade6b13f8a19c85e3d436fe77e49bd9a898d9ff55230a5d465a9e92a",
+      "alphaBounds": [
+        140,
+        79,
+        764,
+        923
+      ],
+      "freeHand": [
+        30.242640687119284,
+        105.65685424949238
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-22.webp",
+      "frame": 23,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 212198,
+      "sha256": "df6952c725143a1af0502cdc13b37ce5f0fb0b0a112ffd1dc0e13dc4620317c4",
+      "rawSha256": "4e9af5ccdb75b5a21686d91b4f12004ec83fd3b6b26b02d1f4f5ac8f305f92ce",
+      "alphaBounds": [
+        133,
+        79,
+        764,
+        923
+      ],
+      "freeHand": [
+        29.000000000000004,
+        106.9282032302755
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    },
+    {
+      "name": "waiter-walk-23.webp",
+      "frame": 24,
+      "size": [
+        780,
+        1008
+      ],
+      "bytes": 211738,
+      "sha256": "985d0f2461b96027853f39530d662a217a51beebfec4a686c76c1dfc986e8c24",
+      "rawSha256": "22620c562f9b1c13cea889a0a60a658784339c0d826520418b8d393d172fd94e",
+      "alphaBounds": [
+        124,
+        79,
+        764,
+        924
+      ],
+      "freeHand": [
+        27.55291427061513,
+        107.72740661031254
+      ],
+      "tray": [
+        107,
+        85
+      ]
+    }
+  ],
+  "totalPublishedBytes": 5371598,
+  "generatorSha256": "5b48d86ac1e76e744d1a0745e102c230fbfc939ef4fdd1bdb4d1f82a0e06b5a3",
+  "editableBlendSha256": "8647d533b14329c21a98581421bda48c8a0a76bf86f71f81ef9d1359c8d3c3e6"
+}

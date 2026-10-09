@@ -1,0 +1,1941 @@
+{
+  "technique": "Original Blender mesh and curve characters, rendered via Blender MCP background mode; transparent orthographic Cycles renders encoded as lossless WebP. No imported SVG or raster character planes.",
+  "tool": "mcp__blender_official__execute_blender_code_for_cli",
+  "blenderVersion": "5.2.2 LTS",
+  "nativeScale": 6,
+  "sources": [
+    {
+      "file": "blender/characters/customers.blend",
+      "sha256": "e01f88909d061372053f571279d8d95355b4c5260237b2c1aea1756576720e8d"
+    },
+    {
+      "file": "blender/characters/waiter.blend",
+      "sha256": "8647d533b14329c21a98581421bda48c8a0a76bf86f71f81ef9d1359c8d3c3e6"
+    },
+    {
+      "file": "blender/characters/build_customers.py",
+      "sha256": "dd966af129a0095c4db730c0632ec8eb6687e83d8457a5acb461eb4825aa9d85"
+    },
+    {
+      "file": "blender/characters/waiter-generator.py",
+      "sha256": "5b48d86ac1e76e744d1a0745e102c230fbfc939ef4fdd1bdb4d1f82a0e06b5a3"
+    }
+  ],
+  "logicalFrames": {
+    "seated": [
+      110,
+      140
+    ],
+    "portrait": [
+      120,
+      130
+    ],
+    "waiter": [
+      130,
+      168
+    ]
+  },
+  "assets": [
+    {
+      "id": "bunny-neutral",
+      "file": "public/assets/blender-characters/bunny-neutral.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-neutral.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        545,
+        786
+      ],
+      "bytes": 131138,
+      "sha256": "a09e7c811efd56e0770276097658f2e5fb21c74b90351099f82554411074ef10"
+    },
+    {
+      "id": "bunny-happy",
+      "file": "public/assets/blender-characters/bunny-happy.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-happy.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        545,
+        786
+      ],
+      "bytes": 129714,
+      "sha256": "aecc677851d8050090480c57ac5a18c71866a6229945fc6015eaeee9026cec20"
+    },
+    {
+      "id": "bunny-hungry",
+      "file": "public/assets/blender-characters/bunny-hungry.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-hungry.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        545,
+        786
+      ],
+      "bytes": 132396,
+      "sha256": "e93ceb2614ff61eb411bb42deea44dbcbbccebf0092d42164266d261984082ac"
+    },
+    {
+      "id": "bunny-impatient",
+      "file": "public/assets/blender-characters/bunny-impatient.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-impatient.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        545,
+        786
+      ],
+      "bytes": 129588,
+      "sha256": "4149474b711a9dc8ec37d36b5e08c97f4dd61b0cee3b814a7ee82d1a1ac7bcc6"
+    },
+    {
+      "id": "bunny-eating",
+      "file": "public/assets/blender-characters/bunny-eating.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-eating.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        545,
+        786
+      ],
+      "bytes": 129882,
+      "sha256": "8a52055f821f91dbf2cde26a767db04b9e959d4fbd7ba93ad849309ef89e45b5"
+    },
+    {
+      "id": "bunny-chewing",
+      "file": "public/assets/blender-characters/bunny-chewing.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-chewing.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        545,
+        786
+      ],
+      "bytes": 129416,
+      "sha256": "2850e829b8bc5f751b1677f6c37c9ee3d9549ad7085a71ae8a7a73a1fb54a277"
+    },
+    {
+      "id": "bunny-bite-0",
+      "file": "public/assets/blender-characters/bunny-bite-0.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-bite-0.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        545,
+        786
+      ],
+      "bytes": 133416,
+      "sha256": "b95a0112d617813dc6db9edd61b617e40c3e6d9040286e8420c108f0d1258bf0"
+    },
+    {
+      "id": "bunny-bite-1",
+      "file": "public/assets/blender-characters/bunny-bite-1.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-bite-1.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        523,
+        786
+      ],
+      "bytes": 127180,
+      "sha256": "fcad07ca47fd1c0b1c2ddfb5bc9cb92e634bf87181871ceabec213ae21fcb278"
+    },
+    {
+      "id": "bunny-bite-2",
+      "file": "public/assets/blender-characters/bunny-bite-2.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-bite-2.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        523,
+        786
+      ],
+      "bytes": 123986,
+      "sha256": "9fd1115107453b39e7de22deccb500bd18b0991643ce0c256b2d56d7870454fb"
+    },
+    {
+      "id": "bunny-bite-3",
+      "file": "public/assets/blender-characters/bunny-bite-3.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-bite-3.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        523,
+        786
+      ],
+      "bytes": 125836,
+      "sha256": "e7401de74240f7ec8ba88d5c13caaeaeb7121637c4e9b5042d0526581edfaea0"
+    },
+    {
+      "id": "bunny-sip-0",
+      "file": "public/assets/blender-characters/bunny-sip-0.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-sip-0.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        553,
+        786
+      ],
+      "bytes": 132832,
+      "sha256": "592624334f1d2156b440e622daa304a934b44e436d68fb99ea47719b2cdfd8c3"
+    },
+    {
+      "id": "bunny-sip-1",
+      "file": "public/assets/blender-characters/bunny-sip-1.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-sip-1.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        523,
+        786
+      ],
+      "bytes": 125490,
+      "sha256": "980816184babd7fddce08b8f9da636b490927ccea50d1158dca565632ed767b2"
+    },
+    {
+      "id": "bunny-sip-2",
+      "file": "public/assets/blender-characters/bunny-sip-2.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-sip-2.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        523,
+        786
+      ],
+      "bytes": 123946,
+      "sha256": "8af895a5cb0a13d90a30e7896995685d20e9166fa57d2f00a570399472b77625"
+    },
+    {
+      "id": "bunny-sip-3",
+      "file": "public/assets/blender-characters/bunny-sip-3.webp",
+      "sourceRender": "blender/characters/customer-renders/bunny-sip-3.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        115,
+        142,
+        523,
+        786
+      ],
+      "bytes": 125656,
+      "sha256": "5aca82c039c24466efa608c7e0e24867abb6d7a062075928d37fa2e2d5b92ec8"
+    },
+    {
+      "id": "fox-neutral",
+      "file": "public/assets/blender-characters/fox-neutral.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-neutral.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 139964,
+      "sha256": "91db7e61930d4d0c1576beee911fce06a4360c7c64e7a103761d9eabbf6f5c72"
+    },
+    {
+      "id": "fox-happy",
+      "file": "public/assets/blender-characters/fox-happy.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-happy.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 138240,
+      "sha256": "2ec8893d3dd7fca6958f037f49c79c14464cf1419500e29f86c9924081f6b2ea"
+    },
+    {
+      "id": "fox-hungry",
+      "file": "public/assets/blender-characters/fox-hungry.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-hungry.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 141574,
+      "sha256": "915f63a6516d1e2aacfc184ebe53b3cf567387333066c3812f7a12d268299e1c"
+    },
+    {
+      "id": "fox-impatient",
+      "file": "public/assets/blender-characters/fox-impatient.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-impatient.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 138824,
+      "sha256": "870f10a495ac0a18bc2ef5b7e94a440ac1f501d2e413531484b691380757ab79"
+    },
+    {
+      "id": "fox-eating",
+      "file": "public/assets/blender-characters/fox-eating.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-eating.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 138818,
+      "sha256": "e160829f78fc994bc5cc10239db5ce9669bc6f97774d0801afeb2193cfde61d4"
+    },
+    {
+      "id": "fox-chewing",
+      "file": "public/assets/blender-characters/fox-chewing.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-chewing.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 139772,
+      "sha256": "73438a582e14b00144032554d33a13bb6ec8b024acc795652271f8673e7ffd15"
+    },
+    {
+      "id": "fox-bite-0",
+      "file": "public/assets/blender-characters/fox-bite-0.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-bite-0.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 143228,
+      "sha256": "b4af917bfc17ad6d8a14fdcf2a2033150ed5b808cd4bbd5e79b15d2ad0de22dd"
+    },
+    {
+      "id": "fox-bite-1",
+      "file": "public/assets/blender-characters/fox-bite-1.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-bite-1.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 137464,
+      "sha256": "314a7e7d9051176c13bad97a9d84c2fbc0c476edcf7eb95bfc8c346b52ddee98"
+    },
+    {
+      "id": "fox-bite-2",
+      "file": "public/assets/blender-characters/fox-bite-2.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-bite-2.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 133532,
+      "sha256": "9705e1e2a7936efbd891c1c986c824aa578de51aad454f32598c57b9bfd4e7e1"
+    },
+    {
+      "id": "fox-bite-3",
+      "file": "public/assets/blender-characters/fox-bite-3.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-bite-3.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 136158,
+      "sha256": "aff3e0501785c4d06be3aa09adc0a8de620bb9ad18c4981dbd2c03d635273c01"
+    },
+    {
+      "id": "fox-sip-0",
+      "file": "public/assets/blender-characters/fox-sip-0.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-sip-0.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 142246,
+      "sha256": "e3caa6a3f10d43ae5e027ca26db2149de502f52e74a471d20015a297d7338a0a"
+    },
+    {
+      "id": "fox-sip-1",
+      "file": "public/assets/blender-characters/fox-sip-1.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-sip-1.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 134348,
+      "sha256": "18238ad6d62ca0282f0dfa3fbbde3444a7c104e6da70a85efb8d71357e4c09a2"
+    },
+    {
+      "id": "fox-sip-2",
+      "file": "public/assets/blender-characters/fox-sip-2.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-sip-2.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 132408,
+      "sha256": "38593f88b4ad3f2d384f72ce64f6669e149bd8d2d03c78fb971c61cd8fbe2cb4"
+    },
+    {
+      "id": "fox-sip-3",
+      "file": "public/assets/blender-characters/fox-sip-3.webp",
+      "sourceRender": "blender/characters/customer-renders/fox-sip-3.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        84,
+        211,
+        576,
+        786
+      ],
+      "bytes": 135386,
+      "sha256": "0b68e4a7bd62da01773b5bd4baa2e770bffd987dd188e182ef20846808b90a61"
+    },
+    {
+      "id": "bear-neutral",
+      "file": "public/assets/blender-characters/bear-neutral.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-neutral.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 129662,
+      "sha256": "8884e05dc4b871f16b7dd021ad8c1996c6417ed580e075da2885eed79a1dd7a1"
+    },
+    {
+      "id": "bear-happy",
+      "file": "public/assets/blender-characters/bear-happy.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-happy.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 128030,
+      "sha256": "3edbb51290b2cabe5e5a2ad235c890be8d6c2c57f8b377f8d9517edfe155158b"
+    },
+    {
+      "id": "bear-hungry",
+      "file": "public/assets/blender-characters/bear-hungry.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-hungry.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 130656,
+      "sha256": "aea6d2907dce2cb17b16f973332dbd74e26062da761aeac145e1998e3f681eec"
+    },
+    {
+      "id": "bear-impatient",
+      "file": "public/assets/blender-characters/bear-impatient.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-impatient.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 127860,
+      "sha256": "49eaa90c008d9fb1a32e904935ceb218a4ec7d5dcab68d54aafb114403abbec7"
+    },
+    {
+      "id": "bear-eating",
+      "file": "public/assets/blender-characters/bear-eating.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-eating.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 127838,
+      "sha256": "b827499155744db3f42726677fee1f335d5052445b4aeb929d7c2a205fc3b51e"
+    },
+    {
+      "id": "bear-chewing",
+      "file": "public/assets/blender-characters/bear-chewing.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-chewing.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 128052,
+      "sha256": "109ac479a5e56cd358d108545ecdb40d4d6b621dad81e52d1d70ebf5e8eaa7db"
+    },
+    {
+      "id": "bear-bite-0",
+      "file": "public/assets/blender-characters/bear-bite-0.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-bite-0.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 132032,
+      "sha256": "b49430cf50ecd6fae29d408a8fd35a01b5d9dc34355fbbab89480955c922c638"
+    },
+    {
+      "id": "bear-bite-1",
+      "file": "public/assets/blender-characters/bear-bite-1.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-bite-1.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 126158,
+      "sha256": "65f709050f51da10612341b1c682c2ab9873e2f40d3e15d9e31f28423017e679"
+    },
+    {
+      "id": "bear-bite-2",
+      "file": "public/assets/blender-characters/bear-bite-2.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-bite-2.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 122124,
+      "sha256": "24b64d2a7eb7f0a4fd14a11179d48332762f3d7f01dfe6a6eab2ec5c0c477803"
+    },
+    {
+      "id": "bear-bite-3",
+      "file": "public/assets/blender-characters/bear-bite-3.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-bite-3.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 124834,
+      "sha256": "b7f0c84cfd74a8ef886516fb1bc2cdfbd1602eef1842b1eb8c031bc370d777e7"
+    },
+    {
+      "id": "bear-sip-0",
+      "file": "public/assets/blender-characters/bear-sip-0.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-sip-0.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 131862,
+      "sha256": "97cf7f358d8ece8e2e809220e1bc9413b1fedd4cf5fa09d0703f84c688c8446d"
+    },
+    {
+      "id": "bear-sip-1",
+      "file": "public/assets/blender-characters/bear-sip-1.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-sip-1.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 124208,
+      "sha256": "7d398fee839bd73bc76ce15ab34247a717f56a0c2901cd9b734143192c91ae9e"
+    },
+    {
+      "id": "bear-sip-2",
+      "file": "public/assets/blender-characters/bear-sip-2.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-sip-2.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 121276,
+      "sha256": "44c00b52c0be9cf5651792275710e94e85d6d6c58ffc9d69d3baef8f5807ea87"
+    },
+    {
+      "id": "bear-sip-3",
+      "file": "public/assets/blender-characters/bear-sip-3.webp",
+      "sourceRender": "blender/characters/customer-renders/bear-sip-3.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 124060,
+      "sha256": "36b86c7f8c7565058c70a648ca6126046537544f0c8481cc72564ef598889259"
+    },
+    {
+      "id": "cat-neutral",
+      "file": "public/assets/blender-characters/cat-neutral.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-neutral.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 133358,
+      "sha256": "95892bf550a24980d6c6d661a3d73e643106d0d475aef3a861314998d91f9d6f"
+    },
+    {
+      "id": "cat-happy",
+      "file": "public/assets/blender-characters/cat-happy.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-happy.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 131408,
+      "sha256": "e552f8325b94a9a95472ebf745ecdb4cf756cf4054b9f1044ab2ddf04c2edeb0"
+    },
+    {
+      "id": "cat-hungry",
+      "file": "public/assets/blender-characters/cat-hungry.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-hungry.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 133870,
+      "sha256": "18796036d230b351201ea24bfb30b546d1ae999a14a11398c9ff41ce68a1e7a2"
+    },
+    {
+      "id": "cat-impatient",
+      "file": "public/assets/blender-characters/cat-impatient.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-impatient.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 131510,
+      "sha256": "8411d450a50b68fa4d0a80ae0b638c7ff2c51af020ce3ff22c2b32b2b5d77b18"
+    },
+    {
+      "id": "cat-eating",
+      "file": "public/assets/blender-characters/cat-eating.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-eating.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 130736,
+      "sha256": "caf0ab143d1b39dbedcd265a6c661b5338d262eb0eaeb8dee11f5e997e0771c8"
+    },
+    {
+      "id": "cat-chewing",
+      "file": "public/assets/blender-characters/cat-chewing.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-chewing.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 130850,
+      "sha256": "4be7a9be6144ef52ab77acea1de32be52c6d3b3711283d0dfdc83a49568f1d5b"
+    },
+    {
+      "id": "cat-bite-0",
+      "file": "public/assets/blender-characters/cat-bite-0.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-bite-0.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 135492,
+      "sha256": "c22a38f09f2416ebd97d7b32e0a40a9e9e5d3fb547a6603f3d189701a394d0b9"
+    },
+    {
+      "id": "cat-bite-1",
+      "file": "public/assets/blender-characters/cat-bite-1.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-bite-1.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 129494,
+      "sha256": "f7ce7e9d6d1fc40d074590c28533090c67632c5e4ff68c8df94042486c1283df"
+    },
+    {
+      "id": "cat-bite-2",
+      "file": "public/assets/blender-characters/cat-bite-2.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-bite-2.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 124744,
+      "sha256": "3fef190d9eedd3565ded7004003cb1e2b1c7286b5e8e8baef7ac1b833c007bd2"
+    },
+    {
+      "id": "cat-bite-3",
+      "file": "public/assets/blender-characters/cat-bite-3.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-bite-3.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 127878,
+      "sha256": "c80c89a38f51078a9fdd0b8caf0b26d2d74fbb628068425af28a3b46dacf9f85"
+    },
+    {
+      "id": "cat-sip-0",
+      "file": "public/assets/blender-characters/cat-sip-0.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-sip-0.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 134744,
+      "sha256": "3f5fa71e713932ddd5c44f8c17be87467e18d21039d722f2e2d4b9d37f4b6ace"
+    },
+    {
+      "id": "cat-sip-1",
+      "file": "public/assets/blender-characters/cat-sip-1.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-sip-1.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 127600,
+      "sha256": "229510b56a4c2f1e621d55dc4c0308f513290127710331cbefcdd8d875406901"
+    },
+    {
+      "id": "cat-sip-2",
+      "file": "public/assets/blender-characters/cat-sip-2.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-sip-2.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 124324,
+      "sha256": "2646c03a18f75ade7f1957fbd27d417518ff8d5e8b0188a260a37d5830186c3d"
+    },
+    {
+      "id": "cat-sip-3",
+      "file": "public/assets/blender-characters/cat-sip-3.webp",
+      "sourceRender": "blender/characters/customer-renders/cat-sip-3.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        87,
+        211,
+        573,
+        786
+      ],
+      "bytes": 127614,
+      "sha256": "e2ee5e0efc45c184330133d0fdfcf300dc51dde3aa901df7293b0a1188cb5aea"
+    },
+    {
+      "id": "panda-neutral",
+      "file": "public/assets/blender-characters/panda-neutral.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-neutral.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 126930,
+      "sha256": "d5356ef8b161433cf0f260c58c078627c733465a300177e8cfcc23e98389efdd"
+    },
+    {
+      "id": "panda-happy",
+      "file": "public/assets/blender-characters/panda-happy.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-happy.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 125522,
+      "sha256": "dc13ebd8e4ed3a0ce7ff561a034526654be5980ec072ecb757e466de4bf684f2"
+    },
+    {
+      "id": "panda-hungry",
+      "file": "public/assets/blender-characters/panda-hungry.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-hungry.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 127438,
+      "sha256": "df204bf7fce8ceb8712e62f1552bec9b6e5e99aa662e002ea040f52e0f3363fe"
+    },
+    {
+      "id": "panda-impatient",
+      "file": "public/assets/blender-characters/panda-impatient.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-impatient.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 125726,
+      "sha256": "896c6f139bb7d41facb1c864fb43b0aec7e9ea8ce15c08e9d193c2fdd4ce0cc1"
+    },
+    {
+      "id": "panda-eating",
+      "file": "public/assets/blender-characters/panda-eating.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-eating.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 125272,
+      "sha256": "547bae4d62479e4ef2e6434c1628ea49d9702b5665da53680dc729c309dc521f"
+    },
+    {
+      "id": "panda-chewing",
+      "file": "public/assets/blender-characters/panda-chewing.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-chewing.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 125478,
+      "sha256": "38b7324e84d2fb0af070a458b7b999182e349272f4550501cfba0441e4ee8e16"
+    },
+    {
+      "id": "panda-bite-0",
+      "file": "public/assets/blender-characters/panda-bite-0.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-bite-0.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 128666,
+      "sha256": "5133c5f5552349dcb42284ac27251f0b72d7867efb319e6e53c5d8e577f50fdb"
+    },
+    {
+      "id": "panda-bite-1",
+      "file": "public/assets/blender-characters/panda-bite-1.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-bite-1.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 123254,
+      "sha256": "ec0adbc954b3a422e6c1d825acfdef45980ee937241ca85a727dc7debae1146f"
+    },
+    {
+      "id": "panda-bite-2",
+      "file": "public/assets/blender-characters/panda-bite-2.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-bite-2.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 119406,
+      "sha256": "94cece6a559a1434a763f49bfbcba64971a5f21c59a8624e5a2ead89dc75d2ec"
+    },
+    {
+      "id": "panda-bite-3",
+      "file": "public/assets/blender-characters/panda-bite-3.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-bite-3.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 121556,
+      "sha256": "07eca5ebfedee38eaa275a2c935438d2cfd32fc4b92deed469f26c05b3fca958"
+    },
+    {
+      "id": "panda-sip-0",
+      "file": "public/assets/blender-characters/panda-sip-0.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-sip-0.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 128780,
+      "sha256": "dc1cf44f1df25e41b227e6c9d3d223e74a4562721c4c0718aab9d0111982daa2"
+    },
+    {
+      "id": "panda-sip-1",
+      "file": "public/assets/blender-characters/panda-sip-1.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-sip-1.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 121768,
+      "sha256": "2a47cbb0d931c76ec7722f30b56a22c327a2e762078d69062245c4069eee67b2"
+    },
+    {
+      "id": "panda-sip-2",
+      "file": "public/assets/blender-characters/panda-sip-2.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-sip-2.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 118552,
+      "sha256": "65ec6c6a623278d7a54604d8c7124c8aa00049341dbf3dae4a40113941d5fa29"
+    },
+    {
+      "id": "panda-sip-3",
+      "file": "public/assets/blender-characters/panda-sip-3.webp",
+      "sourceRender": "blender/characters/customer-renders/panda-sip-3.png",
+      "width": 660,
+      "height": 840,
+      "logicalSize": [
+        110,
+        140
+      ],
+      "alphaBounds": [
+        100,
+        228,
+        560,
+        786
+      ],
+      "bytes": 121730,
+      "sha256": "378a5bc59e0820e71d073310e0269312888e7fd431c42ff501c372d84265446b"
+    },
+    {
+      "id": "guest-bunny",
+      "file": "public/assets/blender-characters/guest-bunny.webp",
+      "sourceRender": "blender/characters/customer-renders/guest-bunny.png",
+      "width": 720,
+      "height": 780,
+      "logicalSize": [
+        120,
+        130
+      ],
+      "alphaBounds": [
+        120,
+        41,
+        600,
+        759
+      ],
+      "bytes": 155280,
+      "sha256": "79ee77699aa8e72b93dad30d1e5348f0124039500a881b776ee857be967634b4"
+    },
+    {
+      "id": "guest-fox",
+      "file": "public/assets/blender-characters/guest-fox.webp",
+      "sourceRender": "blender/characters/customer-renders/guest-fox.png",
+      "width": 720,
+      "height": 780,
+      "logicalSize": [
+        120,
+        130
+      ],
+      "alphaBounds": [
+        85,
+        118,
+        635,
+        759
+      ],
+      "bytes": 166518,
+      "sha256": "1ab33eaa480557e81d1a749ca0ca140e75742f105a404e1487a465c393cdf1ab"
+    },
+    {
+      "id": "guest-bear",
+      "file": "public/assets/blender-characters/guest-bear.webp",
+      "sourceRender": "blender/characters/customer-renders/guest-bear.png",
+      "width": 720,
+      "height": 780,
+      "logicalSize": [
+        120,
+        130
+      ],
+      "alphaBounds": [
+        104,
+        136,
+        616,
+        759
+      ],
+      "bytes": 154190,
+      "sha256": "7a491ff3544147b6a3057dae49f0b6a564639344062ac1ddb26d24466391c244"
+    },
+    {
+      "id": "guest-cat",
+      "file": "public/assets/blender-characters/guest-cat.webp",
+      "sourceRender": "blender/characters/customer-renders/guest-cat.png",
+      "width": 720,
+      "height": 780,
+      "logicalSize": [
+        120,
+        130
+      ],
+      "alphaBounds": [
+        89,
+        118,
+        631,
+        759
+      ],
+      "bytes": 156926,
+      "sha256": "0de45cdbfb290bc1b452950a43c1ab8c5a5fb95378c799053c4127e1d9744dd1"
+    },
+    {
+      "id": "guest-panda",
+      "file": "public/assets/blender-characters/guest-panda.webp",
+      "sourceRender": "blender/characters/customer-renders/guest-panda.png",
+      "width": 720,
+      "height": 780,
+      "logicalSize": [
+        120,
+        130
+      ],
+      "alphaBounds": [
+        104,
+        136,
+        616,
+        759
+      ],
+      "bytes": 150292,
+      "sha256": "c997051907991764d9194e5860cd1b5e57b9bc0fc955620bd7cea20b7f8ca867"
+    },
+    {
+      "id": "waiter",
+      "file": "public/assets/blender-characters/waiter.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        115,
+        79,
+        764,
+        924
+      ],
+      "bytes": 215456,
+      "sha256": "5436547d2fd052a39d8df4b0d255ecb6b86e82cbfd5297dffba2898c3bc14e59"
+    },
+    {
+      "id": "waiter-walk-0",
+      "file": "public/assets/blender-characters/waiter-walk-0.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-0.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        115,
+        79,
+        764,
+        924
+      ],
+      "bytes": 212324,
+      "sha256": "103e04452d8951cfb5ff80f59993504c4b621f6d98112e3dc99deb0a02cf576b"
+    },
+    {
+      "id": "waiter-walk-1",
+      "file": "public/assets/blender-characters/waiter-walk-1.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-1.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        105,
+        79,
+        764,
+        924
+      ],
+      "bytes": 212742,
+      "sha256": "229f53ca64a0d06955b16bca5c8b23522fb662a1b1e3a6213fdef3dda42595e0"
+    },
+    {
+      "id": "waiter-walk-2",
+      "file": "public/assets/blender-characters/waiter-walk-2.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-2.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        97,
+        79,
+        764,
+        924
+      ],
+      "bytes": 213760,
+      "sha256": "9f8330cdd9d0acad122fc495eea8b0cefa15d191876418e344035e857848fa79"
+    },
+    {
+      "id": "waiter-walk-3",
+      "file": "public/assets/blender-characters/waiter-walk-3.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-3.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        89,
+        79,
+        764,
+        924
+      ],
+      "bytes": 214404,
+      "sha256": "931926b7d7ce9ed22db8c8bd5feec33ae6414d3d1a9e4da02aa62d1a329e27cb"
+    },
+    {
+      "id": "waiter-walk-4",
+      "file": "public/assets/blender-characters/waiter-walk-4.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-4.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        84,
+        79,
+        764,
+        924
+      ],
+      "bytes": 215002,
+      "sha256": "12f98c4eb19a850ec6412cdcd8650dc0fbfb931b344f3ba1e5729ff26ebef7b5"
+    },
+    {
+      "id": "waiter-walk-5",
+      "file": "public/assets/blender-characters/waiter-walk-5.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-5.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        80,
+        79,
+        764,
+        924
+      ],
+      "bytes": 215620,
+      "sha256": "0be2aa4fc493b40f22d7e2322b88470c20fc6beeafc559cf13d1836984f23982"
+    },
+    {
+      "id": "waiter-walk-6",
+      "file": "public/assets/blender-characters/waiter-walk-6.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-6.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        79,
+        79,
+        764,
+        924
+      ],
+      "bytes": 216388,
+      "sha256": "4cb461e093edc60be7f44bb4bdc33c26ebe982349e0d6592ecb9c9b774ed4f80"
+    },
+    {
+      "id": "waiter-walk-7",
+      "file": "public/assets/blender-characters/waiter-walk-7.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-7.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        80,
+        79,
+        764,
+        923
+      ],
+      "bytes": 216640,
+      "sha256": "105f686c2389509ddd6fdeea9fc903170a5f21cf15e51aed783f71810f117f93"
+    },
+    {
+      "id": "waiter-walk-8",
+      "file": "public/assets/blender-characters/waiter-walk-8.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-8.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        84,
+        79,
+        764,
+        923
+      ],
+      "bytes": 216180,
+      "sha256": "10db3f41e8033f0405c052a86915a1aaeff7c1fd819f68c41f1a69ae57048a56"
+    },
+    {
+      "id": "waiter-walk-9",
+      "file": "public/assets/blender-characters/waiter-walk-9.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-9.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        89,
+        79,
+        764,
+        924
+      ],
+      "bytes": 216812,
+      "sha256": "5d393411e86f4e12833cd2cac2a5d5472c84f87c6a8b3facb1b19ef7293cf6d9"
+    },
+    {
+      "id": "waiter-walk-10",
+      "file": "public/assets/blender-characters/waiter-walk-10.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-10.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        97,
+        79,
+        764,
+        924
+      ],
+      "bytes": 216498,
+      "sha256": "692059dcc0dc083afbf9b208edd4d2c4cdbe35020c5a02b87c628b0e9bfb9771"
+    },
+    {
+      "id": "waiter-walk-11",
+      "file": "public/assets/blender-characters/waiter-walk-11.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-11.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        105,
+        79,
+        764,
+        923
+      ],
+      "bytes": 216006,
+      "sha256": "8410fcefe77155cf91b138fd8583041ac02fd6d6dc1a6011cd44225c814cd607"
+    },
+    {
+      "id": "waiter-walk-12",
+      "file": "public/assets/blender-characters/waiter-walk-12.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-12.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        115,
+        79,
+        764,
+        924
+      ],
+      "bytes": 215530,
+      "sha256": "3914b38cf4cd5f4be5b3028e6a364e38cfad1598a52d4a02cf0e97b802143dcf"
+    },
+    {
+      "id": "waiter-walk-13",
+      "file": "public/assets/blender-characters/waiter-walk-13.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-13.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        124,
+        79,
+        764,
+        923
+      ],
+      "bytes": 215416,
+      "sha256": "c7331a2fcd23f9d2f97d5af0cc235b0f925326534699581b1ed585301e432abc"
+    },
+    {
+      "id": "waiter-walk-14",
+      "file": "public/assets/blender-characters/waiter-walk-14.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-14.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        133,
+        79,
+        764,
+        924
+      ],
+      "bytes": 215578,
+      "sha256": "043b6ae271d865befc6f1ef0ffeb14b3423a704220a2446ce2a5f3588b686a29"
+    },
+    {
+      "id": "waiter-walk-15",
+      "file": "public/assets/blender-characters/waiter-walk-15.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-15.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        140,
+        79,
+        764,
+        924
+      ],
+      "bytes": 215560,
+      "sha256": "7e6b807f4cbacbb387963b6f54f6d936fcc426662b837117de5ab7741f7db988"
+    },
+    {
+      "id": "waiter-walk-16",
+      "file": "public/assets/blender-characters/waiter-walk-16.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-16.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        146,
+        79,
+        764,
+        924
+      ],
+      "bytes": 215630,
+      "sha256": "bf7725e6e2a30033db944287b745ea124582daf93627d291ef03f138e49d9e10"
+    },
+    {
+      "id": "waiter-walk-17",
+      "file": "public/assets/blender-characters/waiter-walk-17.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-17.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        149,
+        79,
+        764,
+        924
+      ],
+      "bytes": 216074,
+      "sha256": "42f211ef0c21d5fd236c3c0ae7f702e5a1295f97d5e9244f955b8e599e39b811"
+    },
+    {
+      "id": "waiter-walk-18",
+      "file": "public/assets/blender-characters/waiter-walk-18.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-18.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        151,
+        79,
+        764,
+        924
+      ],
+      "bytes": 215808,
+      "sha256": "961d7318ae2cbd4fb777b5355040c6c0efade8aee55df3596f8e995335985593"
+    },
+    {
+      "id": "waiter-walk-19",
+      "file": "public/assets/blender-characters/waiter-walk-19.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-19.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        150,
+        79,
+        764,
+        924
+      ],
+      "bytes": 214458,
+      "sha256": "c43c04510dcd3d9cfdba9784a347e2d507132d2f31f9492a13c2873cbcc4169a"
+    },
+    {
+      "id": "waiter-walk-20",
+      "file": "public/assets/blender-characters/waiter-walk-20.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-20.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        146,
+        79,
+        764,
+        924
+      ],
+      "bytes": 213388,
+      "sha256": "a713c4fc6d1245611f51b0d0c2ac53143c7a30ce6cd5e5dc770600e13f31e3c5"
+    },
+    {
+      "id": "waiter-walk-21",
+      "file": "public/assets/blender-characters/waiter-walk-21.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-21.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        140,
+        79,
+        764,
+        923
+      ],
+      "bytes": 212388,
+      "sha256": "123dd978dce7d88267084be7ff481d8b28a3fe35590b0f86f1b012d1b17a3bf8"
+    },
+    {
+      "id": "waiter-walk-22",
+      "file": "public/assets/blender-characters/waiter-walk-22.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-22.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        133,
+        79,
+        764,
+        923
+      ],
+      "bytes": 212198,
+      "sha256": "df6952c725143a1af0502cdc13b37ce5f0fb0b0a112ffd1dc0e13dc4620317c4"
+    },
+    {
+      "id": "waiter-walk-23",
+      "file": "public/assets/blender-characters/waiter-walk-23.webp",
+      "sourceRender": "blender/characters/waiter-renders/waiter-walk-23.png",
+      "width": 780,
+      "height": 1008,
+      "logicalSize": [
+        130,
+        168
+      ],
+      "alphaBounds": [
+        124,
+        79,
+        764,
+        924
+      ],
+      "bytes": 211738,
+      "sha256": "985d0f2461b96027853f39530d662a217a51beebfec4a686c76c1dfc986e8c24"
+    }
+  ],
+  "totalBytes": 15229594
+}
