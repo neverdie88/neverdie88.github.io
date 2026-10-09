@@ -1,0 +1,489 @@
+{
+  "technique": "Original Blender mesh and curve food, Cycles transparent orthographic renders via Blender MCP; warm0.67px silhouette and exact lossless WebP",
+  "source": "blender/world/food.blend",
+  "generator": "blender/world/food-generator.py",
+  "sourceSha256": "a48644d657fe6a319b8f29168c6ce614358442eb9f1c66f016b6cc37ca53cbdf",
+  "generatorSha256": "39a6f7c0dac8333ce4b621dd7ec3cd071047e1795731f9329db9ffab5fb5485d",
+  "nativeScale": 6,
+  "logicalSize": [
+    150,
+    150
+  ],
+  "nativeSize": [
+    900,
+    900
+  ],
+  "kinds": [
+    "soup",
+    "pasta",
+    "pizza",
+    "salad",
+    "cake",
+    "juice"
+  ],
+  "stages": [
+    "full",
+    "half",
+    "nearly",
+    "empty"
+  ],
+  "assets": [
+    {
+      "id": "food-soup",
+      "file": "public/assets/blender-world/food-soup.webp",
+      "sourceRender": "blender/world/food-renders/food-soup.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        111,
+        109,
+        789,
+        670
+      ],
+      "bytes": 197932,
+      "sha256": "e4e3412ed63a7de70997bbd1ecb0409cceff5d0469c7d4986e11a91ef31a3bbb"
+    },
+    {
+      "id": "food-soup-half",
+      "file": "public/assets/blender-world/food-soup-half.webp",
+      "sourceRender": "blender/world/food-renders/food-soup-half.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        111,
+        109,
+        789,
+        670
+      ],
+      "bytes": 194630,
+      "sha256": "75ea065cbf21f9b6b4a2fdb010b906b7cd59f46cce66ddf37d5c56178cf53000"
+    },
+    {
+      "id": "food-soup-nearly",
+      "file": "public/assets/blender-world/food-soup-nearly.webp",
+      "sourceRender": "blender/world/food-renders/food-soup-nearly.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        111,
+        109,
+        789,
+        670
+      ],
+      "bytes": 176290,
+      "sha256": "c4a2673c5de7e63aa6b55fc9af172374a9cd141b202ea0a3bd4ad9d79f8b0124"
+    },
+    {
+      "id": "food-soup-empty",
+      "file": "public/assets/blender-world/food-soup-empty.webp",
+      "sourceRender": "blender/world/food-renders/food-soup-empty.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        111,
+        109,
+        789,
+        670
+      ],
+      "bytes": 153660,
+      "sha256": "8981d904d188e8812532212fba41a12429a53444b032803ed04fd44cb59b134a"
+    },
+    {
+      "id": "food-pasta",
+      "file": "public/assets/blender-world/food-pasta.webp",
+      "sourceRender": "blender/world/food-renders/food-pasta.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        154,
+        815,
+        720
+      ],
+      "bytes": 243144,
+      "sha256": "abe0d4534e7933749fcd2f92151ac93ea01b60141bb463540afc177823e36ff2"
+    },
+    {
+      "id": "food-pasta-half",
+      "file": "public/assets/blender-world/food-pasta-half.webp",
+      "sourceRender": "blender/world/food-renders/food-pasta-half.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        154,
+        815,
+        720
+      ],
+      "bytes": 229134,
+      "sha256": "95481888f010ec5855154dd0e385169d272c831dbc538c1d1a06286a1b982846"
+    },
+    {
+      "id": "food-pasta-nearly",
+      "file": "public/assets/blender-world/food-pasta-nearly.webp",
+      "sourceRender": "blender/world/food-renders/food-pasta-nearly.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        154,
+        815,
+        720
+      ],
+      "bytes": 199158,
+      "sha256": "9e61aa9bebf91c146de70c695785eabcfccbd32032db9bf2b5cd0e1665b2274d"
+    },
+    {
+      "id": "food-pasta-empty",
+      "file": "public/assets/blender-world/food-pasta-empty.webp",
+      "sourceRender": "blender/world/food-renders/food-pasta-empty.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        154,
+        815,
+        720
+      ],
+      "bytes": 185380,
+      "sha256": "6fc90912105c82549f673ce2926522eb27f966dab60d3772a4815db65ee53fe1"
+    },
+    {
+      "id": "food-pizza",
+      "file": "public/assets/blender-world/food-pizza.webp",
+      "sourceRender": "blender/world/food-renders/food-pizza.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        154,
+        815,
+        720
+      ],
+      "bytes": 276704,
+      "sha256": "39cf1969808102473f7f0e34280f47659028b148320e2ef2cbad8ae4284962e4"
+    },
+    {
+      "id": "food-pizza-half",
+      "file": "public/assets/blender-world/food-pizza-half.webp",
+      "sourceRender": "blender/world/food-renders/food-pizza-half.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        154,
+        815,
+        720
+      ],
+      "bytes": 241500,
+      "sha256": "2ddcaa9868ffda5fde9b306d5de8c6aa41252af4f982943fa3de2cf63a269d9d"
+    },
+    {
+      "id": "food-pizza-nearly",
+      "file": "public/assets/blender-world/food-pizza-nearly.webp",
+      "sourceRender": "blender/world/food-renders/food-pizza-nearly.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        154,
+        815,
+        720
+      ],
+      "bytes": 207376,
+      "sha256": "664ad91189987171c77760bced17041d8229dcf5d1a9d4e20c6b8095a8245719"
+    },
+    {
+      "id": "food-pizza-empty",
+      "file": "public/assets/blender-world/food-pizza-empty.webp",
+      "sourceRender": "blender/world/food-renders/food-pizza-empty.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        154,
+        815,
+        720
+      ],
+      "bytes": 185380,
+      "sha256": "6fc90912105c82549f673ce2926522eb27f966dab60d3772a4815db65ee53fe1"
+    },
+    {
+      "id": "food-salad",
+      "file": "public/assets/blender-world/food-salad.webp",
+      "sourceRender": "blender/world/food-renders/food-salad.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        111,
+        109,
+        789,
+        670
+      ],
+      "bytes": 227784,
+      "sha256": "96288f44a16a11d41af7a44e134692d029a14ef8fccd9aa4ef23394c5a3aeb8c"
+    },
+    {
+      "id": "food-salad-half",
+      "file": "public/assets/blender-world/food-salad-half.webp",
+      "sourceRender": "blender/world/food-renders/food-salad-half.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        111,
+        109,
+        789,
+        670
+      ],
+      "bytes": 204102,
+      "sha256": "65220a6e07c877ae222b69c8e642232ed2c23668954226672c90eb164dd50a16"
+    },
+    {
+      "id": "food-salad-nearly",
+      "file": "public/assets/blender-world/food-salad-nearly.webp",
+      "sourceRender": "blender/world/food-renders/food-salad-nearly.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        111,
+        109,
+        789,
+        670
+      ],
+      "bytes": 165004,
+      "sha256": "8b5d3a727d68966b29f308e97342ada62a18fc33b0a17bc8fdb5a295334f7b0e"
+    },
+    {
+      "id": "food-salad-empty",
+      "file": "public/assets/blender-world/food-salad-empty.webp",
+      "sourceRender": "blender/world/food-renders/food-salad-empty.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        111,
+        109,
+        789,
+        670
+      ],
+      "bytes": 153660,
+      "sha256": "8981d904d188e8812532212fba41a12429a53444b032803ed04fd44cb59b134a"
+    },
+    {
+      "id": "food-cake",
+      "file": "public/assets/blender-world/food-cake.webp",
+      "sourceRender": "blender/world/food-renders/food-cake.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        171,
+        815,
+        753
+      ],
+      "bytes": 222682,
+      "sha256": "8de1d30157e2d1df5d5ca73dc282ed0cc16172e14a03cdddbe46cf51669ceabe"
+    },
+    {
+      "id": "food-cake-half",
+      "file": "public/assets/blender-world/food-cake-half.webp",
+      "sourceRender": "blender/world/food-renders/food-cake-half.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        173,
+        815,
+        753
+      ],
+      "bytes": 219380,
+      "sha256": "924f9942e699007397fbba1c434f78103edc347b09af605456a225b0a3a5eb6c"
+    },
+    {
+      "id": "food-cake-nearly",
+      "file": "public/assets/blender-world/food-cake-nearly.webp",
+      "sourceRender": "blender/world/food-renders/food-cake-nearly.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        174,
+        815,
+        753
+      ],
+      "bytes": 200818,
+      "sha256": "8ab2d8265f52aa89e9905abdc9357fb3d612d799b81d715b9bfc6508bd1f1514"
+    },
+    {
+      "id": "food-cake-empty",
+      "file": "public/assets/blender-world/food-cake-empty.webp",
+      "sourceRender": "blender/world/food-renders/food-cake-empty.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        85,
+        187,
+        815,
+        753
+      ],
+      "bytes": 185218,
+      "sha256": "8cbb4bf02fe359c708dfc0d0793af986423bcbf9b07759673db15c950bb2f355"
+    },
+    {
+      "id": "food-juice",
+      "file": "public/assets/blender-world/food-juice.webp",
+      "sourceRender": "blender/world/food-renders/food-juice.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        254,
+        150,
+        624,
+        698
+      ],
+      "bytes": 127614,
+      "sha256": "a7becdbf1b8af20ea5563d815012de54f7de10a7786685ab63e36355be2bf9c3"
+    },
+    {
+      "id": "food-juice-half",
+      "file": "public/assets/blender-world/food-juice-half.webp",
+      "sourceRender": "blender/world/food-renders/food-juice-half.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        276,
+        150,
+        624,
+        698
+      ],
+      "bytes": 138294,
+      "sha256": "cd7b3b9c303b6b68c978d171be59ec300c1fccded53a95be2afb42038181c3e1"
+    },
+    {
+      "id": "food-juice-nearly",
+      "file": "public/assets/blender-world/food-juice-nearly.webp",
+      "sourceRender": "blender/world/food-renders/food-juice-nearly.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        276,
+        150,
+        624,
+        698
+      ],
+      "bytes": 149032,
+      "sha256": "92af5a4d36268cfa91d3b0f64cc49ed6130bef4e232c2981c81df2fd5edd904f"
+    },
+    {
+      "id": "food-juice-empty",
+      "file": "public/assets/blender-world/food-juice-empty.webp",
+      "sourceRender": "blender/world/food-renders/food-juice-empty.png",
+      "width": 900,
+      "height": 900,
+      "logicalSize": [
+        150,
+        150
+      ],
+      "alphaBounds": [
+        276,
+        150,
+        624,
+        698
+      ],
+      "bytes": 174170,
+      "sha256": "b922af890470bb448ebc1cebe5354346021defccaedb01ac507e47ea3b888be0"
+    }
+  ],
+  "totalBytes": 4658046
+}

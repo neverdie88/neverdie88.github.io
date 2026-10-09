@@ -1,0 +1,686 @@
+{
+  "technique": "Actual Blender models of meshes, curves and fixed-brand extruded text, rendered via Blender MCP. No SVG or raster image input.",
+  "source": "blender/world/environment.blend",
+  "generator": "blender/world/environment-generator.py",
+  "nativeScale": 6,
+  "assets": [
+    {
+      "id": "table-empty",
+      "scene": "Little Table / Blender World / table-empty",
+      "logicalWidth": 270,
+      "logicalHeight": 210,
+      "width": 1620,
+      "height": 1260,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/table-empty.png",
+      "file": "public/assets/blender-world/table-empty.webp",
+      "bytes": 453698,
+      "sha256": "3b909129cb5fd2fcedea7a9e996b6d48c27af1f044c47da73b9b7a3da62555a8",
+      "alphaBounds": [
+        49,
+        427,
+        1571,
+        1229
+      ],
+      "logicalSize": [
+        270,
+        210
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "plant",
+      "scene": "Little Table / Blender World / plant",
+      "logicalWidth": 240,
+      "logicalHeight": 320,
+      "width": 1440,
+      "height": 1920,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/plant.png",
+      "file": "public/assets/blender-world/plant.webp",
+      "bytes": 351394,
+      "sha256": "5774f9e13f0571dd561597aecd74bf91aeaff528480b3b959ce047e76d0a64ad",
+      "alphaBounds": [
+        304,
+        344,
+        1077,
+        1726
+      ],
+      "logicalSize": [
+        240,
+        320
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "cart",
+      "scene": "Little Table / Blender World / cart",
+      "logicalWidth": 240,
+      "logicalHeight": 320,
+      "width": 1440,
+      "height": 1920,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/cart.png",
+      "file": "public/assets/blender-world/cart.webp",
+      "bytes": 475670,
+      "sha256": "656fd0eac83c722485dbfb933772b673bda70b2652d5057747fdd73d72b99966",
+      "alphaBounds": [
+        152,
+        343,
+        1227,
+        1787
+      ],
+      "logicalSize": [
+        240,
+        320
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "order-lane",
+      "scene": "Little Table / Blender World / order-lane",
+      "logicalWidth": 320,
+      "logicalHeight": 150,
+      "width": 1920,
+      "height": 900,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/order-lane.png",
+      "file": "public/assets/blender-world/order-lane.webp",
+      "bytes": 373038,
+      "sha256": "0262bf56ae448156fc2ef0a18a6b63038abbe2ae2392091056be16530aa48f37",
+      "alphaBounds": [
+        103,
+        118,
+        1721,
+        845
+      ],
+      "logicalSize": [
+        320,
+        150
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "wrong-shelves",
+      "scene": "Little Table / Blender World / wrong-shelves",
+      "logicalWidth": 320,
+      "logicalHeight": 150,
+      "width": 1920,
+      "height": 900,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/wrong-shelves.png",
+      "file": "public/assets/blender-world/wrong-shelves.webp",
+      "bytes": 511160,
+      "sha256": "f2e8993380568231d01792043bdf81ebebd0b046217ccadac5c81aab02eb9764",
+      "alphaBounds": [
+        229,
+        73,
+        1643,
+        815
+      ],
+      "logicalSize": [
+        320,
+        150
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "conveyor",
+      "scene": "Little Table / Blender World / conveyor",
+      "logicalWidth": 320,
+      "logicalHeight": 150,
+      "width": 1920,
+      "height": 900,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/conveyor.png",
+      "file": "public/assets/blender-world/conveyor.webp",
+      "bytes": 426208,
+      "sha256": "a2b5c29492ff2ccadd2db0aa0f76b1d2c2497da6bb1754237ec3c997dc7bb6c8",
+      "alphaBounds": [
+        91,
+        250,
+        1829,
+        794
+      ],
+      "logicalSize": [
+        320,
+        150
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "belt-slat",
+      "scene": "Little Table / Blender World / belt-slat",
+      "logicalWidth": 20,
+      "logicalHeight": 30,
+      "width": 120,
+      "height": 180,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/belt-slat.png",
+      "file": "public/assets/blender-world/belt-slat.webp",
+      "bytes": 4946,
+      "sha256": "1e9651b5eabfaee3c91e7d4a8053f3aca54a4110cc99b954758ca0361dd75e7b",
+      "alphaBounds": [
+        51,
+        8,
+        69,
+        172
+      ],
+      "logicalSize": [
+        20,
+        30
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "wall-tile",
+      "scene": "Little Table / Blender World / wall-tile",
+      "logicalWidth": 188,
+      "logicalHeight": 228,
+      "width": 1128,
+      "height": 1368,
+      "opaqueTile": true,
+      "sourcePng": "blender/world/environment-renders/wall-tile.png",
+      "file": "public/assets/blender-world/wall-tile.webp",
+      "bytes": 674044,
+      "sha256": "f2f91570155f42a0e3031c8816aad06f38ca9670259475878472162a419bb822",
+      "alphaBounds": [
+        0,
+        0,
+        1128,
+        1368
+      ],
+      "logicalSize": [
+        188,
+        228
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "floor-tile",
+      "scene": "Little Table / Blender World / floor-tile",
+      "logicalWidth": 156,
+      "logicalHeight": 132,
+      "width": 936,
+      "height": 792,
+      "opaqueTile": true,
+      "sourcePng": "blender/world/environment-renders/floor-tile.png",
+      "file": "public/assets/blender-world/floor-tile.webp",
+      "bytes": 294972,
+      "sha256": "2e479f3709f57c1dffc5f61fc0581754da9af59a9491054339d43e86d406b118",
+      "alphaBounds": [
+        0,
+        0,
+        936,
+        792
+      ],
+      "logicalSize": [
+        156,
+        132
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "garden-tile",
+      "scene": "Little Table / Blender World / garden-tile",
+      "logicalWidth": 156,
+      "logicalHeight": 132,
+      "width": 936,
+      "height": 792,
+      "opaqueTile": true,
+      "sourcePng": "blender/world/environment-renders/garden-tile.png",
+      "file": "public/assets/blender-world/garden-tile.webp",
+      "bytes": 339504,
+      "sha256": "a3d1010ab0a9c9d74baf617a3d1b6493eac1f5ae95270555e4ea776618515f39",
+      "alphaBounds": [
+        0,
+        0,
+        936,
+        792
+      ],
+      "logicalSize": [
+        156,
+        132
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "kitchen-panel",
+      "scene": "Little Table / Blender World / kitchen-panel",
+      "logicalWidth": 200,
+      "logicalHeight": 143,
+      "width": 1200,
+      "height": 858,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/kitchen-panel.png",
+      "file": "public/assets/blender-world/kitchen-panel.webp",
+      "bytes": 443122,
+      "sha256": "6025d7eee0a8c089bb3360111997f4636b680721a0795d735e562478d72f2f2c",
+      "alphaBounds": [
+        1,
+        1,
+        1199,
+        857
+      ],
+      "logicalSize": [
+        200,
+        143
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "counter-rail",
+      "scene": "Little Table / Blender World / counter-rail",
+      "logicalWidth": 160,
+      "logicalHeight": 16,
+      "width": 960,
+      "height": 96,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/counter-rail.png",
+      "file": "public/assets/blender-world/counter-rail.webp",
+      "bytes": 50546,
+      "sha256": "bce2ebe00323a6447826f9aba8315927535b4e8783bd54183e6c3d36583fe9a9",
+      "alphaBounds": [
+        0,
+        5,
+        960,
+        91
+      ],
+      "logicalSize": [
+        160,
+        16
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "awning-tile",
+      "scene": "Little Table / Blender World / awning-tile",
+      "logicalWidth": 70,
+      "logicalHeight": 36,
+      "width": 420,
+      "height": 216,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/awning-tile.png",
+      "file": "public/assets/blender-world/awning-tile.webp",
+      "bytes": 44240,
+      "sha256": "8bcad8ce4f2582a5ef36e25db0068656d2c81faef78011b9ec9bf62579dbe3d0",
+      "alphaBounds": [
+        0,
+        0,
+        420,
+        208
+      ],
+      "logicalSize": [
+        70,
+        36
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "kitchen-sign",
+      "scene": "Little Table / Blender World / kitchen-sign",
+      "logicalWidth": 150,
+      "logicalHeight": 29,
+      "width": 900,
+      "height": 174,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/kitchen-sign.png",
+      "file": "public/assets/blender-world/kitchen-sign.webp",
+      "bytes": 74288,
+      "sha256": "37444ef5b1549d5c24bb977541bdb8cfe3410838aeea6a87d5b9e02930bc2d60",
+      "alphaBounds": [
+        1,
+        1,
+        899,
+        173
+      ],
+      "logicalSize": [
+        150,
+        29
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "order-paper",
+      "scene": "Little Table / Blender World / order-paper",
+      "logicalWidth": 40,
+      "logicalHeight": 48,
+      "width": 240,
+      "height": 288,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/order-paper.png",
+      "file": "public/assets/blender-world/order-paper.webp",
+      "bytes": 24130,
+      "sha256": "e696b1033d4a69fcbb86e17e951314970908219e239e399df6573567b38a1e24",
+      "alphaBounds": [
+        31,
+        25,
+        209,
+        263
+      ],
+      "logicalSize": [
+        40,
+        48
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "serving-tray",
+      "scene": "Little Table / Blender World / serving-tray",
+      "logicalWidth": 150,
+      "logicalHeight": 24,
+      "width": 900,
+      "height": 144,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/serving-tray.png",
+      "file": "public/assets/blender-world/serving-tray.webp",
+      "bytes": 55624,
+      "sha256": "be426b95d06fd33a4c07ec7f21875914285e5d4b936b1bff1951e9f08f7dcb29",
+      "alphaBounds": [
+        7,
+        16,
+        893,
+        137
+      ],
+      "logicalSize": [
+        150,
+        24
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "logo",
+      "scene": "Little Table / Blender World / logo",
+      "logicalWidth": 180,
+      "logicalHeight": 228,
+      "width": 1080,
+      "height": 1368,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/logo.png",
+      "file": "public/assets/blender-world/logo.webp",
+      "bytes": 291014,
+      "sha256": "7de8fd3609704b94bba54b5fa051a9a3af653d39ac83f402d5ebf68d9231f489",
+      "alphaBounds": [
+        73,
+        379,
+        1043,
+        1013
+      ],
+      "logicalSize": [
+        180,
+        228
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "window-morning",
+      "scene": "Little Table / Blender World / window-morning",
+      "logicalWidth": 145,
+      "logicalHeight": 228,
+      "width": 870,
+      "height": 1368,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/window-morning.png",
+      "file": "public/assets/blender-world/window-morning.webp",
+      "bytes": 302270,
+      "sha256": "bb3669d56f05da3764bedde7eeb2617187988f32094bfeb9af69efe4118e78c6",
+      "alphaBounds": [
+        25,
+        292,
+        851,
+        1106
+      ],
+      "logicalSize": [
+        145,
+        228
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "window-afternoon",
+      "scene": "Little Table / Blender World / window-afternoon",
+      "logicalWidth": 145,
+      "logicalHeight": 228,
+      "width": 870,
+      "height": 1368,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/window-afternoon.png",
+      "file": "public/assets/blender-world/window-afternoon.webp",
+      "bytes": 303002,
+      "sha256": "7fb406107d838f79c2871c588777df91f8489d545eab9496895a6045c2d613e1",
+      "alphaBounds": [
+        25,
+        292,
+        851,
+        1106
+      ],
+      "logicalSize": [
+        145,
+        228
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "window-evening",
+      "scene": "Little Table / Blender World / window-evening",
+      "logicalWidth": 145,
+      "logicalHeight": 228,
+      "width": 870,
+      "height": 1368,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/window-evening.png",
+      "file": "public/assets/blender-world/window-evening.webp",
+      "bytes": 303210,
+      "sha256": "8e8dcad2b35ba144fdbdca3f1d675ecd02e65a880c61ebc4e1dc808f5a03e25f",
+      "alphaBounds": [
+        25,
+        292,
+        851,
+        1106
+      ],
+      "logicalSize": [
+        145,
+        228
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "pendant",
+      "scene": "Little Table / Blender World / pendant",
+      "logicalWidth": 150,
+      "logicalHeight": 180,
+      "width": 900,
+      "height": 1080,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/pendant.png",
+      "file": "public/assets/blender-world/pendant.webp",
+      "bytes": 80712,
+      "sha256": "b8505b9dca2956c57a2ba3778a4f25244aef37da26be4d5aad3b5b7869afee80",
+      "alphaBounds": [
+        211,
+        0,
+        689,
+        737
+      ],
+      "logicalSize": [
+        150,
+        180
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "vine",
+      "scene": "Little Table / Blender World / vine",
+      "logicalWidth": 110,
+      "logicalHeight": 170,
+      "width": 660,
+      "height": 1020,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/vine.png",
+      "file": "public/assets/blender-world/vine.webp",
+      "bytes": 137954,
+      "sha256": "52b21e3e8c5ead3b715e5b91953f6d1cdaafe73c46517969d868e910aba400c1",
+      "alphaBounds": [
+        62,
+        0,
+        485,
+        943
+      ],
+      "logicalSize": [
+        110,
+        170
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "wall-shelf",
+      "scene": "Little Table / Blender World / wall-shelf",
+      "logicalWidth": 180,
+      "logicalHeight": 145,
+      "width": 1080,
+      "height": 870,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/wall-shelf.png",
+      "file": "public/assets/blender-world/wall-shelf.webp",
+      "bytes": 143728,
+      "sha256": "16619d6aa7f1e1b0b981ccf4633a25b517512588eec55e5095fce1565958c813",
+      "alphaBounds": [
+        76,
+        143,
+        1004,
+        803
+      ],
+      "logicalSize": [
+        180,
+        145
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "entrance-garden-morning",
+      "scene": "Little Table / Blender World / entrance-garden-morning",
+      "logicalWidth": 260,
+      "logicalHeight": 230,
+      "width": 1560,
+      "height": 1380,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/entrance-garden-morning.png",
+      "file": "public/assets/blender-world/entrance-garden-morning.webp",
+      "bytes": 622544,
+      "sha256": "5e12bbbd92fb9538a2ca31a255b02caafb1adff869e17e512f2259d6706cc0bf",
+      "alphaBounds": [
+        73,
+        151,
+        1451,
+        1254
+      ],
+      "logicalSize": [
+        260,
+        230
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "entrance-garden-afternoon",
+      "scene": "Little Table / Blender World / entrance-garden-afternoon",
+      "logicalWidth": 260,
+      "logicalHeight": 230,
+      "width": 1560,
+      "height": 1380,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/entrance-garden-afternoon.png",
+      "file": "public/assets/blender-world/entrance-garden-afternoon.webp",
+      "bytes": 623566,
+      "sha256": "298c6df2127f047fbd3fc69566029f7fbc28cf1c07855c9715fbda109966ac20",
+      "alphaBounds": [
+        73,
+        151,
+        1451,
+        1254
+      ],
+      "logicalSize": [
+        260,
+        230
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "entrance-garden-evening",
+      "scene": "Little Table / Blender World / entrance-garden-evening",
+      "logicalWidth": 260,
+      "logicalHeight": 230,
+      "width": 1560,
+      "height": 1380,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/entrance-garden-evening.png",
+      "file": "public/assets/blender-world/entrance-garden-evening.webp",
+      "bytes": 620006,
+      "sha256": "1e030d5160d61e31e2248a44e2b677e79b117be92443a7820fe95ed09820576a",
+      "alphaBounds": [
+        73,
+        151,
+        1451,
+        1254
+      ],
+      "logicalSize": [
+        260,
+        230
+      ],
+      "nativeRender": true,
+      "lossless": true
+    },
+    {
+      "id": "entrance-frame",
+      "scene": "Little Table / Blender World / entrance-frame",
+      "logicalWidth": 260,
+      "logicalHeight": 230,
+      "width": 1560,
+      "height": 1380,
+      "opaqueTile": false,
+      "sourcePng": "blender/world/environment-renders/entrance-frame.png",
+      "file": "public/assets/blender-world/entrance-frame.webp",
+      "bytes": 410136,
+      "sha256": "b077d943c87fedd86129df21059dc853b4afb61e349b71340210a739e2fdc673",
+      "alphaBounds": [
+        46,
+        4,
+        1560,
+        1379
+      ],
+      "logicalSize": [
+        260,
+        230
+      ],
+      "nativeRender": true,
+      "lossless": true
+    }
+  ],
+  "totalBytes": 8434726,
+  "sourceSha256": "82d465fe27e2b5a7de909aa1af0b105e9679f0e814d2d1305bc1169cc3e5fe88",
+  "generatorSha256": "74fdd88962f0a379c0da4d2989744310b7487064aa3384cd0ae43430bae87ba2"
+}

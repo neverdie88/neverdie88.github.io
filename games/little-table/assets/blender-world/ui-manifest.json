@@ -1,0 +1,312 @@
+{
+  "technique": "Original Blender mesh and curve pictograms, rendered through Blender MCP Cycles, transparent native6x with a thin silhouette and lossless exact-RGBA WebP packaging",
+  "source": "blender/world/ui-icons.blend",
+  "generator": "blender/world/ui-icons.py",
+  "assets": [
+    {
+      "id": "ui-sun",
+      "file": "public/assets/blender-world/ui-sun.webp",
+      "sourceRender": "blender/world/ui-renders/ui-sun.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        27,
+        27,
+        357,
+        357
+      ],
+      "bytes": 23374,
+      "sha256": "8e154b25816754874f9efd0c21894ede200f05fc015ac34bd9951bc1b9392514"
+    },
+    {
+      "id": "ui-moon",
+      "file": "public/assets/blender-world/ui-moon.webp",
+      "sourceRender": "blender/world/ui-renders/ui-moon.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        51,
+        51,
+        264,
+        333
+      ],
+      "bytes": 17208,
+      "sha256": "ec6d9bf377a6f90dc258b957058932604f54148383a0951cfb118a5a844542e3"
+    },
+    {
+      "id": "ui-star",
+      "file": "public/assets/blender-world/ui-star.webp",
+      "sourceRender": "blender/world/ui-renders/ui-star.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        45,
+        38,
+        338,
+        318
+      ],
+      "bytes": 25842,
+      "sha256": "fbdd519427122cece2e0a26720dd1f441141c489ea0fc82d76decfcd0512315d"
+    },
+    {
+      "id": "ui-star-empty",
+      "file": "public/assets/blender-world/ui-star-empty.webp",
+      "sourceRender": "blender/world/ui-renders/ui-star-empty.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        45,
+        38,
+        338,
+        318
+      ],
+      "bytes": 24396,
+      "sha256": "b81a90c0b929b117e42ac43c134730c878e3c6d5ea5be7948866e5c77dff93ed"
+    },
+    {
+      "id": "ui-receipt",
+      "file": "public/assets/blender-world/ui-receipt.webp",
+      "sourceRender": "blender/world/ui-renders/ui-receipt.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        99,
+        51,
+        285,
+        319
+      ],
+      "bytes": 28076,
+      "sha256": "9ef2e025ca7b688ac92f276f77887a8c0a331d24af563b3cb49e0d08be3ea0ca"
+    },
+    {
+      "id": "ui-ticket",
+      "file": "public/assets/blender-world/ui-ticket.webp",
+      "sourceRender": "blender/world/ui-renders/ui-ticket.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        99,
+        42,
+        285,
+        319
+      ],
+      "bytes": 29428,
+      "sha256": "e2ddeb40f3d8f310e525e8c2efb146730ddfbef2f42b4bd57e277f570bdb6cb3"
+    },
+    {
+      "id": "ui-leaf",
+      "file": "public/assets/blender-world/ui-leaf.webp",
+      "sourceRender": "blender/world/ui-renders/ui-leaf.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        51,
+        59,
+        314,
+        332
+      ],
+      "bytes": 33612,
+      "sha256": "ec5fcb4a7037f64a269259c8dd8383e2a0675b7f638b0e041b2519b7439bf07f"
+    },
+    {
+      "id": "ui-sound",
+      "file": "public/assets/blender-world/ui-sound.webp",
+      "sourceRender": "blender/world/ui-renders/ui-sound.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        51,
+        74,
+        350,
+        310
+      ],
+      "bytes": 23282,
+      "sha256": "cdcd6891171b3aec739f22280a47cb9bd5420c30b4ca7c2d14acedb804752065"
+    },
+    {
+      "id": "ui-muted",
+      "file": "public/assets/blender-world/ui-muted.webp",
+      "sourceRender": "blender/world/ui-renders/ui-muted.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        51,
+        74,
+        350,
+        310
+      ],
+      "bytes": 19384,
+      "sha256": "4b2e5122a31f5541bb21d2c89f5c2de24c323427f607951314eb56e5fc061a8e"
+    },
+    {
+      "id": "ui-music",
+      "file": "public/assets/blender-world/ui-music.webp",
+      "sourceRender": "blender/world/ui-renders/ui-music.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        57,
+        28,
+        315,
+        327
+      ],
+      "bytes": 22200,
+      "sha256": "cf2f4bd5207c0a35fdc07134c2f6b0bd2af312a58a6d63b8e59a8a6daba42df9"
+    },
+    {
+      "id": "ui-belt",
+      "file": "public/assets/blender-world/ui-belt.webp",
+      "sourceRender": "blender/world/ui-renders/ui-belt.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        21,
+        93,
+        363,
+        291
+      ],
+      "bytes": 39612,
+      "sha256": "94f5f555450b8fa684b6841091b0204d281fc7d45af88f5a3d92a579e412320d"
+    },
+    {
+      "id": "ui-wrong",
+      "file": "public/assets/blender-world/ui-wrong.webp",
+      "sourceRender": "blender/world/ui-renders/ui-wrong.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        156,
+        48,
+        228,
+        336
+      ],
+      "bytes": 10372,
+      "sha256": "01bc9794de640fd696ae0e55ba5c743a6f1efa01552378ef87d4d183cc920ee8"
+    },
+    {
+      "id": "ui-bell",
+      "file": "public/assets/blender-world/ui-bell.webp",
+      "sourceRender": "blender/world/ui-renders/ui-bell.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        27,
+        51,
+        357,
+        327
+      ],
+      "bytes": 34094,
+      "sha256": "ea0436d2c1b7ac71c31780d6249c8393ad52cc5d1d26b0156c6c6ae092c8ddcf"
+    },
+    {
+      "id": "ui-plate",
+      "file": "public/assets/blender-world/ui-plate.webp",
+      "sourceRender": "blender/world/ui-renders/ui-plate.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        5,
+        45,
+        357,
+        327
+      ],
+      "bytes": 27026,
+      "sha256": "ed61975bbced3f8e3bf303cbc24920bb8ec4bcb64bace4c83e0b9f7a5a203c98"
+    },
+    {
+      "id": "ui-table",
+      "file": "public/assets/blender-world/ui-table.webp",
+      "sourceRender": "blender/world/ui-renders/ui-table.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        21,
+        93,
+        363,
+        339
+      ],
+      "bytes": 28000,
+      "sha256": "22a9bd455ef6dc661e12ebab2937e7fdb378d99d18a93e3f1c85e7cbd8f9212a"
+    },
+    {
+      "id": "ui-lock",
+      "file": "public/assets/blender-world/ui-lock.webp",
+      "sourceRender": "blender/world/ui-renders/ui-lock.png",
+      "width": 384,
+      "height": 384,
+      "logicalSize": [
+        64,
+        64
+      ],
+      "alphaBounds": [
+        81,
+        39,
+        303,
+        330
+      ],
+      "bytes": 31224,
+      "sha256": "2a4972b5628a882ca74d00d9588f0bb2ebc113770ebb084a9057cb1f353a77f2"
+    }
+  ],
+  "totalBytes": 417130
+}
