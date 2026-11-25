@@ -222,7 +222,8 @@
       stroke-dasharray: 9 5;
       animation: packetFlow 0.85s linear infinite;
     }
-      #nd-resizer, #tutor-pane, #tutor-expand-tab, #lens-ask-btn, #insp-compare-btn, #sc-ask-btn, #insp-ask-btn { display: none !important; }
+      .nd-control-card, .nd-inspector, .nd-stage-card, .sd-card, .sd-inspector, .sd-stage-card, .id-card, .id-inspector, .id-stage-card { flex-shrink: 0 !important; }
+    #nd-resizer, #tutor-pane, #tutor-expand-tab, #lens-ask-btn, #insp-compare-btn, #sc-ask-btn, #insp-ask-btn { display: none !important; }
   </style>
 </head>
 <body>
@@ -1160,7 +1161,7 @@
       $('tutor-pane').classList.toggle('hidden', c);
       $('nd-resizer').style.display = c ? 'none' : 'block';
       $('tutor-toggle-btn')?.classList.toggle('active', !c);
-      $('tutor-toggle-btn')?.textContent = c ? '⟨ ✨ Expand AI Tutor' : '✨ Hide AI Tutor ⟩';
+      if ($('tutor-toggle-btn')) $('tutor-toggle-btn').textContent = c ? '⟨ ✨ Expand AI Tutor' : '✨ Hide AI Tutor ⟩';
       $('tutor-expand-tab')?.classList.toggle('visible', c);
       if ($('library-modal').classList.contains('open')) syncModalSplitBounds();
     }
