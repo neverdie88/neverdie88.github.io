@@ -355,21 +355,12 @@
               Visual active-recall hierarchy of every GCP comparison matrix: click any <strong>Matrix</strong> for its Golden Rule &amp; Decision Flowchart, or click any <strong>GCP Option</strong> to inspect Specs, Exam Triggers, ⚠️ Traps, Scenarios, and Lesson Notes!
             </div>
           </div>
-          <div class="cm-toolbar gemini-reader-ignore">
-            
-            <button type="button" id="mode-all-btn" class="cm-pill-btn active">🌳 All Domains</button>
-            <button type="button" id="mode-domain-btn" class="cm-pill-btn">🎯 1 Domain</button>
-            <button type="button" id="mode-matrix-btn" class="cm-pill-btn">🔍 1 Matrix Deep Map</button>
-            <button type="button" id="toggle-leaves-btn" class="cm-pill-btn" title="Expand Trigger, Exam Trap & Scenario leaf nodes on options">🔬 Show Triggers &amp; Traps</button>
-            <button type="button" id="toggle-quiz-btn" class="cm-pill-btn" title="Mask GCP option names on the mind map so you can guess the service from its badge & triggers!">🧠 Self-Quiz (Hide Names)</button>
-            <button type="button" id="expand-all-btn" class="cm-pill-btn">Expand All</button>
-            <button type="button" id="collapse-all-btn" class="cm-pill-btn">Collapse Options</button>
-          </div>
+          
         </div>
 
         <div class="cm-filter-row gemini-reader-ignore">
           <input type="search" id="cm-search" class="cm-search" placeholder="Search services, triggers, traps (e.g. PSC, Spanner, MACsec, RPO, Auth Proxy)... (/)" />
-          <select id="cm-matrix-select" class="cm-matrix-select" title="Jump directly to a specific Comparison Matrix"></select>
+          
           <div id="cm-domain-pills" class="cm-domain-pills"></div>
         </div>
 
@@ -647,7 +638,7 @@
       $('cm-live-counts').textContent = `${domains.length} Domains · ${TABLES.length} Matrices · ${totalRows} Options`;
 
       // Matrix select dropdown
-      $('cm-matrix-select').innerHTML =
+      if ($('cm-matrix-select')) $('cm-matrix-select').innerHTML =
         `<option value="">Jump to any Matrix (1–${TABLES.length})...</option>` +
         TABLES.map(
           t =>
@@ -701,11 +692,11 @@
     }
 
     function syncToolbarButtons() {
-      $('mode-all-btn').classList.toggle('active', viewMode === 'all');
-      $('mode-domain-btn').classList.toggle('active', viewMode === 'domain');
-      $('mode-matrix-btn').classList.toggle('active', viewMode === 'matrix');
-      $('toggle-leaves-btn').classList.toggle('active', showAllLeaves || viewMode === 'matrix');
-      $('toggle-quiz-btn').classList.toggle('quiz-active', selfQuizMode);
+      $('mode-all-btn')?.classList.toggle('active', viewMode === 'all');
+      $('mode-domain-btn')?.classList.toggle('active', viewMode === 'domain');
+      $('mode-matrix-btn')?.classList.toggle('active', viewMode === 'matrix');
+      $('toggle-leaves-btn')?.classList.toggle('active', showAllLeaves || viewMode === 'matrix');
+      $('toggle-quiz-btn')?.classList.toggle('quiz-active', selfQuizMode);
       renderControls();
     }
 
@@ -1315,17 +1306,17 @@
     }
 
     // Toolbar Listeners
-    $('mode-all-btn').addEventListener('click', () => {
+    $('mode-all-btn')?.addEventListener('click', () => {
       viewMode = 'all';
       syncToolbarButtons();
       renderMindMap();
     });
-    $('mode-domain-btn').addEventListener('click', () => {
+    $('mode-domain-btn')?.addEventListener('click', () => {
       viewMode = 'domain';
       syncToolbarButtons();
       renderMindMap();
     });
-    $('mode-matrix-btn').addEventListener('click', () => {
+    $('mode-matrix-btn')?.addEventListener('click', () => {
       viewMode = 'matrix';
       if (!activeMatrixId && TABLES[0]) activeMatrixId = TABLES[0].id;
       collapsedMatrices[activeMatrixId] = false;
@@ -1333,22 +1324,22 @@
       showMatrixInspector(activeMatrixId);
       renderMindMap();
     });
-    $('toggle-leaves-btn').addEventListener('click', () => {
+    $('toggle-leaves-btn')?.addEventListener('click', () => {
       showAllLeaves = !showAllLeaves;
       syncToolbarButtons();
       renderMindMap();
     });
-    $('toggle-quiz-btn').addEventListener('click', () => {
+    $('toggle-quiz-btn')?.addEventListener('click', () => {
       selfQuizMode = !selfQuizMode;
       if (!selfQuizMode) revealedOptions.clear();
       syncToolbarButtons();
       renderMindMap();
     });
-    $('expand-all-btn').addEventListener('click', () => {
+    $('expand-all-btn')?.addEventListener('click', () => {
       collapsedMatrices = {};
       renderMindMap();
     });
-    $('collapse-all-btn').addEventListener('click', () => {
+    $('collapse-all-btn')?.addEventListener('click', () => {
       viewMode = 'all';
       showAllLeaves = false;
       expandedOptions = {};
@@ -1362,7 +1353,7 @@
       if (searchQuery) collapsedMatrices = {};
       renderMindMap();
     });
-    $('cm-matrix-select').addEventListener('change', e => {
+    $('cm-matrix-select')?.addEventListener('change', e => {
       const tid = e.target.value;
       if (!tid) {
         viewMode = 'all';
