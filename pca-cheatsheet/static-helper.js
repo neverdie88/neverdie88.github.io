@@ -36,7 +36,6 @@
     }
   });
 
-  // Lightweight zero-backend SpeechSynthesis reader
   var activeKey = null;
   var activeBtn = null;
   var activeDefaultLabel = '';

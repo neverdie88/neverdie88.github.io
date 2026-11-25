@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GCP Professional Cloud Architect — Architecture Cheat Sheet & 18 Decision Diagrams</title>
+  <title>Professional Cloud Architect — Cheat Sheet Mind Map</title>
   <link rel="icon" href="data:," />
   <script>try{if(localStorage.getItem('pca_hub_theme')!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
   <link rel="stylesheet" href="./styles.css" />
@@ -14,115 +14,469 @@
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
   <script src="./cheatsheet-data.js"></script>
   <style>
-    .cs-shell { height: calc(100vh - 54px); display: flex; overflow: hidden; background: #f1f5f9; }
-    .cs-sidebar { width: 292px; min-width: 230px; max-width: 380px; background: #ffffff; border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; }
-    .cs-sidebar.collapsed { display: none; }
-    .cs-side-top { padding: 12px 14px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); display: flex; flex-direction: column; gap: 9px; }
-    .cs-search-input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 12.5px; outline: none; }
-    .cs-search-input:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14); }
-    .cs-domain-pills { display: flex; flex-wrap: wrap; gap: 4px; }
-    .cs-dom-pill { padding: 3px 8px; border-radius: 999px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; font-size: 11px; font-weight: 600; cursor: pointer; }
-    .cs-dom-pill:hover { background: #e2e8f0; }
-    .cs-dom-pill.active { background: #1d4ed8; border-color: #1d4ed8; color: #ffffff; }
-    .cs-toggles { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: #334155; padding-top: 2px; }
-    .cs-toggle-lbl { display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; user-select: none; }
-    .cs-toc-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 3px; }
-    .cs-toc-btn { text-align: left; padding: 8px 10px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: #334155; font-size: 12.5px; font-weight: 600; cursor: pointer; display: flex; align-items: flex-start; gap: 7px; line-height: 1.35; }
-    .cs-toc-btn:hover { background: #f1f5f9; }
-    .cs-toc-btn.active { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; font-weight: 700; }
-    .cs-main { flex: 1; min-width: 0; overflow-y: auto; padding: 20px 26px 64px; }
-    .cs-hero { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: #ffffff; border-radius: 14px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12); }
-    .cs-hero h1 { margin: 0 0 6px; font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
-    .cs-hero p { margin: 0; font-size: 13.5px; color: #cbd5e1; line-height: 1.5; }
-    .cs-stats-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-    .cs-stat-badge { font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.22); color: #f8fafc; text-decoration: none; }
-    .matrix-card { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04); overflow: hidden; }
-    .matrix-head { padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px; }
-    .matrix-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .matrix-domain-tag { display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #1d4ed8; background: #dbeafe; padding: 2px 8px; border-radius: 999px; margin-bottom: 4px; }
-    .matrix-h2 { margin: 0; font-size: 17.5px; font-weight: 800; color: #0f172a; }
-    .matrix-sub { font-size: 12.5px; color: #64748b; margin-top: 2px; }
-    .matrix-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .matrix-rule-box { padding: 10px 14px; border-radius: 10px; background: #eff6ff; border-left: 4px solid #2563eb; font-size: 13px; color: #1e3a8a; line-height: 1.5; }
-    .matrix-rule-box p { margin: 0; }
-    .matrix-diagram-slot { padding: 14px 20px; background: #ffffff; border-bottom: 1px solid #e2e8f0; }
-    .matrix-table-wrap { width: 100%; overflow-x: auto; }
-    .cs-table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.5; min-width: 880px; }
-    .cs-table thead th { background: #f1f5f9; color: #1e293b; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; padding: 10px 12px; text-align: left; border-bottom: 2px solid #cbd5e1; border-right: 1px solid #e2e8f0; }
-    .cs-table thead th:last-child { border-right: none; }
-    .cs-table tbody td { padding: 13px 12px; vertical-align: top; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #f1f5f9; }
-    .cs-table tbody td:last-child { border-right: none; }
-    .cs-table tbody tr:hover { background: #fafcff; }
-    .col-opt { width: 24%; }
-    .col-when { width: 28%; }
-    .col-trap { width: 23%; }
-    .col-ex { width: 25%; }
-    .opt-name { font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 4px; line-height: 1.3; }
-    .opt-badge { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #e0e7ff; color: #3730a3; margin-bottom: 7px; }
-    .opt-desc { font-size: 12.6px; color: #334155; }
-    .opt-desc p { margin: 0; }
-    body.self-quiz-mode .quiz-maskable:not(.revealed) .opt-name,
-    body.self-quiz-mode .quiz-maskable:not(.revealed) .opt-badge { filter: blur(7px); user-select: none; cursor: pointer; transition: filter 0.15s ease; }
-    .quiz-reveal-hint { display: none; font-size: 11px; font-weight: 700; color: #2563eb; margin-bottom: 5px; cursor: pointer; }
-    body.self-quiz-mode .quiz-maskable:not(.revealed) .quiz-reveal-hint { display: inline-block; }
-    .when-list { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 5px; color: #1e293b; font-size: 12.6px; }
-    .when-list li p { margin: 0; }
-    .trap-box { padding: 8px 10px; border-radius: 8px; background: #fffbeb; border: 1px solid #fde68a; color: #78350f; font-size: 12.3px; }
-    .trap-box p { margin: 0; }
-    .ex-card { display: flex; flex-direction: column; gap: 6px; font-size: 12.3px; }
-    .ex-stem { color: #1e293b; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
-    .ex-why-details { font-size: 12px; color: #14532d; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 7px; padding: 5px 9px; }
-    .ex-why-details summary { cursor: pointer; font-weight: 700; color: #15803d; user-select: none; }
-    .ex-why-details p { margin: 5px 0 0; }
+    .cm-shell {
+      height: calc(100vh - 54px);
+      display: flex;
+      overflow: hidden;
+      background: #f1f5f9;
+    }
+    .cm-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 14px 18px 48px;
+      gap: 12px;
+    }
+
+    .cm-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      flex-shrink: 0;
+    }
+    .cm-head-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .cm-title {
+      margin: 0;
+      font-size: 18.5px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .cm-sub {
+      font-size: 12.8px;
+      color: #475569;
+      margin-top: 3px;
+      line-height: 1.45;
+    }
+    .cm-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .cm-pill-btn {
+      padding: 5px 11px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #1e293b;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .cm-pill-btn:hover { background: #e2e8f0; }
+    .cm-pill-btn.active {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+      color: #ffffff;
+    }
+    .cm-pill-btn.quiz-active {
+      background: #7c3aed;
+      border-color: #7c3aed;
+      color: #ffffff;
+    }
+
+    .cm-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .cm-search {
+      width: min(340px, 100%);
+      padding: 7px 11px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 12.5px;
+      outline: none;
+    }
+    .cm-search:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+    .cm-matrix-select {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+      max-width: 320px;
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    .cm-domain-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .cm-dom-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1.5px solid #cbd5e1;
+      background: #ffffff;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .cm-lens-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .cm-lens-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .cm-lens-chip {
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      font-size: 11.3px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .cm-lens-chip:hover { background: #eff6ff; border-color: #93c5fd; }
+    .cm-lens-chip.active {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+      color: #ffffff;
+    }
+
+    /* Inspector Panel */
+    .cm-inspector {
+      display: none;
+      background: #ffffff;
+      border: 2px solid #2563eb;
+      border-radius: 14px;
+      padding: 14px 18px;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+      gap: 12px;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .cm-inspector.open { display: flex; }
+    .cm-insp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .cm-insp-panel {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12.6px;
+      line-height: 1.5;
+      color: #1e293b;
+    }
+    .cm-insp-panel.trap {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #78350f;
+    }
+    .cm-insp-panel.scenario {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #14532d;
+    }
+    .cm-insp-panel h4 {
+      margin: 0 0 6px;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 800;
+    }
+    .cm-insp-panel p { margin: 0; }
+    .cm-insp-panel ul { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 4px; }
+
+    /* Mind Map Stage */
+    .cm-stage-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .cm-stage-bar {
+      padding: 8px 14px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: #475569;
+    }
+    .cm-viewport {
+      width: 100%;
+      overflow: auto;
+      background-color: #f8fafc;
+      background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+      background-size: 20px 20px;
+      cursor: grab;
+      padding: 14px;
+      flex: 1;
+    }
+    .cm-viewport:active { cursor: grabbing; }
+
+    .d-node { cursor: pointer; transition: filter 0.14s ease, opacity 0.18s ease; }
+    .d-node:hover { filter: brightness(1.04) drop-shadow(0 3px 8px rgba(15, 23, 42, 0.18)); }
+
+    @keyframes highlightPulse {
+      from { stroke-dashoffset: 28; }
+      to { stroke-dashoffset: 0; }
+    }
+    .pulse-path {
+      stroke-dasharray: 9 5;
+      animation: highlightPulse 0.9s linear infinite;
+    }
+
+    /* Dark Mode Overrides */
+    html[data-theme="dark"] .cm-shell { background: #0b1120; }
+    html[data-theme="dark"] .cm-card,
+    html[data-theme="dark"] .cm-stage-card,
+    html[data-theme="dark"] .cm-inspector {
+      background: #111827;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    html[data-theme="dark"] .cm-title { color: #f1f5f9; }
+    html[data-theme="dark"] .cm-sub { color: #cbd5e1; }
+    html[data-theme="dark"] .cm-pill-btn,
+    html[data-theme="dark"] .cm-lens-chip {
+      background: #1e293b;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+    html[data-theme="dark"] .cm-pill-btn:hover,
+    html[data-theme="dark"] .cm-lens-chip:hover { background: #334155; }
+    html[data-theme="dark"] .cm-pill-btn.active,
+    html[data-theme="dark"] .cm-lens-chip.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #ffffff;
+    }
+    html[data-theme="dark"] .cm-pill-btn.quiz-active {
+      background: #7c3aed;
+      border-color: #a78bfa;
+      color: #ffffff;
+    }
+    html[data-theme="dark"] .cm-matrix-select {
+      background: #0f172a;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    html[data-theme="dark"] .cm-lens-box,
+    html[data-theme="dark"] .cm-stage-bar {
+      background: #162033;
+      border-color: #334155;
+      color: #cbd5e1;
+    }
+    html[data-theme="dark"] .cm-insp-panel {
+      background: #1e293b;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+    html[data-theme="dark"] .cm-insp-panel.trap {
+      background: rgba(120, 53, 15, 0.32);
+      border-color: rgba(245, 158, 11, 0.45);
+      color: #fde68a;
+    }
+    html[data-theme="dark"] .cm-insp-panel.scenario {
+      background: rgba(20, 83, 45, 0.32);
+      border-color: rgba(74, 222, 128, 0.42);
+      color: #bbf7d0;
+    }
+    html[data-theme="dark"] .cm-viewport {
+      background-color: #0b1120;
+      background-image: radial-gradient(#1e293b 1.2px, transparent 1.2px);
+    }
+      .cm-card, .cm-inspector, .cm-stage-card { flex-shrink: 0 !important; }
+    #cm-resizer, #tutor-pane, #tutor-expand-tab, #insp-quiz-mat-btn, #insp-quiz-opt-btn { display: none !important; }
   </style>
 </head>
 <body>
-  <header class="topbar">
+    <header class="topbar">
     <div class="topbar-left">
       <a href="/" class="brand-btn" style="text-decoration:none;" title="Back to Thien's Playground">← Playground</a>
-      <button id="toggle-cs-sidebar-btn" class="brand-btn" title="Show/Hide Matrix Index">☰ Index</button>
-      <a href="./index.html" class="brand-btn" style="text-decoration:none;background:rgba(59,130,246,0.34);border-color:rgba(147,197,253,0.75);color:#fff;">📊 Decision Matrices (18)</a>
-      <a href="./mindmap.html" class="brand-btn" style="text-decoration:none;">🧠 Cheat Sheet Mind Map</a>
-      <a href="./network-dendrite.html" class="brand-btn" style="text-decoration:none;">🕸️ Network & Path Finder</a>
-      <a href="./services-dendrite.html" class="brand-btn" style="text-decoration:none;">🌳 All GCP Services</a>
-      <a href="./infra-dendrite.html" class="brand-btn" style="text-decoration:none;">🏗️ Infra Residency</a>
+      <span class="exam-badge">🧠 Google Cloud Professional Cloud Architect — Cheat Sheet Mind Map</span>
     </div>
-    <div class="topbar-right">
-      <span class="exam-badge">Google Cloud Professional Cloud Architect</span>
-    </div>
+    <div class="topbar-right"></div>
   </header>
 
-  <div class="cs-shell">
-    <aside id="cs-sidebar" class="cs-sidebar">
-      <div class="cs-side-top">
-        <input type="search" id="cs-search" class="cs-search-input" placeholder="Search services, traps, specs... (/)" />
-        <div id="cs-domain-pills" class="cs-domain-pills"></div>
-        <div class="cs-toggles">
-          <label class="cs-toggle-lbl" title="Blur the Option column so you can test yourself from Triggers & Scenarios">
-            <input type="checkbox" id="toggle-self-quiz" />
-            <span>🧠 Self-Quiz Mode (Blur Names)</span>
-          </label>
-          <label class="cs-toggle-lbl" title="Show interactive Mermaid decision flowcharts above each comparison table">
-            <input type="checkbox" id="toggle-all-diagrams" checked />
-            <span>📐 Show Decision Tree Diagrams</span>
-          </label>
+  <div class="cm-shell">
+    <main class="cm-main">
+      <!-- Top Control Card -->
+      <div class="cm-card">
+        <div class="cm-head-row">
+          <div>
+            <h1 class="cm-title">
+              <span>🧠 PCA v6.1 Cheat Sheet — Interactive Mind Map</span>
+              <span id="cm-live-counts" style="font-size:12px;padding:3px 9px;border-radius:999px;background:rgba(37,99,235,0.14);color:#2563eb;font-weight:800;">7 Domains · 18 Matrices</span>
+            </h1>
+            <div class="cm-sub">
+              Visual active-recall hierarchy of every GCP comparison matrix: click any <strong>Matrix</strong> for its Golden Rule &amp; Decision Flowchart, or click any <strong>GCP Option</strong> to inspect Specs, Exam Triggers, ⚠️ Traps, Scenarios, and Lesson Notes!
+            </div>
+          </div>
+          <div class="cm-toolbar gemini-reader-ignore">
+            
+            <button type="button" id="mode-all-btn" class="cm-pill-btn active">🌳 All Domains</button>
+            <button type="button" id="mode-domain-btn" class="cm-pill-btn">🎯 1 Domain</button>
+            <button type="button" id="mode-matrix-btn" class="cm-pill-btn">🔍 1 Matrix Deep Map</button>
+            <button type="button" id="toggle-leaves-btn" class="cm-pill-btn" title="Expand Trigger, Exam Trap & Scenario leaf nodes on options">🔬 Show Triggers &amp; Traps</button>
+            <button type="button" id="toggle-quiz-btn" class="cm-pill-btn" title="Mask GCP option names on the mind map so you can guess the service from its badge & triggers!">🧠 Self-Quiz (Hide Names)</button>
+            <button type="button" id="expand-all-btn" class="cm-pill-btn">Expand All</button>
+            <button type="button" id="collapse-all-btn" class="cm-pill-btn">Collapse Options</button>
+          </div>
+        </div>
+
+        <div class="cm-filter-row gemini-reader-ignore">
+          <input type="search" id="cm-search" class="cm-search" placeholder="Search services, triggers, traps (e.g. PSC, Spanner, MACsec, RPO, Auth Proxy)... (/)" />
+          <select id="cm-matrix-select" class="cm-matrix-select" title="Jump directly to a specific Comparison Matrix"></select>
+          <div id="cm-domain-pills" class="cm-domain-pills"></div>
+        </div>
+
+        <!-- Quick Spotlight Lenses -->
+        <div class="cm-lens-box gemini-reader-ignore">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:11.8px;font-weight:800;">🔎 Quick Exam Spotlight Lenses — Click to Highlight Across All Matrices:</span>
+            <button type="button" id="clear-lens-btn" class="btn" style="padding:2px 8px;font-size:11px;display:none;">✕ Clear Spotlight</button>
+          </div>
+          <div id="cm-lens-chips" class="cm-lens-chips"></div>
         </div>
       </div>
-      <div id="cs-toc-list" class="cs-toc-list"></div>
+
+      <!-- Clicked Matrix or Option Inspector -->
+      <div id="cm-inspector" class="cm-inspector"></div>
+
+      <!-- Interactive SVG Mind Map Stage -->
+      <div class="cm-stage-card">
+        <div class="cm-stage-bar gemini-reader-ignore">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span><strong>Legend:</strong></span>
+            <span style="color:#2563eb;font-weight:700;">● GCP Service Option (click to inspect)</span>
+            <span style="color:#16a34a;font-weight:700;">✓ Exam Trigger</span>
+            <span style="color:#d97706;font-weight:700;">⚠️ Distractor Trap / Architecture Note</span>
+            <span style="color:#7c3aed;font-weight:700;">🎯 Scenario Q</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11.5px;opacity:0.8;">Drag canvas to pan · Cmd/Ctrl + Scroll to zoom</span>
+            <button type="button" id="zoom-out-btn" class="btn" style="padding:3px 9px;font-size:12px;">−</button>
+            <span id="zoom-label" style="font-weight:700;min-width:44px;text-align:center;">100%</span>
+            <button type="button" id="zoom-in-btn" class="btn" style="padding:3px 9px;font-size:12px;">+</button>
+            <button type="button" id="zoom-fit-btn" class="btn" style="padding:3px 9px;font-size:12px;">Fit Width</button>
+          </div>
+        </div>
+        <div id="cm-viewport" class="cm-viewport">
+          <div id="cm-svg-host" style="transform-origin: 0 0;"></div>
+        </div>
+      </div>
+    </main>
+
+    <div id="cm-resizer" class="pane-resizer" title="Drag to resize or double-click to collapse AI Tutor"></div>
+
+    <!-- Right Embedded AI Architect Tutor -->
+    <aside id="tutor-pane" class="tutor-pane">
+      <div class="tutor-header">
+        <div class="tutor-title">
+          <span>✨</span>
+          <span>AI Mind Map Tutor</span>
+        </div>
+        <div class="tutor-controls">
+          <select id="model-select" class="model-select" title="Select Agent Runtime & Model">
+            <optgroup label="Google ADK (LlmAgent + Python Tools)">
+              <option value="adk:gemini-2.5-flash">🤖 ADK · Gemini 2.5 Flash</option>
+              <option value="adk:gemini-2.5-pro">🤖 ADK · Gemini 2.5 Pro</option>
+            </optgroup>
+            <optgroup label="Local AGY CLI (Zero-Key)">
+              <option value="gemini-flash-next" selected>⚡ AGY · Gemini Flash Next</option>
+              <option value="auto">⚡ AGY · Gemini Pro Next (Auto)</option>
+              <option value="gemini-4-neon-medium">⚡ AGY · Gemini 4 Neon</option>
+              <option value="gemini-4-carbon-medium">⚡ AGY · Gemini 4 Carbon</option>
+              <option value="fable-5.2-medium">⚡ AGY · Claude Fable 5.2</option>
+            </optgroup>
+          </select>
+          <button id="clear-chat-btn" class="btn" style="padding:4px 8px;font-size:12px;">Clear</button>
+          <button id="tutor-collapse-btn" type="button" class="btn tutor-collapse-btn">Collapse ⟩</button>
+        </div>
+      </div>
+
+      <div class="quick-chips">
+        <button class="chip-btn" data-q="Quiz me with a tricky PCA v6.1 multiple-choice scenario testing the currently selected Mind Map branch! Hide the official answer and distractor breakdown inside a <details> reveal block.">🎲 Quiz Selected Branch</button>
+        <button class="chip-btn" data-q="Give me 4 rapid-fire 'What-If' requirement pivots that flip the winning choice from one sibling node to another in my currently selected Mind Map branch.">🔀 Sibling What-If Pivots</button>
+        <button class="chip-btn" data-q="Give me a 30-second visual memory palace / decision rule to never confuse the sibling options in this Mind Map branch on exam day.">🧠 30-Sec Memory Rule</button>
+      </div>
+
+      <div id="chat-messages" class="chat-messages">
+        <div class="chat-empty">
+          <strong>🧠 Cheat Sheet Mind Map Tutor</strong>
+          Click any <strong>Matrix</strong> or <strong>GCP Option</strong> node in the Mind Map — I automatically track the node you’re inspecting so you can compare sibling services or drill realistic PCA scenarios!
+        </div>
+      </div>
+
+      <form id="chat-form" class="chat-input-area">
+        <textarea id="chat-input" rows="2" placeholder="Ask about any Mind Map branch, compare two sibling nodes, or ask for a quiz..."></textarea>
+        <button type="submit" id="chat-send-btn" class="btn btn-accent" style="height:42px;">Send</button>
+      </form>
     </aside>
 
-    <main id="cs-main" class="cs-main">
-      <div class="cs-hero">
-        <h1>Google Cloud Professional Cloud Architect — Cheat Sheet &amp; Decision Diagrams</h1>
-        <p>
-          Interactive visual decision trees, side-by-side service comparisons, architectural trade-offs, distractor traps, and scenario walkthroughs — plus 4 interactive SVG dendrite &amp; mind-map views above.
-        </p>
-        <div id="cs-stats-strip" class="cs-stats-strip"></div>
-      </div>
-      <div id="cs-tables-container"></div>
-    </main>
+    <button id="tutor-expand-tab" type="button" class="tutor-expand-tab" title="Expand AI Tutor (Cmd+\)">⟨ ✨ Expand AI Tutor</button>
   </div>
 
+  <!-- Split-Screen Lesson Study Guide Modal -->
+  <div id="library-modal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <span id="cm-modal-title">📘 Self-Contained Lesson Study Guide</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button type="button" id="toggle-library-split-btn" class="btn" style="padding:4px 10px;font-size:12px;">⛶ Full Width</button>
+          <button type="button" id="close-library-btn" class="btn" style="padding:4px 10px;">✕ Close</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="library-reader" class="library-reader msg-md" style="width:100%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Diagram Modal -->
   <div id="diagram-modal" class="modal-backdrop">
     <div class="modal-window" style="height:auto;max-height:92vh;width:min(1240px,96vw);">
       <div class="modal-header">
@@ -135,12 +489,59 @@
 
   <script src="./static-helper.js"></script>
   <script type="module">
-    const TABLES = window.PCA_CHEATSHEET_TABLES || [];
+    let TABLES = window.PCA_CHEATSHEET_TABLES || [];
     const $ = id => document.getElementById(id);
 
     if (window.mermaid) {
       window.mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose', suppressErrorRendering: true });
     }
+
+    const DOMAIN_PALETTE = {
+      'Networking & Hybrid': { icon: '🌐', color: '#2563eb', darkColor: '#60a5fa', lightBg: '#eff6ff', darkBg: '#172554' },
+      'Databases & Storage': { icon: '🗄️', color: '#7c3aed', darkColor: '#a78bfa', lightBg: '#f5f3ff', darkBg: '#2e1065' },
+      'Compute & Messaging': { icon: '🚀', color: '#0891b2', darkColor: '#22d3ee', lightBg: '#ecfeff', darkBg: '#083344' },
+      'Data & Migration': { icon: '📦', color: '#059669', darkColor: '#34d399', lightBg: '#ecfdf5', darkBg: '#064e3b' },
+      'Security & AI': { icon: '🛡️', color: '#dc2626', darkColor: '#f87171', lightBg: '#fef2f2', darkBg: '#450a0a' },
+      'APIs & Integration': { icon: '🔌', color: '#d97706', darkColor: '#fbbf24', lightBg: '#fffbeb', darkBg: '#451a03' },
+      'Backup, DR & Resilience': { icon: '🛟', color: '#db2777', darkColor: '#f472b6', lightBg: '#fdf2f8', darkBg: '#500724' },
+    };
+
+    const SPOTLIGHT_LENSES = [
+      {
+        id: 'errata',
+        label: '⚠️ ⚡ Key Architecture Updates',
+        match: (t, r) => (r.lessons || []).some(l => l.errata) || String(r.badge || '').includes('⚠️'),
+      },
+      {
+        id: 'connections',
+        label: '🕸️ All Connection & Hybrid Options',
+        match: (t, r) =>
+          t.domain === 'Networking & Hybrid' ||
+          t.id === 'backup-dr-data-connections' ||
+          /vpn|interconnect|psc|peering|egress|iap|proxy|nat|workload identity/i.test(`${r.option} ${r.badge}`),
+      },
+      {
+        id: 'databases',
+        label: '🗄️ All Databases & Storage',
+        match: (t, r) => t.domain === 'Databases & Storage',
+      },
+      {
+        id: 'zerotrust',
+        label: '🔐 Zero-Trust, IAM & Anti-Exfiltration',
+        match: (t, r) =>
+          /iap|vpc service controls|kms|secret|armor|workload identity|os login|auth proxy/i.test(`${r.option} ${r.description}`),
+      },
+      {
+        id: 'genai',
+        label: '🤖 Vertex AI & GenAI (PCA v6.1)',
+        match: (t, r) => t.id === 'ai-ml-spectrum' || /pgvector|gemini|vertex|bqml|model armor/i.test(`${r.option} ${r.description}`),
+      },
+      {
+        id: 'five9s',
+        label: '🛟 RPO = 0 / 99.999% Multi-Region',
+        match: (t, r) => /99\.999%|rpo:\s*0|rpo = 0|active-active|synchronous/i.test(`${r.badge} ${r.description}`),
+      },
+    ];
 
     function esc(s) {
       return String(s || '')
@@ -150,247 +551,1197 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
     }
+    function stripMdPlain(s) {
+      return String(s || '')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\$\\rightarrow\$/g, '→')
+        .replace(/\$\\leftrightarrow\$/g, '↔')
+        .replace(/\$\\le\s*([^$]+)\$/g, '<= $1')
+        .replace(/\$\\ge\s*([^$]+)\$/g, '>= $1')
+        .replace(/\\\$/g, '$')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+    function trunc(s, max) {
+      const str = stripMdPlain(s);
+      return str.length > max ? str.slice(0, max - 1) + '…' : str;
+    }
     function renderMd(md) {
       if (typeof window.renderRichMarkdown === 'function') {
         return window.renderRichMarkdown(md || '', { stripToc: true });
       }
       return window.marked ? window.marked.parse(String(md || ''), { breaks: true, gfm: true }) : esc(md);
     }
+    function isDark() {
+      return document.documentElement.getAttribute('data-theme') === 'dark';
+    }
+    function getDomainStyle(domainName) {
+      return DOMAIN_PALETTE[domainName] || { icon: '📊', color: '#2563eb', darkColor: '#60a5fa', lightBg: '#eff6ff', darkBg: '#1e293b' };
+    }
 
+    // State
+    let viewMode = 'all'; // 'all' | 'domain' | 'matrix'
+    let activeDomain = 'Networking & Hybrid';
+    let activeMatrixId = TABLES[0]?.id || '';
     let searchQuery = '';
-    let activeDomain = 'All';
-    let showDiagrams = true;
-    let activeTableId = TABLES[0]?.id || '';
-    let mmdCounter = 0;
+    let showAllLeaves = false;
+    let selfQuizMode = false;
+    let revealedOptions = new Set();
+    let collapsedMatrices = {};
+    let expandedOptions = {};
+    let activeLensId = null;
+    let selectedNode = null; // { kind: 'matrix', tid } | { kind: 'option', tid, rIdx }
+    let zoomPct = 100;
+    let librarySplitMode = true;
+    let chatHistory = [];
+    let streaming = false;
+    let mmdSeq = 0;
 
-    function renderDomainPills() {
-      const domains = ['All', ...Array.from(new Set(TABLES.map(t => t.domain)))];
-      $('cs-domain-pills').innerHTML = domains
-        .map(d => `<button type="button" class="cs-dom-pill${d === activeDomain ? ' active' : ''}" data-dom="${esc(d)}">${esc(d)}</button>`)
-        .join('');
-      $('cs-domain-pills').querySelectorAll('.cs-dom-pill').forEach(btn => {
-        btn.addEventListener('click', () => {
-          activeDomain = btn.dataset.dom;
-          renderDomainPills();
-          renderAll();
-        });
+    function getDomainsList() {
+      const order = Object.keys(DOMAIN_PALETTE);
+      const seen = Array.from(new Set(TABLES.map(t => t.domain)));
+      return seen.sort((a, b) => {
+        const ia = order.indexOf(a);
+        const ib = order.indexOf(b);
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
       });
     }
 
-    function rowMatchesFilter(row, table) {
-      if (!searchQuery) return true;
+    function rowKey(tid, idx) {
+      return `${tid}::${idx}`;
+    }
+
+    function rowMatchesSearch(t, r, q) {
+      if (!q) return true;
       const hay = [
-        table.title,
-        table.domain,
-        row.option,
-        row.badge,
-        row.description,
-        ...(row.whenToChoose || []),
-        row.examTrap,
-        row.exampleQ?.stem || '',
-        row.exampleQ?.why || '',
-      ].join(' ').toLowerCase();
-      return searchQuery.toLowerCase().split(/\s+/).filter(Boolean).every(tok => hay.includes(tok));
+        t.title,
+        t.domain,
+        r.option,
+        r.badge,
+        r.description,
+        ...(r.whenToChoose || []),
+        r.examTrap,
+        r.exampleQ?.stem || '',
+        r.exampleQ?.why || '',
+        ...(r.lessons || []).map(l => `Ch ${l.ch} L${l.lnum} ${l.title}`),
+      ]
+        .join(' ')
+        .toLowerCase();
+      return q
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean)
+        .every(tok => hay.includes(tok));
     }
 
-    async function renderMermaidIn(container) {
-      if (!window.mermaid || !container) return;
-      for (const el of Array.from(container.querySelectorAll('.cs-mmd-source'))) {
-        const tObj = TABLES.find(x => x.id === el.dataset.tid);
-        const code = String((tObj && tObj.mermaid) || '').trim();
-        if (!code) continue;
-        const renderId = `cs-mmd-${++mmdCounter}-${Date.now()}`;
-        try {
-          const { svg } = await window.mermaid.render(renderId, code);
-          const canvas = el.querySelector('.diagram-canvas');
-          if (canvas) canvas.innerHTML = svg;
-          el.querySelector('.z-btn')?.addEventListener('click', () => {
-            $('diag-modal-title').textContent = el.dataset.title || '📐 Decision Tree';
-            $('diagram-modal-body').innerHTML = svg;
-            const sEl = $('diagram-modal-body').querySelector('svg');
-            if (sEl) { sEl.style.width = '100%'; sEl.style.maxWidth = '1120px'; sEl.style.height = 'auto'; }
-            $('diagram-modal').classList.add('open');
-          });
-          el.querySelector('.copy-mmd')?.addEventListener('click', async e => {
-            try {
-              await navigator.clipboard.writeText(code);
-              e.currentTarget.textContent = '✓ Copied';
-              setTimeout(() => { e.currentTarget.textContent = 'Copy Mermaid'; }, 1200);
-            } catch {}
-          });
-        } catch {
-          const stray = document.getElementById(`d${renderId}`) || document.getElementById(renderId);
-          if (stray) stray.remove();
-        }
-      }
+    function updateTableLinks() {
+      const hash = activeMatrixId ? `#matrix-${activeMatrixId}` : '';
+      if ($('switch-to-table-top')) $('switch-to-table-top').href = `/cheatsheet.html${hash}`;
+      if ($('switch-table-pill')) $('switch-table-pill').href = `/cheatsheet.html${hash}`;
     }
 
-    async function renderAll() {
-      const visibleTables = [];
-      let totalVisibleRows = 0;
-      for (const t of TABLES) {
-        if (activeDomain !== 'All' && t.domain !== activeDomain) continue;
-        const matchedRows = (t.rows || []).filter(r => rowMatchesFilter(r, t));
-        if (matchedRows.length > 0) {
-          visibleTables.push({ ...t, matchedRows });
-          totalVisibleRows += matchedRows.length;
-        }
-      }
+    function renderControls() {
+      const domains = getDomainsList();
+      const totalRows = TABLES.reduce((acc, t) => acc + (t.rows || []).length, 0);
+      $('cm-live-counts').textContent = `${domains.length} Domains · ${TABLES.length} Matrices · ${totalRows} Options`;
 
-      $('cs-stats-strip').innerHTML = `
-        <a href="./mindmap.html" class="cs-stat-badge" style="background:rgba(139,92,246,0.38);border-color:rgba(196,181,253,0.65);">🧠 Open Interactive Mind Map ↗</a>
-        <a href="./network-dendrite.html" class="cs-stat-badge" style="background:rgba(37,99,235,0.38);border-color:rgba(147,197,253,0.65);">🕸️ Open Network &amp; Path Finder ↗</a>
-        <a href="./services-dendrite.html" class="cs-stat-badge">🌳 All GCP Services Dendrite ↗</a>
-        <a href="./infra-dendrite.html" class="cs-stat-badge">🏗️ Infra Residency Dendrite ↗</a>
-        <span class="cs-stat-badge">📊 ${visibleTables.length} Decision Matrices · ${totalVisibleRows} GCP Options</span>
-      `;
+      // Matrix select dropdown
+      $('cm-matrix-select').innerHTML =
+        `<option value="">Jump to any Matrix (1–${TABLES.length})...</option>` +
+        TABLES.map(
+          t =>
+            `<option value="${esc(t.id)}"${viewMode === 'matrix' && activeMatrixId === t.id ? ' selected' : ''}>${esc(t.icon)} ${esc(t.title)} (${(t.rows || []).length})</option>`
+        ).join('');
 
-      $('cs-toc-list').innerHTML = visibleTables
-        .map(t => `
-          <button type="button" class="cs-toc-btn${t.id === activeTableId ? ' active' : ''}" data-tid="${esc(t.id)}">
-            <span>${esc(t.icon)}</span>
-            <span>${esc(t.title)} <span style="color:#64748b;font-weight:500;">(${t.matchedRows.length})</span></span>
-          </button>
-        `).join('');
+      // Domain pills
+      const dark = isDark();
+      $('cm-domain-pills').innerHTML = domains
+        .map(d => {
+          const st = getDomainStyle(d);
+          const count = TABLES.filter(t => t.domain === d).length;
+          const active = viewMode === 'domain' && activeDomain === d;
+          const col = dark ? st.darkColor : st.color;
+          const bg = active ? st.color : dark ? st.darkBg : st.lightBg;
+          const fg = active ? '#ffffff' : col;
+          return `<button type="button" class="cm-dom-pill" data-dom="${esc(d)}" style="background:${bg};border-color:${col};color:${fg};">${esc(st.icon)} ${esc(d)} (${count})</button>`;
+        })
+        .join('');
 
-      $('cs-toc-list').querySelectorAll('.cs-toc-btn').forEach(btn => {
+      $('cm-domain-pills').querySelectorAll('.cm-dom-pill').forEach(btn => {
         btn.addEventListener('click', () => {
-          activeTableId = btn.dataset.tid;
-          document.getElementById(`matrix-${activeTableId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          $('cs-toc-list').querySelectorAll('.cs-toc-btn').forEach(b => b.classList.toggle('active', b === btn));
+          const d = btn.dataset.dom;
+          if (viewMode === 'domain' && activeDomain === d) {
+            viewMode = 'all';
+          } else {
+            activeDomain = d;
+            viewMode = 'domain';
+          }
+          syncToolbarButtons();
+          renderMindMap();
         });
       });
 
-      const container = $('cs-tables-container');
-      if (!visibleTables.length) {
-        container.innerHTML = `<div class="matrix-card" style="padding:32px;text-align:center;color:#64748b;">No options match your search. Clear the filter to view all ${TABLES.length} matrices.</div>`;
+      // Lens chips
+      $('cm-lens-chips').innerHTML = SPOTLIGHT_LENSES.map(
+        ln => `<button type="button" class="cm-lens-chip${ln.id === activeLensId ? ' active' : ''}" data-lid="${esc(ln.id)}">${esc(ln.label)}</button>`
+      ).join('');
+      $('clear-lens-btn').style.display = activeLensId ? 'inline-flex' : 'none';
+
+      $('cm-lens-chips').querySelectorAll('.cm-lens-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const lid = btn.dataset.lid;
+          activeLensId = activeLensId === lid ? null : lid;
+          renderControls();
+          renderMindMap();
+        });
+      });
+
+      updateTableLinks();
+    }
+
+    function syncToolbarButtons() {
+      $('mode-all-btn').classList.toggle('active', viewMode === 'all');
+      $('mode-domain-btn').classList.toggle('active', viewMode === 'domain');
+      $('mode-matrix-btn').classList.toggle('active', viewMode === 'matrix');
+      $('toggle-leaves-btn').classList.toggle('active', showAllLeaves || viewMode === 'matrix');
+      $('toggle-quiz-btn').classList.toggle('quiz-active', selfQuizMode);
+      renderControls();
+    }
+
+    async function showMatrixInspector(tid) {
+      const t = TABLES.find(x => x.id === tid);
+      const box = $('cm-inspector');
+      if (!t) {
+        box.classList.remove('open');
         return;
       }
+      selectedNode = { kind: 'matrix', tid };
+      activeMatrixId = tid;
+      updateTableLinks();
+      const st = getDomainStyle(t.domain);
+      box.style.borderColor = isDark() ? st.darkColor : st.color;
+      box.classList.add('open');
 
-      container.innerHTML = visibleTables.map(t => {
-        const rowsHtml = t.matchedRows.map(r => {
-          const whenHtml = (r.whenToChoose || []).map(item => `<li>${renderMd(item)}</li>`).join('');
-          return `
-            <tr>
-              <td class="col-opt quiz-maskable">
-                <span class="quiz-reveal-hint gemini-reader-ignore">👁 Click to Reveal Option</span>
-                <div class="opt-name">${esc(r.option)}</div>
-                ${r.badge ? `<span class="opt-badge">${esc(r.badge)}</span>` : ''}
-                <div class="opt-desc">${renderMd(r.description)}</div>
-              </td>
-              <td class="col-when"><ul class="when-list">${whenHtml}</ul></td>
-              <td class="col-trap"><div class="trap-box">${renderMd(r.examTrap)}</div></td>
-              <td class="col-ex">
-                <div class="ex-card">
-                  <div class="ex-stem"><strong>Scenario:</strong> ${esc(r.exampleQ?.stem || '')}</div>
-                  <details class="ex-why-details">
-                    <summary class="gemini-reader-ignore">✓ Why ${esc(r.option.split('(')[0].trim())} Wins</summary>
-                    ${renderMd(r.exampleQ?.why || '')}
-                  </details>
-                </div>
-              </td>
-            </tr>
-          `;
-        }).join('');
+      if (window.StudyContext && !$('library-modal').classList.contains('open')) {
+        window.StudyContext.setOpenLesson({
+          label: `Mind Map Matrix · ${t.title}`,
+          chapterSlug: t.id,
+          markdown: `# ${t.title}\nGolden Rule: ${t.decisionRule}\n\n` + (t.rows || []).map(r => `- **${r.option}** (${r.badge || ''}): ${r.description}`).join('\n'),
+          dismissible: false,
+        });
+      }
 
-        return `
-          <section class="matrix-card" id="matrix-${esc(t.id)}" data-tid="${esc(t.id)}">
-            <div class="matrix-head">
-              <div class="matrix-title-row">
-                <div>
-                  <span class="matrix-domain-tag">${esc(t.domain)}</span>
-                  <h2 class="matrix-h2">${esc(t.icon)} ${esc(t.title)}</h2>
-                  <div class="matrix-sub">${esc(t.subtitle)}</div>
-                </div>
-                <div class="matrix-actions gemini-reader-ignore">
-                  <a class="btn" href="./mindmap.html?matrix=${encodeURIComponent(t.id)}" style="padding:4px 10px;font-size:12px;text-decoration:none;">🧠 Mind Map</a>
-                  <button type="button" class="btn toggle-one-diag-btn" style="padding:4px 10px;font-size:12px;">📐 ${showDiagrams ? 'Hide' : 'Show'} Flowchart</button>
-                  <button type="button" class="btn tts-play-btn read-matrix-btn" style="padding:4px 10px;font-size:12px;">🔊 Speak</button>
-                </div>
-              </div>
-              <div class="matrix-rule-box"><strong>⚡ Golden Decision Rule:</strong> ${renderMd(t.decisionRule)}</div>
+      box.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+          <div>
+            <span style="font-size:11px;font-weight:800;text-transform:uppercase;color:${isDark() ? st.darkColor : st.color};">${esc(st.icon)} ${esc(t.domain)}</span>
+            <div style="font-size:17px;font-weight:800;margin-top:2px;">${esc(t.icon)} ${esc(t.title)}</div>
+            <div style="font-size:12.5px;opacity:0.8;margin-top:2px;">${esc(t.subtitle || '')}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;" class="gemini-reader-ignore">
+            <button type="button" id="insp-focus-mat-btn" class="btn btn-primary" style="padding:4px 10px;font-size:12px;">
+              ${viewMode === 'matrix' && activeMatrixId === t.id ? '🌳 Back to All Matrices' : '🔍 Deep-Focus This Matrix'}
+            </button>
+            
+            <button type="button" id="insp-speak-mat-btn" class="btn tts-play-btn" style="padding:4px 10px;font-size:12px;">🔊 Speak Rule</button>
+            <button type="button" id="insp-quiz-mat-btn" class="btn" style="padding:4px 10px;font-size:12px;">🎲 Quiz Me</button>
+            <button type="button" id="insp-close-btn" class="btn" style="padding:4px 8px;font-size:12px;">✕</button>
+          </div>
+        </div>
+        <div class="cm-insp-panel" style="border-left:4px solid ${st.color};">
+          <h4>⚡ Golden Exam Decision Rule</h4>
+          <div>${renderMd(t.decisionRule || '')}</div>
+        </div>
+        ${
+          t.mermaid
+            ? `<div class="diagram-card gemini-reader-ignore" id="insp-mmd-card" style="margin:0;">
+                 <div class="diagram-toolbar">
+                   <span>📐 Decision Flowchart — ${esc(t.title)}</span>
+                   <div class="diagram-toolbar-btns"><button type="button" class="z-btn">🔍 Fullscreen</button></div>
+                 </div>
+                 <div class="diagram-canvas"><span style="font-size:12px;opacity:0.7;">Rendering flowchart...</span></div>
+               </div>`
+            : ''
+        }
+      `;
+
+      box.querySelector('#insp-close-btn').addEventListener('click', () => {
+        selectedNode = null;
+        box.classList.remove('open');
+        renderMindMap();
+      });
+      box.querySelector('#insp-focus-mat-btn').addEventListener('click', () => {
+        if (viewMode === 'matrix' && activeMatrixId === t.id) {
+          viewMode = 'all';
+        } else {
+          activeMatrixId = t.id;
+          collapsedMatrices[t.id] = false;
+          viewMode = 'matrix';
+        }
+        syncToolbarButtons();
+        showMatrixInspector(t.id);
+        renderMindMap();
+      });
+      box.querySelector('#insp-speak-mat-btn')?.addEventListener('click', e => {
+        window.GeminiReader?.readPlainText(`${t.title}. Golden Exam Rule: ${stripMdPlain(t.decisionRule)}`, {
+          targetKey: `cm-mat::${t.id}`,
+          anchorBtn: e.currentTarget,
+          defaultBtnText: '🔊 Speak Rule',
+        });
+      });
+      box.querySelector('#insp-quiz-mat-btn')?.addEventListener('click', () => {
+        askTutor(
+          `Quiz me with a realistic hard PCA v6.1 scenario question testing the options in "${t.title}". Give 4 equal-length choices (A, B, C, D) and wrap the official answer, distractor traps, and What-If pivots inside a <details><summary>👁 Click to Reveal Official Answer</summary>...</details> block!`
+        );
+      });
+
+      if (t.mermaid && window.mermaid) {
+        const mCard = box.querySelector('#insp-mmd-card');
+        if (mCard) {
+          const rid = `dc-mmd-${++mmdSeq}-${Date.now()}`;
+          try {
+            const { svg } = await window.mermaid.render(rid, String(t.mermaid).trim());
+            const canvas = mCard.querySelector('.diagram-canvas');
+            if (canvas) canvas.innerHTML = svg;
+            mCard.querySelector('.z-btn')?.addEventListener('click', () => {
+              $('diag-modal-title').textContent = `📐 ${t.title}`;
+              $('diagram-modal-body').innerHTML = svg;
+              const sEl = $('diagram-modal-body').querySelector('svg');
+              if (sEl) {
+                sEl.style.width = '100%';
+                sEl.style.maxWidth = '1120px';
+                sEl.style.height = 'auto';
+              }
+              $('diagram-modal').classList.add('open');
+            });
+          } catch (err) {
+            const stray = document.getElementById(`d${rid}`) || document.getElementById(rid);
+            if (stray) stray.remove();
+          }
+        }
+      }
+    }
+
+    function showOptionInspector(tid, rIdx) {
+      const t = TABLES.find(x => x.id === tid);
+      const r = t?.rows?.[rIdx];
+      const box = $('cm-inspector');
+      if (!t || !r) {
+        box.classList.remove('open');
+        return;
+      }
+      selectedNode = { kind: 'option', tid, rIdx };
+      activeMatrixId = tid;
+      updateTableLinks();
+      const st = getDomainStyle(t.domain);
+      box.style.borderColor = isDark() ? st.darkColor : st.color;
+      box.classList.add('open');
+
+      if (window.StudyContext && !$('library-modal').classList.contains('open')) {
+        window.StudyContext.setOpenLesson({
+          label: `Mind Map Option · ${r.option}`,
+          chapterSlug: t.id,
+          markdown: [
+            `# ${r.option} (${r.badge || ''})`,
+            `Parent Matrix: ${t.title}`,
+            `Specs & Description: ${r.description}`,
+            `When to Choose: ${(r.whenToChoose || []).join(' | ')}`,
+            `Exam Trap: ${r.examTrap}`,
+            r.exampleQ?.stem ? `Example Scenario: ${r.exampleQ.stem} -> ${r.exampleQ.why}` : '',
+          ].join('\n\n'),
+          dismissible: false,
+        });
+      }
+
+      const lessonBtns = (r.lessons || [])
+        .map(
+          l => `
+          <button type="button" class="btn open-l-modal-btn" data-slug="${esc(l.slug)}" data-lnum="${l.lnum}" style="padding:4px 10px;font-size:12px;border-color:#93c5fd;color:#1d4ed8;background:#eff6ff;">
+            📘 Ch ${String(l.ch).padStart(2, '0')} · L${String(l.lnum).padStart(2, '0')}: ${esc(l.title)}${l.errata ? ' ⚠️' : ''}
+          </button>
+          <a class="btn" href="/course.html?chapter=${encodeURIComponent(l.slug)}&lesson=${Math.max(0, l.lnum - 1)}" target="_blank" rel="noopener" style="padding:4px 10px;font-size:12px;text-decoration:none;">
+            🎬 Video ↗
+          </a>
+        `
+        )
+        .join('');
+
+      const exLink = r.exampleQ?.examRef
+        ? `<a class="btn" href="/?exam=${encodeURIComponent(r.exampleQ.examRef.examId)}&q=${r.exampleQ.examRef.qNum}" style="padding:3px 9px;font-size:11.5px;text-decoration:none;margin-top:6px;display:inline-flex;">↗ Practice ${esc(r.exampleQ.examRef.label)}</a>`
+        : '';
+
+      box.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:11.5px;font-weight:800;color:${isDark() ? st.darkColor : st.color};cursor:pointer;" id="insp-back-mat-link">
+              ← ${esc(t.icon)} ${esc(t.title)}
             </div>
-            <div class="matrix-diagram-slot gemini-reader-ignore" style="display:${showDiagrams ? 'block' : 'none'};">
-              <div class="diagram-card cs-mmd-source" data-tid="${esc(t.id)}" data-title="${esc(t.title)}" style="margin:0;">
-                <div class="diagram-toolbar">
-                  <span>📐 Decision Flowchart — ${esc(t.title)}</span>
-                  <div class="diagram-toolbar-btns">
-                    <button type="button" class="copy-mmd">Copy Mermaid</button>
-                    <button type="button" class="z-btn">🔍 Fullscreen</button>
-                  </div>
-                </div>
-                <div class="diagram-canvas"><span style="color:#64748b;font-size:12px;">Rendering decision flowchart...</span></div>
-              </div>
+            <div style="font-size:17px;font-weight:800;margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span>${esc(r.option)}</span>
+              ${r.badge ? `<span class="opt-badge">${esc(r.badge)}</span>` : ''}
             </div>
-            <div class="matrix-table-wrap">
-              <table class="cs-table">
-                <thead class="gemini-reader-ignore">
-                  <tr>
-                    <th class="col-opt">Option &amp; Architecture Specs</th>
-                    <th class="col-when">When to Choose (Triggers)</th>
-                    <th class="col-trap">⚠️ Common Trap</th>
-                    <th class="col-ex">Scenario Walkthrough</th>
-                  </tr>
-                </thead>
-                <tbody>${rowsHtml}</tbody>
-              </table>
-            </div>
-          </section>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;" class="gemini-reader-ignore">
+            
+            <button type="button" id="insp-speak-opt-btn" class="btn tts-play-btn" style="padding:4px 10px;font-size:12px;">🔊 Speak Option</button>
+            <button type="button" id="insp-quiz-opt-btn" class="btn btn-primary" style="padding:4px 10px;font-size:12px;">🎲 Quiz vs. Alternatives</button>
+            <button type="button" id="insp-close-btn" class="btn" style="padding:4px 8px;font-size:12px;">✕</button>
+          </div>
+        </div>
+
+        <div class="cm-insp-grid">
+          <div class="cm-insp-panel">
+            <h4>📐 Architecture &amp; Key Specs</h4>
+            <div>${renderMd(r.description || '')}</div>
+          </div>
+          <div class="cm-insp-panel">
+            <h4>✓ When to Choose (Exam Triggers)</h4>
+            <ul>${(r.whenToChoose || []).map(w => `<li>${renderMd(w)}</li>`).join('')}</ul>
+          </div>
+          <div class="cm-insp-panel trap">
+            <h4>⚠️ Classic PCA Distractor Trap</h4>
+            <div>${renderMd(r.examTrap || '')}</div>
+          </div>
+          ${
+            r.exampleQ?.stem
+              ? `<div class="cm-insp-panel scenario">
+                   <h4>🎯 Example PCA Scenario</h4>
+                   <div><strong>Stem:</strong> ${esc(r.exampleQ.stem)}</div>
+                   <details style="margin-top:6px;">
+                     <summary style="cursor:pointer;font-weight:800;">✓ Why This Option Wins</summary>
+                     <div style="margin-top:4px;">${renderMd(r.exampleQ.why || '')}</div>
+                   </details>
+                   ${exLink}
+                 </div>`
+              : ''
+          }
+        </div>
+
+        <div class="gemini-reader-ignore" style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;">
+          ${lessonBtns}
+        </div>
+      `;
+
+      box.querySelector('#insp-back-mat-link')?.addEventListener('click', () => {
+        showMatrixInspector(t.id);
+        renderMindMap();
+      });
+      box.querySelector('#insp-close-btn').addEventListener('click', () => {
+        selectedNode = null;
+        box.classList.remove('open');
+        renderMindMap();
+      });
+      box.querySelectorAll('.open-l-modal-btn').forEach(b => {
+        b.addEventListener('click', () => openLessonStudyModal(b.dataset.slug, Number(b.dataset.lnum || 1)));
+      });
+      box.querySelector('#insp-speak-opt-btn')?.addEventListener('click', e => {
+        const plain = [
+          r.option,
+          r.badge,
+          stripMdPlain(r.description),
+          'When to choose: ' + (r.whenToChoose || []).map(stripMdPlain).join('. '),
+          'Exam trap: ' + stripMdPlain(r.examTrap),
+        ].join('. ');
+        window.GeminiReader?.readPlainText(plain, {
+          targetKey: `cm-opt::${tid}::${rIdx}`,
+          anchorBtn: e.currentTarget,
+          defaultBtnText: '🔊 Speak Option',
+        });
+      });
+      box.querySelector('#insp-quiz-opt-btn')?.addEventListener('click', () => {
+        const siblings = (t.rows || []).map(x => x.option).join(', ');
+        askTutor(
+          `Write 1 tricky PCA v6.1 multiple-choice scenario where "${r.option}" competes directly against its closest silver-medal alternatives in "${t.title}" (${siblings}). Make all 4 options equal length, and put the answer + why each distractor fails inside a <details> block!`
+        );
+      });
+    }
+
+    function buildOptionLeaves(r) {
+      const leaves = [];
+      for (const w of (r.whenToChoose || []).slice(0, 2)) {
+        leaves.push({ kind: 'trigger', icon: '✓', label: `When: ${stripMdPlain(w)}` });
+      }
+      if (r.examTrap) {
+        leaves.push({ kind: 'trap', icon: '⚠️', label: `Trap: ${stripMdPlain(r.examTrap)}` });
+      }
+      if (r.exampleQ?.stem) {
+        leaves.push({ kind: 'scenario', icon: '🎯', label: `Ex: ${stripMdPlain(r.exampleQ.stem)}` });
+      }
+      return leaves;
+    }
+
+    function renderMindMap() {
+      const dark = isDark();
+      const activeLens = SPOTLIGHT_LENSES.find(x => x.id === activeLensId) || null;
+      const domains = getDomainsList();
+
+      let filteredTables = TABLES;
+      if (viewMode === 'domain') {
+        filteredTables = TABLES.filter(t => t.domain === activeDomain);
+      } else if (viewMode === 'matrix') {
+        filteredTables = TABLES.filter(t => t.id === activeMatrixId);
+        if (!filteredTables.length && TABLES[0]) filteredTables = [TABLES[0]];
+      }
+
+      const activeDomains = domains.filter(d => filteredTables.some(t => t.domain === d));
+      const leavesVisibleGlobally = showAllLeaves || viewMode === 'matrix';
+
+      // Layout Coordinates
+      const SOMA_X = 22, SOMA_W = 228, SOMA_H = 146, SOMA_OUT = SOMA_X + SOMA_W;
+      const DOM_X = 312, DOM_W = 224, DOM_H = 52, DOM_OUT = DOM_X + DOM_W;
+      const MAT_X = 598, MAT_W = 332, MAT_H = 48, MAT_OUT = MAT_X + MAT_W;
+      const OPT_X = 992, OPT_W = 382, OPT_H = 42, OPT_OUT = OPT_X + OPT_W;
+      const LEAF_X = 1434, LEAF_W = 556, LEAF_H = 28;
+
+      let anyLeavesRendered = false;
+      let cursorY = 26;
+      const laidDomains = [];
+
+      for (const domName of activeDomains) {
+        const domStyle = getDomainStyle(domName);
+        const domTables = filteredTables.filter(t => t.domain === domName);
+        const laidMatrices = [];
+
+        for (const t of domTables) {
+          const matCollapsed = Boolean(collapsedMatrices[t.id]) && viewMode !== 'matrix';
+          const rows = t.rows || [];
+          const laidOptions = [];
+
+          if (matCollapsed) {
+            const y = cursorY + OPT_H / 2;
+            laidOptions.push({
+              isPlaceholder: true,
+              tid: t.id,
+              count: rows.length,
+              y,
+              matched: true,
+              traced: false,
+              leaves: [],
+            });
+            cursorY += OPT_H + 10;
+          } else {
+            rows.forEach((r, rIdx) => {
+              const matched = rowMatchesSearch(t, r, searchQuery);
+              const traced = activeLens ? Boolean(activeLens.match(t, r)) : false;
+              const rk = rowKey(t.id, rIdx);
+              const optLeavesOpen = leavesVisibleGlobally || Boolean(expandedOptions[rk]);
+              const rawLeaves = optLeavesOpen ? buildOptionLeaves(r) : [];
+              const laidLeaves = [];
+
+              if (rawLeaves.length > 0) {
+                anyLeavesRendered = true;
+                for (const lf of rawLeaves) {
+                  laidLeaves.push({
+                    leaf: lf,
+                    y: cursorY + LEAF_H / 2,
+                  });
+                  cursorY += LEAF_H + 6;
+                }
+                const optMidY = (laidLeaves[0].y + laidLeaves[laidLeaves.length - 1].y) / 2;
+                laidOptions.push({
+                  row: r,
+                  rIdx,
+                  rk,
+                  tid: t.id,
+                  y: optMidY,
+                  matched,
+                  traced,
+                  optLeavesOpen,
+                  leaves: laidLeaves,
+                });
+                cursorY += 8;
+              } else {
+                const y = cursorY + OPT_H / 2;
+                laidOptions.push({
+                  row: r,
+                  rIdx,
+                  rk,
+                  tid: t.id,
+                  y,
+                  matched,
+                  traced,
+                  optLeavesOpen: false,
+                  leaves: [],
+                });
+                cursorY += OPT_H + 8;
+              }
+            });
+          }
+
+          const matMidY =
+            laidOptions.length > 0
+              ? (laidOptions[0].y + laidOptions[laidOptions.length - 1].y) / 2
+              : cursorY + MAT_H / 2;
+
+          laidMatrices.push({
+            table: t,
+            y: matMidY,
+            matCollapsed,
+            matched: laidOptions.some(o => o.matched),
+            traced: laidOptions.some(o => o.traced),
+            options: laidOptions,
+          });
+          cursorY += 14;
+        }
+
+        const domMidY =
+          laidMatrices.length > 0
+            ? (laidMatrices[0].y + laidMatrices[laidMatrices.length - 1].y) / 2
+            : cursorY + DOM_H / 2;
+
+        laidDomains.push({
+          domain: domName,
+          style: domStyle,
+          y: domMidY,
+          matched: laidMatrices.some(m => m.matched),
+          traced: laidMatrices.some(m => m.traced),
+          matrices: laidMatrices,
+        });
+        cursorY += 22;
+      }
+
+      const svgW = anyLeavesRendered ? LEAF_X + LEAF_W + 28 : OPT_X + OPT_W + 28;
+      const svgH = Math.max(420, cursorY + 20);
+      const somaY =
+        laidDomains.length > 0
+          ? (laidDomains[0].y + laidDomains[laidDomains.length - 1].y) / 2
+          : svgH / 2;
+
+      const cardFill = dark ? '#1e293b' : '#ffffff';
+      const cardStroke = dark ? '#475569' : '#cbd5e1';
+      const titleFill = dark ? '#f1f5f9' : '#0f172a';
+      const subFill = dark ? '#94a3b8' : '#64748b';
+
+      let paths = '';
+      let nodes = '';
+
+      // Soma Root Node
+      const totalOpts = TABLES.reduce((a, t) => a + (t.rows || []).length, 0);
+      nodes += `
+        <g class="d-node soma-node" transform="translate(${SOMA_X}, ${somaY - SOMA_H / 2})">
+          <rect width="${SOMA_W}" height="${SOMA_H}" rx="18" fill="#0f172a" stroke="#3b82f6" stroke-width="3" />
+          <text x="16" y="26" fill="#93c5fd" font-size="11" font-weight="800">GCP PCA v6.1 ARCHITECTURE</text>
+          <text x="16" y="49" fill="#ffffff" font-size="16" font-weight="800">🧠 Cheat Sheet Map</text>
+          <text x="16" y="68" fill="#cbd5e1" font-size="11.2" font-weight="600">Alternatives &amp; Decision Rules</text>
+          <line x1="16" y1="80" x2="${SOMA_W - 16}" y2="80" stroke="#334155" stroke-width="1" />
+          <text x="16" y="98" fill="#e2e8f0" font-size="11">• ${domains.length} Architecture Domains</text>
+          <text x="16" y="116" fill="#e2e8f0" font-size="11">• ${TABLES.length} Comparison Matrices</text>
+          <text x="16" y="134" fill="#93c5fd" font-size="11" font-weight="700">• ${totalOpts} GCP Options Compared</text>
+        </g>
+        <circle cx="${SOMA_OUT}" cy="${somaY}" r="5.5" fill="#3b82f6" />
+      `;
+
+      for (const ld of laidDomains) {
+        const col = dark ? ld.style.darkColor : ld.style.color;
+        const domBg = dark ? ld.style.darkBg : ld.style.lightBg;
+        const dimD = (activeLens && !ld.traced) || (searchQuery && !ld.matched) ? 'opacity="0.18"' : 'opacity="0.92"';
+        const pulseD = ld.traced ? 'class="pulse-path"' : '';
+
+        paths += `<path d="M ${SOMA_OUT} ${somaY} C ${SOMA_OUT + 34} ${somaY}, ${DOM_X - 34} ${ld.y}, ${DOM_X} ${ld.y}" fill="none" stroke="${col}" stroke-width="${ld.traced ? '3.2' : '2.3'}" ${pulseD} ${dimD} />`;
+
+        nodes += `
+          <g class="d-node dom-node" data-dom="${esc(ld.domain)}" transform="translate(${DOM_X}, ${ld.y - DOM_H / 2})" ${dimD}>
+            <rect width="${DOM_W}" height="${DOM_H}" rx="12" fill="${domBg}" stroke="${col}" stroke-width="2.2" />
+            <text x="12" y="22" fill="${col}" font-size="12.5" font-weight="800">${esc(ld.style.icon)} ${esc(trunc(ld.domain, 25))}</text>
+            <text x="12" y="39" fill="${subFill}" font-size="10.8" font-weight="700">${ld.matrices.length} Comparison ${ld.matrices.length === 1 ? 'Matrix' : 'Matrices'}</text>
+          </g>
+          <circle cx="${DOM_OUT}" cy="${ld.y}" r="4.5" fill="${col}" ${dimD} />
         `;
-      }).join('');
 
-      container.querySelectorAll('.quiz-maskable').forEach(cell => {
-        cell.addEventListener('click', () => {
-          if (document.body.classList.contains('self-quiz-mode')) cell.classList.toggle('revealed');
+        for (const lm of ld.matrices) {
+          const t = lm.table;
+          const isMatSel = selectedNode?.kind === 'matrix' && selectedNode.tid === t.id;
+          const dimM = (activeLens && !lm.traced) || (searchQuery && !lm.matched) ? 'opacity="0.17"' : 'opacity="0.93"';
+          const pulseM = lm.traced ? 'class="pulse-path"' : '';
+
+          paths += `<path d="M ${DOM_OUT} ${ld.y} C ${DOM_OUT + 32} ${ld.y}, ${MAT_X - 32} ${lm.y}, ${MAT_X} ${lm.y}" fill="none" stroke="${col}" stroke-width="${isMatSel || lm.traced ? '3' : '1.9'}" ${pulseM} ${dimM} />`;
+
+          nodes += `
+            <g class="d-node mat-node" data-tid="${esc(t.id)}" transform="translate(${MAT_X}, ${lm.y - MAT_H / 2})" ${dimM}>
+              <rect width="${MAT_W}" height="${MAT_H}" rx="10" fill="${isMatSel ? domBg : cardFill}" stroke="${isMatSel ? col : cardStroke}" stroke-width="${isMatSel ? '2.6' : '1.6'}" />
+              <text x="11" y="19" fill="${col}" font-size="11.8" font-weight="800">${esc(t.icon)} ${esc(trunc(t.title, 41))}</text>
+              <text x="11" y="35" fill="${subFill}" font-size="10.5" font-weight="600">${esc(trunc(t.subtitle || `${(t.rows || []).length} options`, 46))}</text>
+              <text x="${MAT_W - 10}" y="27" text-anchor="end" fill="${col}" font-size="11.5" font-weight="800" class="mat-collapse-hit" data-tid="${esc(t.id)}">${lm.matCollapsed ? '[+]' : '[−]'}</text>
+            </g>
+            <circle cx="${MAT_OUT}" cy="${lm.y}" r="3.8" fill="${col}" ${dimM} />
+          `;
+
+          for (const lo of lm.options) {
+            if (lo.isPlaceholder) {
+              paths += `<path d="M ${MAT_OUT} ${lm.y} C ${MAT_OUT + 30} ${lm.y}, ${OPT_X - 30} ${lo.y}, ${OPT_X} ${lo.y}" fill="none" stroke="${col}" stroke-width="1.4" stroke-dasharray="4,3" opacity="0.7" />`;
+              nodes += `
+                <g class="d-node opt-expand-placeholder" data-tid="${esc(lo.tid)}" transform="translate(${OPT_X}, ${lo.y - 16})">
+                  <rect width="270" height="32" rx="8" fill="${cardFill}" stroke="${cardStroke}" stroke-dasharray="4,3" stroke-width="1.3" />
+                  <text x="12" y="20" fill="${subFill}" font-size="11.3" font-weight="700">[+] Click to expand ${lo.count} compared GCP options...</text>
+                </g>
+              `;
+              continue;
+            }
+
+            const r = lo.row;
+            const isOptSel = selectedNode?.kind === 'option' && selectedNode.tid === lo.tid && selectedNode.rIdx === lo.rIdx;
+            const dimO = (activeLens && !lo.traced) || (searchQuery && !lo.matched) ? 'opacity="0.16"' : 'opacity="0.96"';
+            const pulseO = lo.traced ? 'class="pulse-path"' : '';
+            const hasErrata = (r.lessons || []).some(l => l.errata) || String(r.badge || '').includes('⚠️');
+
+            paths += `<path d="M ${MAT_OUT} ${lm.y} C ${MAT_OUT + 30} ${lm.y}, ${OPT_X - 30} ${lo.y}, ${OPT_X} ${lo.y}" fill="none" stroke="${hasErrata ? '#f59e0b' : col}" stroke-width="${isOptSel || lo.traced ? '2.6' : '1.5'}" ${pulseO} ${dimO} />`;
+
+            const masked = selfQuizMode && !revealedOptions.has(lo.rk);
+            const displayOptTitle = masked ? '❓ [Self-Quiz — Click to Reveal Service]' : trunc(r.option, 45);
+            const optStroke = isOptSel ? col : hasErrata ? '#f59e0b' : cardStroke;
+            const optFill = isOptSel ? domBg : cardFill;
+
+            nodes += `
+              <g class="d-node opt-node" data-tid="${esc(lo.tid)}" data-ridx="${lo.rIdx}" data-rk="${esc(lo.rk)}" transform="translate(${OPT_X}, ${lo.y - OPT_H / 2})" ${dimO}>
+                <rect width="${OPT_W}" height="${OPT_H}" rx="9" fill="${optFill}" stroke="${optStroke}" stroke-width="${isOptSel ? '2.5' : '1.4'}" />
+                <circle cx="11" cy="15" r="3.6" fill="${hasErrata ? '#f59e0b' : col}" />
+                <text x="20" y="18" fill="${masked ? '#a855f7' : titleFill}" font-size="11.7" font-weight="800">${esc(displayOptTitle)}</text>
+                <text x="20" y="33" fill="${hasErrata ? '#d97706' : subFill}" font-size="10.4" font-weight="700">${esc(trunc(r.badge || '', 50))}</text>
+                <text x="${OPT_W - 9}" y="25" text-anchor="end" fill="${subFill}" font-size="11" font-weight="800" class="opt-leaf-hit" data-rk="${esc(lo.rk)}">${lo.optLeavesOpen ? '[−]' : '[+]'}</text>
+              </g>
+            `;
+
+            if (lo.leaves.length > 0) {
+              nodes += `<circle cx="${OPT_OUT}" cy="${lo.y}" r="3.4" fill="${col}" ${dimO} />`;
+              for (const ll of lo.leaves) {
+                const lf = ll.leaf;
+                let lfStroke = cardStroke, lfFill = cardFill, lfTxt = titleFill, lfEdge = col;
+                if (lf.kind === 'trigger') {
+                  lfEdge = '#16a34a';
+                  lfStroke = dark ? '#166534' : '#86efac';
+                  lfFill = dark ? '#052e16' : '#f0fdf4';
+                  lfTxt = dark ? '#bbf7d0' : '#14532d';
+                } else if (lf.kind === 'trap') {
+                  lfEdge = '#d97706';
+                  lfStroke = dark ? '#92400e' : '#fcd34d';
+                  lfFill = dark ? '#451a03' : '#fffbeb';
+                  lfTxt = dark ? '#fde68a' : '#78350f';
+                } else if (lf.kind === 'scenario') {
+                  lfEdge = '#7c3aed';
+                  lfStroke = dark ? '#5b21b6' : '#c4b5fd';
+                  lfFill = dark ? '#2e1065' : '#f5f3ff';
+                  lfTxt = dark ? '#ddd6fe' : '#4c1d95';
+                }
+
+                paths += `<path d="M ${OPT_OUT} ${lo.y} C ${OPT_OUT + 28} ${lo.y}, ${LEAF_X - 28} ${ll.y}, ${LEAF_X} ${ll.y}" fill="none" stroke="${lfEdge}" stroke-width="1.35" ${dimO} />`;
+                nodes += `
+                  <g class="d-node leaf-node" data-tid="${esc(lo.tid)}" data-ridx="${lo.rIdx}" transform="translate(${LEAF_X}, ${ll.y - LEAF_H / 2})" ${dimO}>
+                    <rect width="${LEAF_W}" height="${LEAF_H}" rx="7" fill="${lfFill}" stroke="${lfStroke}" stroke-width="1.2" />
+                    <text x="10" y="18" fill="${lfTxt}" font-size="11.1" font-weight="600">${esc(lf.icon)} ${esc(trunc(lf.label, 84))}</text>
+                  </g>
+                `;
+              }
+            }
+          }
+        }
+      }
+
+      const scaledW = Math.round((svgW * zoomPct) / 100);
+      $('cm-svg-host').innerHTML = `
+        <svg viewBox="0 0 ${svgW} ${svgH}" width="${scaledW}" style="max-width:none;height:auto;display:block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+          ${paths}
+          ${nodes}
+        </svg>
+      `;
+
+      // Wire SVG interactions
+      $('cm-svg-host').querySelector('.soma-node')?.addEventListener('click', () => {
+        viewMode = 'all';
+        syncToolbarButtons();
+        renderMindMap();
+      });
+
+      $('cm-svg-host').querySelectorAll('.dom-node').forEach(el => {
+        el.addEventListener('click', () => {
+          const d = el.dataset.dom;
+          if (viewMode === 'domain' && activeDomain === d) {
+            viewMode = 'all';
+          } else {
+            activeDomain = d;
+            viewMode = 'domain';
+          }
+          syncToolbarButtons();
+          renderMindMap();
         });
       });
 
-      container.querySelectorAll('.matrix-card').forEach(card => {
-        const tid = card.dataset.tid;
-        const diagSlot = card.querySelector('.matrix-diagram-slot');
-        const diagBtn = card.querySelector('.toggle-one-diag-btn');
-        if (diagBtn && diagSlot) {
-          diagBtn.addEventListener('click', () => {
-            const open = diagSlot.style.display === 'none';
-            diagSlot.style.display = open ? 'block' : 'none';
-            diagBtn.textContent = `📐 ${open ? 'Hide' : 'Show'} Flowchart`;
-          });
-        }
-        const readBtn = card.querySelector('.read-matrix-btn');
-        if (readBtn && window.GeminiReader) {
-          readBtn.addEventListener('click', () => {
-            window.GeminiReader.readElement(card, { targetKey: `cs::${tid}`, anchorBtn: readBtn, defaultBtnText: '🔊 Speak' });
-          });
-        }
+      $('cm-svg-host').querySelectorAll('.mat-node').forEach(el => {
+        el.addEventListener('click', e => {
+          const tid = el.dataset.tid;
+          if (e.target.classList.contains('mat-collapse-hit')) {
+            collapsedMatrices[tid] = !collapsedMatrices[tid];
+            renderMindMap();
+            return;
+          }
+          showMatrixInspector(tid);
+          renderMindMap();
+        });
       });
 
-      await renderMermaidIn(container);
+      $('cm-svg-host').querySelectorAll('.opt-expand-placeholder').forEach(el => {
+        el.addEventListener('click', () => {
+          collapsedMatrices[el.dataset.tid] = false;
+          renderMindMap();
+        });
+      });
+
+      $('cm-svg-host').querySelectorAll('.opt-node').forEach(el => {
+        el.addEventListener('click', e => {
+          const tid = el.dataset.tid;
+          const rIdx = Number(el.dataset.ridx);
+          const rk = el.dataset.rk;
+          if (e.target.classList.contains('opt-leaf-hit')) {
+            expandedOptions[rk] = !expandedOptions[rk];
+            renderMindMap();
+            return;
+          }
+          if (selfQuizMode && !revealedOptions.has(rk)) {
+            revealedOptions.add(rk);
+            renderMindMap();
+            return;
+          }
+          showOptionInspector(tid, rIdx);
+          renderMindMap();
+        });
+      });
+
+      $('cm-svg-host').querySelectorAll('.leaf-node').forEach(el => {
+        el.addEventListener('click', () => {
+          showOptionInspector(el.dataset.tid, Number(el.dataset.ridx));
+          renderMindMap();
+        });
+      });
     }
 
-    $('toggle-cs-sidebar-btn').addEventListener('click', () => $('cs-sidebar').classList.toggle('collapsed'));
-    $('cs-search').addEventListener('input', e => { searchQuery = e.target.value.trim(); renderAll(); });
-    $('toggle-self-quiz').addEventListener('change', e => {
-      document.body.classList.toggle('self-quiz-mode', e.target.checked);
-      if (!e.target.checked) document.querySelectorAll('.quiz-maskable.revealed').forEach(el => el.classList.remove('revealed'));
+    // Toolbar Listeners
+    $('mode-all-btn').addEventListener('click', () => {
+      viewMode = 'all';
+      syncToolbarButtons();
+      renderMindMap();
     });
-    $('toggle-all-diagrams').addEventListener('change', e => { showDiagrams = e.target.checked; renderAll(); });
+    $('mode-domain-btn').addEventListener('click', () => {
+      viewMode = 'domain';
+      syncToolbarButtons();
+      renderMindMap();
+    });
+    $('mode-matrix-btn').addEventListener('click', () => {
+      viewMode = 'matrix';
+      if (!activeMatrixId && TABLES[0]) activeMatrixId = TABLES[0].id;
+      collapsedMatrices[activeMatrixId] = false;
+      syncToolbarButtons();
+      showMatrixInspector(activeMatrixId);
+      renderMindMap();
+    });
+    $('toggle-leaves-btn').addEventListener('click', () => {
+      showAllLeaves = !showAllLeaves;
+      syncToolbarButtons();
+      renderMindMap();
+    });
+    $('toggle-quiz-btn').addEventListener('click', () => {
+      selfQuizMode = !selfQuizMode;
+      if (!selfQuizMode) revealedOptions.clear();
+      syncToolbarButtons();
+      renderMindMap();
+    });
+    $('expand-all-btn').addEventListener('click', () => {
+      collapsedMatrices = {};
+      renderMindMap();
+    });
+    $('collapse-all-btn').addEventListener('click', () => {
+      viewMode = 'all';
+      showAllLeaves = false;
+      expandedOptions = {};
+      for (const t of TABLES) collapsedMatrices[t.id] = true;
+      syncToolbarButtons();
+      renderMindMap();
+    });
+
+    $('cm-search').addEventListener('input', e => {
+      searchQuery = e.target.value.trim();
+      if (searchQuery) collapsedMatrices = {};
+      renderMindMap();
+    });
+    $('cm-matrix-select').addEventListener('change', e => {
+      const tid = e.target.value;
+      if (!tid) {
+        viewMode = 'all';
+        syncToolbarButtons();
+        renderMindMap();
+        return;
+      }
+      activeMatrixId = tid;
+      collapsedMatrices[tid] = false;
+      viewMode = 'matrix';
+      syncToolbarButtons();
+      showMatrixInspector(tid);
+      renderMindMap();
+    });
+    $('clear-lens-btn').addEventListener('click', () => {
+      activeLensId = null;
+      renderControls();
+      renderMindMap();
+    });
+
+    // Zoom & Drag-to-Pan
+    function setZoom(pct) {
+      zoomPct = Math.min(165, Math.max(50, Math.round(pct)));
+      $('zoom-label').textContent = `${zoomPct}%`;
+      renderMindMap();
+    }
+    $('zoom-in-btn').addEventListener('click', () => setZoom(zoomPct + 15));
+    $('zoom-out-btn').addEventListener('click', () => setZoom(zoomPct - 15));
+    $('zoom-fit-btn').addEventListener('click', () => {
+      const vw = $('cm-viewport').clientWidth - 32;
+      const targetW = showAllLeaves || viewMode === 'matrix' ? 2018 : 1402;
+      setZoom(Math.min(115, Math.max(55, Math.round((vw / targetW) * 100))));
+    });
+
+    const vp = $('cm-viewport');
+    let panning = false, px = 0, py = 0, sl = 0, st = 0;
+    vp.addEventListener('mousedown', e => {
+      if (e.target.closest('.d-node')) return;
+      panning = true;
+      px = e.clientX;
+      py = e.clientY;
+      sl = vp.scrollLeft;
+      st = vp.scrollTop;
+    });
+    window.addEventListener('mousemove', e => {
+      if (!panning) return;
+      vp.scrollLeft = sl - (e.clientX - px);
+      vp.scrollTop = st - (e.clientY - py);
+    });
+    window.addEventListener('mouseup', () => { panning = false; });
+    vp.addEventListener('wheel', e => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        setZoom(zoomPct + (e.deltaY < 0 ? 10 : -10));
+      }
+    }, { passive: false });
+
+    // Re-render SVG automatically when Dark/Light theme flips
+    new MutationObserver(() => {
+      renderControls();
+      renderMindMap();
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // Split-Screen Lesson Study Guide Modal
+    function syncModalSplitBounds() {
+      const modal = $('library-modal');
+      const tutorOpen = !$('tutor-pane').classList.contains('hidden');
+      const toggleBtn = $('toggle-library-split-btn');
+      if (tutorOpen && librarySplitMode) {
+        const tw = $('tutor-pane').offsetWidth || 420;
+        const rw = $('cm-resizer').offsetWidth || 6;
+        modal.classList.add('split-with-tutor');
+        modal.style.right = `${tw + rw}px`;
+        toggleBtn.style.display = '';
+        toggleBtn.textContent = '⛶ Full Width';
+      } else {
+        modal.classList.remove('split-with-tutor');
+        modal.style.right = '0';
+        toggleBtn.style.display = tutorOpen ? '' : 'none';
+        toggleBtn.textContent = '◫ Split with Tutor';
+      }
+    }
+
+    async function upgradeMermaidCodeBlocks(container) {
+      if (!window.mermaid || !container) return;
+      for (const codeEl of Array.from(container.querySelectorAll('pre > code.language-mermaid'))) {
+        const raw = (codeEl.textContent || '').trim();
+        if (!raw) continue;
+        const pre = codeEl.parentElement;
+        const card = document.createElement('div');
+        card.className = 'diagram-card';
+        card.innerHTML = `<div class="diagram-toolbar"><span>📐 Architecture Diagram</span><div class="diagram-toolbar-btns"><button type="button" class="z-btn">🔍 Fullscreen</button></div></div><div class="diagram-canvas"></div>`;
+        pre.replaceWith(card);
+        const normalized = raw.replace(/\\n/g, '<br/>');
+        const sanitized = normalized.replace(/(\b[A-Za-z0-9_-]+)\[([^\]"\n]*[()\/][^\]"\n]*)\]/g, '$1["$2"]');
+        for (const cand of [normalized, sanitized]) {
+          try {
+            const rid = `dchat-mmd-${++mmdSeq}-${Date.now()}`;
+            const { svg } = await window.mermaid.render(rid, cand);
+            card.querySelector('.diagram-canvas').innerHTML = svg;
+            card.querySelector('.z-btn').addEventListener('click', () => {
+              $('diag-modal-title').textContent = '📐 Architecture Diagram';
+              $('diagram-modal-body').innerHTML = svg;
+              $('diagram-modal').classList.add('open');
+            });
+            break;
+          } catch {}
+        }
+      }
+    }
+
+    async function openLessonStudyModal(slug, lessonNum) {
+      const modal = $('library-modal');
+      const reader = $('library-reader');
+      modal.classList.add('open');
+      syncModalSplitBounds();
+      reader.innerHTML = '<p>Loading self-contained lesson study guide...</p>';
+      const resp = await fetch(`/api/materials/chapter/${encodeURIComponent(slug)}`);
+      const data = await resp.json();
+      const cleanMd = String(data.markdown || '').split('<!-- END_OF_CHAPTER_QUIZZES_START -->')[0];
+      const sections = cleanMd.split(/\n(?=##\s+)/);
+      const lessonSec = sections.slice(1).find(s => new RegExp(`^##\\s+${Number(lessonNum)}\\.\\s+`).test(s.trim()));
+      const chMatch = String(slug).match(/^(\d+)-/);
+      const chLabel = chMatch ? `Ch ${chMatch[1]}` : slug;
+      const bodyMd = lessonSec || cleanMd;
+      const headingMatch = bodyMd.trim().match(/^##\s+\d+\.\s+([^\n]+)/);
+      const lTitle = headingMatch ? headingMatch[1].trim() : `Lesson ${lessonNum}`;
+
+      $('cm-modal-title').textContent = `📘 ${chLabel} · Lesson ${lessonNum} — ${lTitle}`;
+      if (window.StudyContext) {
+        window.StudyContext.setOpenLesson({
+          label: `${chLabel} · L${String(lessonNum).padStart(2, '0')}: ${lTitle}`,
+          chapterSlug: slug,
+          lessonNum,
+          markdown: bodyMd.slice(0, 9000),
+        });
+      }
+
+      reader.innerHTML = `
+        <div class="lesson-focus-banner gemini-reader-ignore" style="margin-bottom:14px;">
+          <strong>📖 ${esc(chLabel)} · Lesson ${lessonNum}</strong>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" id="cm-modal-read-btn" class="btn tts-play-btn" style="padding:4px 10px;font-size:12px;">🔊 Read Guide</button>
+            <a class="btn" style="padding:4px 10px;font-size:12px;text-decoration:none;" href="/course.html?chapter=${encodeURIComponent(slug)}&lesson=${Math.max(0, lessonNum - 1)}" target="_blank" rel="noopener">🎬 Open Video &amp; Slides ↗</a>
+          </div>
+        </div>
+        <div id="cm-modal-md-body">${renderMd(bodyMd)}</div>
+      `;
+      await upgradeMermaidCodeBlocks(reader);
+      const rBtn = $('cm-modal-read-btn');
+      const mBody = $('cm-modal-md-body');
+      if (rBtn && mBody && window.GeminiReader) {
+        rBtn.addEventListener('click', () => {
+          window.GeminiReader.readElement(mBody, {
+            targetKey: `cm-lesson::${slug}::${lessonNum}`,
+            anchorBtn: rBtn,
+            defaultBtnText: '🔊 Read Guide',
+            rawFallbackText: bodyMd,
+          });
+        });
+      }
+    }
+
+    function closeLessonModal() {
+      $('library-modal').classList.remove('open');
+    }
+    $('close-library-btn').addEventListener('click', closeLessonModal);
+    $('library-modal').addEventListener('click', e => { if (e.target === $('library-modal')) closeLessonModal(); });
+    $('toggle-library-split-btn').addEventListener('click', () => {
+      librarySplitMode = !librarySplitMode;
+      syncModalSplitBounds();
+    });
     $('close-diagram-btn').addEventListener('click', () => $('diagram-modal').classList.remove('open'));
     $('diagram-modal').addEventListener('click', e => { if (e.target === $('diagram-modal')) $('diagram-modal').classList.remove('open'); });
-    window.addEventListener('keydown', e => {
-      if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
-        e.preventDefault();
-        $('cs-search').focus();
-      } else if (e.key === 'Escape') {
-        $('diagram-modal').classList.remove('open');
+
+    // Tutor Collapse & Resize
+    function setTutorCollapsed(collapsed) {
+      const c = Boolean(collapsed);
+      $('tutor-pane').classList.toggle('hidden', c);
+      $('cm-resizer').style.display = c ? 'none' : 'block';
+      $('tutor-toggle-btn')?.classList.toggle('active', !c);
+      if ($('tutor-toggle-btn')) $('tutor-toggle-btn').textContent = c ? '⟨ ✨ Expand AI Tutor' : '✨ Hide AI Tutor ⟩';
+      $('tutor-expand-tab').classList.toggle('visible', c);
+      if ($('library-modal').classList.contains('open')) syncModalSplitBounds();
+    }
+    $('tutor-toggle-btn')?.addEventListener('click', () => setTutorCollapsed(!$('tutor-pane').classList.contains('hidden')));
+    $('tutor-collapse-btn').addEventListener('click', () => setTutorCollapsed(true));
+    $('tutor-expand-tab').addEventListener('click', () => setTutorCollapsed(false));
+
+    let isResizing = false;
+    $('cm-resizer').addEventListener('mousedown', e => {
+      isResizing = true;
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', e => {
+      if (!isResizing) return;
+      const w = Math.min(Math.max(320, window.innerWidth - e.clientX), Math.floor(window.innerWidth * 0.6));
+      $('tutor-pane').style.width = `${w}px`;
+      if ($('library-modal').classList.contains('open')) syncModalSplitBounds();
+    });
+    window.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.userSelect = '';
       }
     });
 
-    renderDomainPills();
-    renderAll().then(() => {
-      if (window.location.hash) {
-        document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+        e.preventDefault();
+        setTutorCollapsed(!$('tutor-pane').classList.contains('hidden'));
+      } else if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
+        e.preventDefault();
+        $('cm-search').focus();
+      } else if (e.key === 'Escape') {
+        if ($('diagram-modal').classList.contains('open')) $('diagram-modal').classList.remove('open');
+        else if ($('library-modal').classList.contains('open')) closeLessonModal();
       }
     });
+
+    // Embedded AI Architect Tutor Streaming
+    async function askTutor(questionText, actionType = '') {
+      if (streaming || !questionText.trim()) return;
+      if ($('tutor-pane').classList.contains('hidden')) setTutorCollapsed(false);
+      const empty = $('chat-messages').querySelector('.chat-empty');
+      if (empty) empty.remove();
+
+      const consumed = window.StudyContext ? window.StudyContext.consumeForSend() : { openLesson: null, highlighted: null };
+
+      const uDiv = document.createElement('div');
+      uDiv.className = 'msg user';
+      if (consumed.openLesson || consumed.highlighted) {
+        const bw = document.createElement('div');
+        bw.className = 'msg-ctx-badges';
+        if (consumed.openLesson?.label) {
+          const b = document.createElement('span');
+          b.className = 'msg-ctx-badge';
+          b.textContent = `🧠 ${consumed.openLesson.label}`;
+          bw.appendChild(b);
+        }
+        if (consumed.highlighted?.text) {
+          const b = document.createElement('span');
+          b.className = 'msg-ctx-badge';
+          const sn = consumed.highlighted.text.replace(/\s+/g, ' ').trim();
+          b.textContent = `✂️ “${sn.slice(0, 50)}${sn.length > 50 ? '…' : ''}”`;
+          bw.appendChild(b);
+        }
+        uDiv.appendChild(bw);
+      }
+      const uTxt = document.createElement('div');
+      uTxt.textContent = questionText;
+      uDiv.appendChild(uTxt);
+      $('chat-messages').appendChild(uDiv);
+
+      const aDiv = document.createElement('div');
+      aDiv.className = 'msg assistant';
+      const mdEl = document.createElement('div');
+      mdEl.className = 'msg-md';
+      mdEl.innerHTML = `<span class="typing-dot"></span><span style="color:#64748b;font-size:13px;">Analyzing Mind Map trade-offs...</span>`;
+      aDiv.appendChild(mdEl);
+      $('chat-messages').appendChild(aDiv);
+      $('chat-messages').scrollTop = $('chat-messages').scrollHeight;
+
+      streaming = true;
+      $('chat-send-btn').disabled = true;
+
+      const studyContextPayload = {
+        openLesson: consumed.openLesson || null,
+        highlighted: consumed.highlighted || null,
+      };
+
+      let full = '';
+      try {
+        const resp = await fetch('/api/agent/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: questionText,
+            actionType,
+            spoilerFree: false,
+            model: $('model-select').value,
+            history: chatHistory,
+            questionContext: { standalone: true, threadId: 'cheatsheet-mindmap-tutor', studyContext: studyContextPayload },
+            studyContext: studyContextPayload,
+          }),
+        });
+        const reader = resp.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const parts = buf.split('\n\n');
+          buf = parts.pop() || '';
+          for (const p of parts) {
+            const ln = p.trim();
+            if (!ln.startsWith('data:')) continue;
+            try {
+              const evt = JSON.parse(ln.slice(5).trim());
+              if (evt.type === 'delta') {
+                full += evt.text;
+                const liveClean = window.TutorEnhancer ? window.TutorEnhancer.parseStreamedReply(full).cleanMd : full;
+                mdEl.innerHTML = renderMd(liveClean);
+                $('chat-messages').scrollTop = $('chat-messages').scrollHeight;
+              } else if (evt.type === 'error') {
+                full += `\n\n> **Error:** ${evt.error}`;
+                mdEl.innerHTML = renderMd(full);
+              }
+            } catch {}
+          }
+        }
+        const finalClean = window.TutorEnhancer ? window.TutorEnhancer.parseStreamedReply(full).cleanMd : full;
+        mdEl.innerHTML = renderMd(finalClean || '_No response_');
+        await upgradeMermaidCodeBlocks(mdEl);
+        if (window.TutorEnhancer) {
+          window.TutorEnhancer.decorateAssistantBubble(aDiv, mdEl, full, {
+            autoSpeakNow: true,
+            onRequestProposal: () =>
+              askTutor(
+                'Summarize the key GCP option comparison, trigger rule, or exam trap from our discussion above and propose a Cheat Sheet update.',
+                'propose_cheatsheet'
+              ),
+          });
+        }
+        chatHistory.push({ role: 'user', content: questionText }, { role: 'assistant', content: finalClean });
+      } catch (err) {
+        mdEl.innerHTML = `<p style="color:#ef4444;">Error: ${esc(err.message)}</p>`;
+      } finally {
+        streaming = false;
+        $('chat-send-btn').disabled = false;
+      }
+    }
+
+    $('chat-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const txt = $('chat-input').value.trim();
+      if (!txt) return;
+      $('chat-input').value = '';
+      askTutor(txt);
+    });
+    $('chat-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        $('chat-form').requestSubmit();
+      }
+    });
+    $('clear-chat-btn').addEventListener('click', () => {
+      chatHistory = [];
+      $('chat-messages').innerHTML = `<div class="chat-empty"><strong>🧠 Cheat Sheet Mind Map Tutor</strong>Chat cleared. Click any node in the Mind Map to inspect and drill scenarios!</div>`;
+    });
+    document.querySelectorAll('.chip-btn[data-q]').forEach(btn => {
+      btn.addEventListener('click', () => askTutor(btn.dataset.q));
+    });
+
+    async function refreshTablesFromServer() {
+      renderControls();
+      renderMindMap();
+    }
+
+    window.addEventListener('cheatsheet:updated', refreshTablesFromServer);
+
+    // Boot
+    (async function init() {
+      await refreshTablesFromServer();
+      // Support deep-linking via #matrix-<id> or ?matrix=<id>
+      const params = new URLSearchParams(window.location.search);
+      const hashId = window.location.hash.startsWith('#matrix-') ? window.location.hash.slice('#matrix-'.length) : '';
+      const targetTid = params.get('matrix') || hashId;
+      if (targetTid && TABLES.some(t => t.id === targetTid)) {
+        activeMatrixId = targetTid;
+        viewMode = 'matrix';
+        syncToolbarButtons();
+        await showMatrixInspector(targetTid);
+        renderMindMap();
+      }
+      
+    })();
   </script>
 </body>
 </html>

@@ -15,13 +15,13 @@
   action: Play Sunny Bites
 
 - name: Professional Cloud Architect Cheat Sheet
-  category: Productivity
+  category: Study
   description: >-
-    Interactive Google Cloud Professional Cloud Architect visual cheat sheet:
-    18 architecture decision flowcharts, interactive mind map, networking &
-    packet path finder, service containment catalog, and residency dendrites.
+    Interactive Google Cloud Professional Cloud Architect mind map across 7
+    domains, 18 decision matrices, and 94 GCP services — with Mermaid decision
+    flowcharts, active-recall self-quiz mode, triggers, traps, and scenarios.
   url: /pca-cheatsheet/
-  action: Open cheat sheet
+  action: Open mind map
 
 - name: Markup Studio
   category: Productivity
