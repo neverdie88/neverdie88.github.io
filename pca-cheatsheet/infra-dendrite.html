@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GCP Infrastructure Residency Dendrite — PCA Cheat Sheet</title>
+  <script>try{if(localStorage.getItem('pca_hub_theme')!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="./rich-markdown.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script src="./infra-dendrite-data.js"></script>
+  <style>
+    .id-shell {
+      height: calc(100vh - 54px);
+      display: flex;
+      overflow: hidden;
+      background: #f1f5f9;
+    }
+    .id-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 16px 20px 48px;
+      gap: 14px;
+    }
+    .id-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+    .id-head-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .id-title {
+      margin: 0;
+      font-size: 18.5px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .id-sub {
+      font-size: 12.8px;
+      color: #475569;
+      margin-top: 2px;
+    }
+    .id-pill-btn {
+      padding: 5px 11px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #1e293b;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .id-pill-btn:hover { background: #e2e8f0; }
+    .id-pill-btn.active {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+      color: #ffffff;
+    }
+    .id-search {
+      width: min(390px, 100%);
+      padding: 7px 11px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 12.5px;
+      outline: none;
+    }
+    .id-search:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+    .id-zone-pills, .id-lens-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .id-zone-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1.5px solid #cbd5e1;
+      background: #ffffff;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .id-lens-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 9px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .id-lens-chip {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      font-size: 11.4px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .id-lens-chip:hover { background: #eff6ff; border-color: #93c5fd; }
+    .id-lens-chip.active {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+      color: #ffffff;
+    }
+    .id-lens-banner {
+      display: none;
+      padding: 9px 12px;
+      border-radius: 8px;
+      background: #eff6ff;
+      border: 1px solid #93c5fd;
+      font-size: 12.5px;
+      color: #1e3a8a;
+      gap: 6px;
+      flex-direction: column;
+    }
+    .id-lens-banner.open { display: flex; }
+
+    .id-inspector {
+      display: none;
+      background: #ffffff;
+      border: 2px solid #2563eb;
+      border-radius: 12px;
+      padding: 13px 16px;
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.1);
+      gap: 10px;
+      flex-direction: column;
+    }
+    .id-inspector.open { display: flex; }
+
+    .id-stage-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+    .id-stage-bar {
+      padding: 8px 14px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: #475569;
+    }
+    .id-viewport {
+      width: 100%;
+      overflow: auto;
+      background: radial-gradient(#e2e8f0 1px, transparent 1px);
+      background-size: 20px 20px;
+      cursor: grab;
+      padding: 12px;
+    }
+    .id-viewport:active { cursor: grabbing; }
+
+    .d-node { cursor: pointer; transition: filter 0.14s ease, opacity 0.18s ease; }
+    .d-node:hover { filter: brightness(0.96) drop-shadow(0 3px 6px rgba(15, 23, 42, 0.12)); }
+
+    @keyframes highlightPulse {
+      from { stroke-dashoffset: 28; }
+      to { stroke-dashoffset: 0; }
+    }
+    .pulse-path {
+      stroke-dasharray: 9 5;
+      animation: highlightPulse 0.9s linear infinite;
+    }
+      #id-resizer, #tutor-pane, #tutor-expand-tab, #lens-ask-btn, #insp-compare-btn, #sc-ask-btn, #insp-ask-btn { display: none !important; }
+  </style>
+</head>
+<body>
+    <header class="topbar">
+    <div class="topbar-left">
+      <a href="/" class="brand-btn" style="text-decoration:none;" title="Back to Thien's Playground">← Playground</a>
+      
+      <a href="./index.html" class="brand-btn" style="text-decoration:none;">📊 Decision Matrices (18)</a>
+      <a href="./mindmap.html" class="brand-btn" style="text-decoration:none;">🧠 Cheat Sheet Mind Map</a>
+      <a href="./network-dendrite.html" class="brand-btn" style="text-decoration:none;">🕸️ Network & Path Finder</a>
+      <a href="./services-dendrite.html" class="brand-btn" style="text-decoration:none;">🌳 All GCP Services</a>
+      <a href="./infra-dendrite.html" class="brand-btn" style="text-decoration:none;background:rgba(59,130,246,0.34);border-color:rgba(147,197,253,0.75);color:#fff;">🏗️ Infra Residency</a>
+    </div>
+    <div class="topbar-right">
+      <span class="exam-badge">Google Cloud Professional Cloud Architect</span>
+    </div>
+  </header>
+
+  <div class="id-shell">
+    <main class="id-main">
+      <div class="id-card">
+        <div class="id-head-row">
+          <div>
+            <h1 class="id-title">🏗️ Infrastructure Residency Dendrite — What Lives in Your VPC vs. Tenant VPC vs. Google Cloud vs. On-Premises</h1>
+            <div class="id-sub">
+              See the exact physical &amp; IP residency boundary of every workload:
+              <strong>Z1 Your VPC Subnets</strong> · <strong>Z2 Google Tenant VPC (Memorystore / Cloud SQL / AlloyDB)</strong> ·
+              <strong>Z3 Multi-Tenant Google Cloud (*.googleapis.com &amp; Cloud Run)</strong> · <strong>Z4 Global Edge PoPs</strong> ·
+              <strong>Z5 Dedicated Pods (GCVE / Bare Metal)</strong> · <strong>Z6 On-Premises</strong>.
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;" class="gemini-reader-ignore">
+            <button type="button" id="view-big-btn" class="id-pill-btn active">🏗️ All 6 Zones (Master Map)</button>
+            <button type="button" id="view-single-btn" class="id-pill-btn">🔍 Single Zone Focus</button>
+            <button type="button" id="expand-all-btn" class="id-pill-btn">Expand All</button>
+            <button type="button" id="collapse-all-btn" class="id-pill-btn">Collapse Spines</button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;" class="gemini-reader-ignore">
+          <input type="search" id="id-search" class="id-search" placeholder="Find where any resource lives (e.g. Memorystore, Cloud SQL, Cloud Run, GKE, BigQuery, GCVE, Transfer Appliance)..." />
+          <div id="id-zone-pills" class="id-zone-pills"></div>
+        </div>
+
+        <!-- Architectural Residency Lenses -->
+        <div class="id-lens-box gemini-reader-ignore">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:12px;font-weight:800;color:#1e293b;">🔎 Residency &amp; Boundary Lenses — Click to Spotlight Tricky Cross-Zone Rules:</span>
+            <button type="button" id="clear-lens-btn" class="btn" style="padding:2px 8px;font-size:11px;display:none;">✕ Clear Lens</button>
+          </div>
+          <div id="id-lens-chips" class="id-lens-chips"></div>
+          <div id="id-lens-banner" class="id-lens-banner"></div>
+        </div>
+      </div>
+
+      <!-- Clicked Sub-Zone Inspector -->
+      <div id="id-inspector" class="id-inspector"></div>
+
+      <!-- SVG Canvas -->
+      <div class="id-stage-card">
+        <div class="id-stage-bar gemini-reader-ignore">
+          <div>
+            <strong>Spine Legend:</strong>
+            <span style="margin-left:8px;color:#1d4ed8;font-weight:700;">● Services Resident in This Zone</span>
+            <span style="margin-left:12px;color:#047857;font-weight:700;">● 🔌 IP Allocation &amp; Cross-Zone Bridge</span>
+            <span style="margin-left:12px;color:#b45309;font-weight:700;">▲ ⚠️ Residency / Transitivity Exam Trap</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button type="button" id="zoom-out-btn" class="btn" style="padding:3px 9px;font-size:12px;">−</button>
+            <span id="zoom-label" style="font-weight:700;min-width:44px;text-align:center;">100%</span>
+            <button type="button" id="zoom-in-btn" class="btn" style="padding:3px 9px;font-size:12px;">+</button>
+            <button type="button" id="zoom-reset-btn" class="btn" style="padding:3px 9px;font-size:12px;">Fit Width</button>
+          </div>
+        </div>
+        <div id="id-viewport" class="id-viewport">
+          <div id="id-svg-host" style="transform-origin: 0 0;"></div>
+        </div>
+      </div>
+    </main>
+
+    <div id="id-resizer" class="pane-resizer" title="Drag to resize or double-click to collapse AI Tutor"></div>
+
+    <!-- Embedded AI Architect Tutor -->
+    <aside id="tutor-pane" class="tutor-pane">
+      <div class="tutor-header">
+        <div class="tutor-title">
+          <span>✨</span>
+          <span>AI Infra Residency Tutor</span>
+        </div>
+        <div class="tutor-controls">
+          <select id="model-select" class="model-select">
+            <optgroup label="Google ADK (LlmAgent + Python Tools)">
+              <option value="adk:gemini-2.5-flash">🤖 ADK · Gemini 2.5 Flash</option>
+              <option value="adk:gemini-2.5-pro">🤖 ADK · Gemini 2.5 Pro</option>
+            </optgroup>
+            <optgroup label="Local AGY CLI (Zero-Key)">
+              <option value="gemini-flash-next" selected>⚡ AGY · Gemini Flash Next</option>
+              <option value="auto">⚡ AGY · Gemini Pro Next (Auto)</option>
+              <option value="gemini-4-neon-medium">⚡ AGY · Gemini 4 Neon</option>
+              <option value="gemini-4-carbon-medium">⚡ AGY · Gemini 4 Carbon</option>
+              <option value="fable-5.2-medium">⚡ AGY · Claude Fable 5.2</option>
+            </optgroup>
+          </select>
+          <button id="clear-chat-btn" class="btn" style="padding:4px 8px;font-size:12px;">Clear</button>
+          <button id="tutor-collapse-btn" type="button" class="btn tutor-collapse-btn">Collapse ⟩</button>
+        </div>
+      </div>
+
+      <div class="quick-chips">
+        <button class="chip-btn" data-q="Explain clearly why Memorystore, Cloud SQL (Private IP), AlloyDB, and Filestore live in a Google-Managed Tenant VPC (Z2) rather than directly inside my VPC subnet (Z1) or on *.googleapis.com (Z3), and what exam traps that creates for Cloud Run and peered VPCs!">🧠 Why Tenant VPC (Z2) Matters</button>
+        <button class="chip-btn" data-q="Compare Z1 (Customer VPC), Z2 (Google Tenant VPC), and Z3 (Google Multi-Tenant Cloud Infra): which security control protects each zone (VPC Firewalls vs IAM vs VPC Service Controls) and which bridge connects them (PGA vs PSA vs PSC vs Direct VPC Egress)?">🛡️ Z1 vs Z2 vs Z3 Matrix</button>
+        <button class="chip-btn" data-q="Quiz me with 3 tricky PCA v6.1 questions testing where a workload lives (Your VPC vs Tenant VPC vs Multi-Tenant Google Cloud vs Dedicated Pod vs On-Premises) and how to connect to it! Hide answers inside <details> blocks.">🎲 Residency Trap Quiz</button>
+      </div>
+
+      <div id="chat-messages" class="chat-messages">
+        <div class="chat-empty">
+          <strong>🏗️ Infrastructure Residency Tutor</strong>
+          Click any <strong>Residency Zone (Z1–Z6)</strong>, <strong>Sub-Zone</strong>, or <strong>Lens</strong> on the left to inspect where workloads physically run, how they get IPs, and which bridges connect them!
+        </div>
+      </div>
+
+      <form id="chat-form" class="chat-input-area">
+        <textarea id="chat-input" rows="2" placeholder="Ask 'Does X live in my VPC or Google's VPC?' or 'How does Cloud Run reach Memorystore?'..."></textarea>
+        <button type="submit" id="chat-send-btn" class="btn btn-accent" style="height:42px;">Send</button>
+      </form>
+    </aside>
+
+    <button id="tutor-expand-tab" type="button" class="tutor-expand-tab">⟨ ✨ Expand AI Tutor</button>
+  </div>
+
+  <!-- Split-Screen Lesson Study Guide Modal -->
+  <div id="library-modal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <span id="id-modal-title">📘 Lesson Study Guide</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button type="button" id="toggle-library-split-btn" class="btn" style="padding:4px 10px;font-size:12px;">⛶ Full Width</button>
+          <button type="button" id="close-library-btn" class="btn" style="padding:4px 10px;">✕ Close</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="library-reader" class="library-reader msg-md" style="width:100%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./static-helper.js"></script>
+  <script type="module">
+    const DATA = window.GCP_INFRA_DENDRITE;
+    const $ = id => document.getElementById(id);
+
+    if (window.mermaid) {
+      window.mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function trunc(s, max) {
+      const str = String(s || '');
+      return str.length > max ? str.slice(0, max - 1) + '…' : str;
+    }
+    function renderMd(md) {
+      if (typeof window.renderRichMarkdown === 'function') {
+        return window.renderRichMarkdown(md || '', { stripToc: true });
+      }
+      return window.marked ? window.marked.parse(String(md || ''), { breaks: true, gfm: true }) : esc(md);
+    }
+
+    let viewMode = 'big';
+    let activeTrunkId = DATA.trunks[0].id;
+    let searchQuery = '';
+    let collapsedBranches = {};
+    let activeLensId = null;
+    let selectedBranchId = null;
+    let zoomPct = 100;
+    let librarySplitMode = true;
+    let chatHistory = [];
+    let streaming = false;
+    let mmdSeq = 0;
+
+    function branchMatchesSearch(trunk, branch, q) {
+      if (!q) return true;
+      const hay = [
+        trunk.title,
+        trunk.subtitle,
+        branch.title,
+        branch.badge,
+        branch.summary,
+        ...(branch.spines || []).map(s => s.label),
+        ...(branch.lessons || []).map(l => `Ch ${l.ch} L${l.lnum} ${l.title}`),
+      ]
+        .join(' ')
+        .toLowerCase();
+      return q
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean)
+        .every(t => hay.includes(t));
+    }
+
+    function findBranch(bid) {
+      for (const t of DATA.trunks) {
+        for (const b of t.branches) {
+          if (b.id === bid) return { trunk: t, branch: b };
+        }
+      }
+      return null;
+    }
+
+    function renderZonePills() {
+      $('id-zone-pills').innerHTML = DATA.trunks
+        .map(t => {
+          const isAct = viewMode === 'single' && t.id === activeTrunkId;
+          const style = isAct
+            ? `background:${t.color};border-color:${t.color};color:#fff;`
+            : `border-color:${t.color}55;color:${t.color};background:${t.bgTint};`;
+          return `<button type="button" class="id-zone-pill" data-tid="${esc(t.id)}" style="${style}">${esc(t.code)} · ${esc(t.shortTitle)}</button>`;
+        })
+        .join('');
+      $('id-zone-pills').querySelectorAll('.id-zone-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tid = btn.dataset.tid;
+          if (viewMode === 'single' && activeTrunkId === tid) {
+            viewMode = 'big';
+          } else {
+            activeTrunkId = tid;
+            viewMode = 'single';
+          }
+          syncViewButtons();
+          renderDendriteSvg();
+        });
+      });
+    }
+
+    function renderLensChips() {
+      $('id-lens-chips').innerHTML = DATA.lenses
+        .map(
+          ln =>
+            `<button type="button" class="id-lens-chip${ln.id === activeLensId ? ' active' : ''}" data-lid="${esc(ln.id)}">${esc(ln.label)}</button>`
+        )
+        .join('');
+
+      $('id-lens-chips').querySelectorAll('.id-lens-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.lid;
+          activeLensId = activeLensId === id ? null : id;
+          const ln = DATA.lenses.find(x => x.id === activeLensId);
+          if (ln) {
+            viewMode = 'big';
+            ln.branchIds.forEach(bid => { collapsedBranches[bid] = false; });
+            syncViewButtons();
+            if (window.StudyContext) {
+              window.StudyContext.setOpenLesson({
+                label: `Infra Residency · ${ln.label}`,
+                markdown: ln.note,
+                dismissible: false,
+              });
+            }
+          }
+          renderLensBanner();
+          renderLensChips();
+          renderDendriteSvg();
+        });
+      });
+    }
+
+    function renderLensBanner() {
+      const banner = $('id-lens-banner');
+      const clrBtn = $('clear-lens-btn');
+      const ln = DATA.lenses.find(x => x.id === activeLensId);
+      if (!ln) {
+        banner.classList.remove('open');
+        clrBtn.style.display = 'none';
+        return;
+      }
+      clrBtn.style.display = 'inline-flex';
+      banner.classList.add('open');
+      banner.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+          <div>
+            <strong>${esc(ln.label)}</strong>
+            <span style="font-size:11.5px;color:#475569;margin-left:8px;">(Unrelated branches are dimmed while this lens is active — click <strong>✕ Clear Lens</strong> to show all equally)</span>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button type="button" id="lens-speak-btn" class="btn tts-play-btn" style="padding:2px 8px;font-size:11.5px;">🔊 Speak Rule</button>
+            <button type="button" id="lens-ask-btn" class="btn btn-primary" style="padding:2px 8px;font-size:11.5px;">💬 Test Me on This Boundary</button>
+          </div>
+        </div>
+        <div>${esc(ln.note)}</div>
+      `;
+      $('lens-speak-btn')?.addEventListener('click', e => {
+        window.GeminiReader?.readPlainText(ln.note, {
+          targetKey: `infra-lens::${ln.id}`,
+          anchorBtn: e.currentTarget,
+          defaultBtnText: '🔊 Speak Rule',
+        });
+      });
+      $('lens-ask-btn')?.addEventListener('click', () => {
+        askTutor(`Give me a realistic PCA v6.1 exam scenario testing "${ln.label}" — especially the networking/security boundary trap! Wrap the answer inside a <details> reveal block.`);
+      });
+    }
+
+    $('clear-lens-btn').addEventListener('click', () => {
+      activeLensId = null;
+      renderLensBanner();
+      renderLensChips();
+      renderDendriteSvg();
+    });
+
+    function showBranchInspector(bid) {
+      selectedBranchId = bid;
+      const found = findBranch(bid);
+      const box = $('id-inspector');
+      if (!found) {
+        box.classList.remove('open');
+        return;
+      }
+      const { trunk, branch } = found;
+      box.classList.add('open');
+      box.style.borderColor = trunk.color;
+
+      if (window.StudyContext) {
+        window.StudyContext.setOpenLesson({
+          label: `Residency Zone · ${branch.title}`,
+          markdown: `${trunk.title} -> ${branch.title}\n${branch.summary}\nDetails:\n${(branch.spines || []).map(s => '- ' + s.label).join('\n')}`,
+          dismissible: false,
+        });
+      }
+
+      const lessonBtns = (branch.lessons || [])
+        .map(
+          l => `
+          <button type="button" class="btn open-l-modal-btn" data-slug="${esc(l.slug)}" data-lnum="${l.lnum}" style="padding:4px 10px;font-size:12px;border-color:#93c5fd;color:#1d4ed8;background:#eff6ff;">
+            📘 Ch ${String(l.ch).padStart(2, '0')} · L${String(l.lnum).padStart(2, '0')}: ${esc(l.title)}${l.errata ? ' ⚠️' : ''}
+          </button>
+          <a class="btn" href="/course.html?chapter=${encodeURIComponent(l.slug)}&lesson=${Math.max(0, l.lnum - 1)}" target="_blank" rel="noopener" style="padding:4px 10px;font-size:12px;text-decoration:none;">
+            🎬 Video ↗
+          </a>
+        `
+        )
+        .join('');
+
+      box.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:${trunk.color};">${esc(trunk.title)}</div>
+            <div style="font-size:16px;font-weight:800;color:#0f172a;margin-top:2px;">
+              ${esc(branch.code)}. ${esc(branch.title)}
+              <span style="font-size:11.5px;padding:2px 8px;border-radius:999px;background:${trunk.bgTint};color:${trunk.color};margin-left:6px;">${esc(branch.badge)}</span>
+            </div>
+            <div style="font-size:13px;color:#334155;margin-top:4px;">${esc(branch.summary)}</div>
+          </div>
+          <button type="button" id="close-insp-btn" class="btn gemini-reader-ignore" style="padding:3px 8px;font-size:12px;">✕</button>
+        </div>
+        <div class="gemini-reader-ignore" style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;">
+          ${lessonBtns}
+          <button type="button" id="insp-speak-btn" class="btn tts-play-btn" style="padding:4px 10px;font-size:12px;">🔊 Speak Zone</button>
+          <button type="button" id="insp-compare-btn" class="btn btn-primary" style="padding:4px 10px;font-size:12px;">💬 Explain Residency &amp; Bridges (${esc(branch.code)})</button>
+        </div>
+      `;
+
+      box.querySelector('#close-insp-btn').addEventListener('click', () => {
+        selectedBranchId = null;
+        box.classList.remove('open');
+        renderDendriteSvg();
+      });
+      box.querySelectorAll('.open-l-modal-btn').forEach(b => {
+        b.addEventListener('click', () => openLessonStudyModal(b.dataset.slug, Number(b.dataset.lnum || 1)));
+      });
+      box.querySelector('#insp-speak-btn').addEventListener('click', e => {
+        const text = `${branch.title}. ${branch.summary}. ${(branch.spines || []).map(s => s.label).join('. ')}`;
+        window.GeminiReader?.readPlainText(text, {
+          targetKey: `id-branch::${branch.id}`,
+          anchorBtn: e.currentTarget,
+          defaultBtnText: '🔊 Speak Zone',
+        });
+      });
+      box.querySelector('#insp-compare-btn').addEventListener('click', () => {
+        askTutor(`Explain where every service in "${branch.title}" (${trunk.title}) physically/network-wise lives, how it gets its IP or endpoint, how other zones connect to it, and the top PCA exam traps!`);
+      });
+    }
+
+    function renderDendriteSvg() {
+      renderZonePills();
+      const trunksToShow = viewMode === 'single' ? DATA.trunks.filter(t => t.id === activeTrunkId) : DATA.trunks;
+      const activeLens = activeLensId ? DATA.lenses.find(x => x.id === activeLensId) : null;
+      const lensSet = new Set(activeLens ? activeLens.branchIds : []);
+
+      const SOMA_X = 24, SOMA_W = 248, SOMA_H = 156, SOMA_OUT_X = SOMA_X + SOMA_W;
+      const TRUNK_X = 340, TRUNK_W = 276, TRUNK_H = 54, TRUNK_OUT_X = TRUNK_X + TRUNK_W;
+      const BR_X = 682, BR_W = 358, BR_H = 42, BR_OUT_X = BR_X + BR_W;
+      const SP_X = 1106, SP_W = 730, SP_H = 29, SVG_W = 1854;
+
+      const SPINE_GAP = 34, BRANCH_GAP = 14, TRUNK_GAP = 26;
+      let cursorY = 26;
+      const laidTrunks = [];
+
+      for (const t of trunksToShow) {
+        const laidBranches = [];
+        for (const b of t.branches) {
+          const matched = branchMatchesSearch(t, b, searchQuery);
+          const isCollapsed = Boolean(collapsedBranches[b.id]);
+          const spinesList = isCollapsed
+            ? [{ kind: 'collapsed', label: `[+] Click to expand ${b.spines.length} resident services, bridges & traps...` }]
+            : b.spines;
+
+          const laidSpines = [];
+          for (const sp of spinesList) {
+            const spMatched =
+              !searchQuery ||
+              sp.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              t.title.toLowerCase().includes(searchQuery.toLowerCase());
+            laidSpines.push({
+              spine: sp,
+              y: cursorY + SP_H / 2,
+              matched: spMatched,
+            });
+            cursorY += SPINE_GAP;
+          }
+          const bMidY = (laidSpines[0].y + laidSpines[laidSpines.length - 1].y) / 2;
+          laidBranches.push({
+            branch: b,
+            y: bMidY,
+            matched,
+            traced: lensSet.has(b.id),
+            isCollapsed,
+            spines: laidSpines,
+          });
+          cursorY += BRANCH_GAP;
+        }
+        const tMidY = (laidBranches[0].y + laidBranches[laidBranches.length - 1].y) / 2;
+        laidTrunks.push({
+          trunk: t,
+          y: tMidY,
+          traced: laidBranches.some(lb => lb.traced),
+          matched: laidBranches.some(lb => lb.matched),
+          branches: laidBranches,
+        });
+        cursorY += TRUNK_GAP;
+      }
+
+      const svgH = Math.max(400, cursorY + 18);
+      const somaY = (laidTrunks[0].y + laidTrunks[laidTrunks.length - 1].y) / 2;
+      let paths = '', nodes = '';
+
+      for (const lt of laidTrunks) {
+        const t = lt.trunk;
+        const dimT = (activeLens && !lt.traced) || (searchQuery && !lt.matched) ? 'opacity="0.16"' : 'opacity="0.92"';
+        const pulseT = lt.traced ? 'class="pulse-path"' : '';
+        paths += `<path d="M ${SOMA_OUT_X} ${somaY} C ${SOMA_OUT_X + 40} ${somaY}, ${TRUNK_X - 40} ${lt.y}, ${TRUNK_X} ${lt.y}" fill="none" stroke="${t.color}" stroke-width="${lt.traced ? '3.6' : '2.5'}" ${pulseT} ${dimT} />`;
+
+        for (const lb of lt.branches) {
+          const b = lb.branch;
+          const dimB = (activeLens && !lb.traced) || (searchQuery && !lb.matched) ? 'opacity="0.15"' : 'opacity="0.92"';
+          const pulseB = lb.traced ? 'class="pulse-path"' : '';
+          paths += `<path d="M ${TRUNK_OUT_X} ${lt.y} C ${TRUNK_OUT_X + 36} ${lt.y}, ${BR_X - 36} ${lb.y}, ${BR_X} ${lb.y}" fill="none" stroke="${t.color}" stroke-width="${lb.traced || selectedBranchId === b.id ? '3.1' : '1.9'}" ${pulseB} ${dimB} />`;
+
+          for (const ls of lb.spines) {
+            const sp = ls.spine;
+            const dimS = (activeLens && !lb.traced) || (searchQuery && !ls.matched) ? 'opacity="0.14"' : 'opacity="0.9"';
+            const sCol = sp.kind === 'trap' ? '#d97706' : sp.kind === 'bridge' ? '#059669' : t.color;
+            const dash = sp.kind === 'trap' ? 'stroke-dasharray="5,3"' : lb.traced ? 'class="pulse-path"' : '';
+            paths += `<path d="M ${BR_OUT_X} ${lb.y} C ${BR_OUT_X + 34} ${lb.y}, ${SP_X - 34} ${ls.y}, ${SP_X} ${ls.y}" fill="none" stroke="${sCol}" stroke-width="${lb.traced && ls.matched ? '2.2' : '1.45'}" ${dash} ${dimS} />`;
+          }
+        }
+      }
+
+      nodes += `
+        <g transform="translate(${SOMA_X}, ${somaY - SOMA_H / 2})">
+          <rect width="${SOMA_W}" height="${SOMA_H}" rx="18" fill="#0f172a" stroke="#2563eb" stroke-width="3" />
+          <text x="16" y="27" fill="#93c5fd" font-size="11.5" font-weight="800">INFRASTRUCTURE RESIDENCY</text>
+          <text x="16" y="50" fill="#ffffff" font-size="16" font-weight="800">🏗️ Where Everything Lives</text>
+          <text x="16" y="69" fill="#cbd5e1" font-size="11.2" font-weight="600">IP, Subnet &amp; Physical Boundaries</text>
+          <line x1="16" y1="80" x2="${SOMA_W - 16}" y2="80" stroke="#334155" stroke-width="1" />
+          <text x="16" y="98" fill="#93c5fd" font-size="11">• Z1 Your VPC · Z2 Tenant VPC</text>
+          <text x="16" y="116" fill="#67e8f9" font-size="11">• Z3 Google Cloud · Z4 Edge PoPs</text>
+          <text x="16" y="134" fill="#fca5a5" font-size="11" font-weight="700">• Z5 Dedicated Pods · Z6 On-Prem</text>
+        </g>
+        <circle cx="${SOMA_OUT_X}" cy="${somaY}" r="6" fill="#2563eb" />
+      `;
+
+      for (const lt of laidTrunks) {
+        const t = lt.trunk;
+        const dimT = (activeLens && !lt.traced) || (searchQuery && !lt.matched) ? 'opacity="0.24"' : '';
+        nodes += `
+          <g class="d-node trunk-node" data-tid="${esc(t.id)}" transform="translate(${TRUNK_X}, ${lt.y - TRUNK_H / 2})" ${dimT}>
+            <rect width="${TRUNK_W}" height="${TRUNK_H}" rx="12" fill="${t.bgTint}" stroke="${t.color}" stroke-width="2.2" />
+            <text x="13" y="22" fill="${t.color}" font-size="12.5" font-weight="800">${esc(trunc(t.title, 39))}</text>
+            <text x="13" y="40" fill="#475569" font-size="10.8" font-weight="600">${esc(trunc(t.subtitle, 43))}</text>
+          </g>
+          <circle cx="${TRUNK_OUT_X}" cy="${lt.y}" r="4.5" fill="${t.color}" ${dimT} />
+        `;
+
+        for (const lb of lt.branches) {
+          const b = lb.branch;
+          const isSel = selectedBranchId === b.id || lb.traced;
+          const dimB = (activeLens && !lb.traced) || (searchQuery && !lb.matched) ? 'opacity="0.22"' : '';
+          nodes += `
+            <g class="d-node branch-node" data-bid="${esc(b.id)}" transform="translate(${BR_X}, ${lb.y - BR_H / 2})" ${dimB}>
+              <rect width="${BR_W}" height="${BR_H}" rx="10" fill="${isSel ? t.bgTint : '#ffffff'}" stroke="${isSel ? t.color : '#94a3b8'}" stroke-width="${isSel ? '2.5' : '1.5'}" />
+              <text x="11" y="18" fill="${t.color}" font-size="11.8" font-weight="800">${esc(b.code)} · ${esc(trunc(b.title, 42))}</text>
+              <text x="11" y="34" fill="#64748b" font-size="10.8" font-weight="700">${esc(trunc(b.badge, 44))}</text>
+              <text x="${BR_W - 10}" y="25" text-anchor="end" fill="#475569" font-size="11.5" font-weight="800" class="branch-collapse-hit" data-bid="${esc(b.id)}">${lb.isCollapsed ? '[+]' : '[−]'}</text>
+            </g>
+            <circle cx="${BR_OUT_X}" cy="${lb.y}" r="3.8" fill="${t.color}" ${dimB} />
+          `;
+
+          for (const ls of lb.spines) {
+            const sp = ls.spine;
+            const dimS = (activeLens && !lb.traced) || (searchQuery && !ls.matched) ? 'opacity="0.18"' : '';
+            const isTrap = sp.kind === 'trap';
+            const isBridge = sp.kind === 'bridge';
+            const fillBg = isTrap ? '#fffbeb' : isBridge ? '#ecfdf5' : '#ffffff';
+            const strokeC = isTrap ? '#f59e0b' : isBridge ? '#6ee7b7' : '#cbd5e1';
+            const txtC = isTrap ? '#92400e' : isBridge ? '#065f46' : '#1e293b';
+            const dotC = isTrap ? '#d97706' : isBridge ? '#059669' : t.color;
+
+            nodes += `
+              <g class="d-node spine-node" data-bid="${esc(b.id)}" data-kind="${esc(sp.kind)}" transform="translate(${SP_X}, ${ls.y - SP_H / 2})" ${dimS}>
+                <rect width="${SP_W}" height="${SP_H}" rx="7" fill="${fillBg}" stroke="${strokeC}" stroke-width="1.25" />
+                <circle cx="12" cy="${SP_H / 2}" r="3.5" fill="${dotC}" />
+                <text x="23" y="19" fill="${txtC}" font-size="11.5" font-weight="${isTrap ? '700' : '500'}">${esc(trunc(sp.label, 108))}</text>
+              </g>
+            `;
+          }
+        }
+      }
+
+      const scaledW = Math.round((SVG_W * zoomPct) / 100);
+      $('id-svg-host').innerHTML = `
+        <svg viewBox="0 0 ${SVG_W} ${svgH}" width="${scaledW}" style="max-width:none;height:auto;display:block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+          ${paths}
+          ${nodes}
+        </svg>
+      `;
+
+      $('id-svg-host').querySelectorAll('.trunk-node').forEach(el => {
+        el.addEventListener('click', () => {
+          const tid = el.dataset.tid;
+          if (viewMode === 'big') {
+            activeTrunkId = tid;
+            viewMode = 'single';
+          } else {
+            viewMode = 'big';
+          }
+          syncViewButtons();
+          renderDendriteSvg();
+        });
+      });
+
+      $('id-svg-host').querySelectorAll('.branch-node').forEach(el => {
+        el.addEventListener('click', e => {
+          const bid = el.dataset.bid;
+          if (e.target.classList.contains('branch-collapse-hit')) {
+            collapsedBranches[bid] = !collapsedBranches[bid];
+            renderDendriteSvg();
+            return;
+          }
+          showBranchInspector(bid);
+          renderDendriteSvg();
+        });
+      });
+
+      $('id-svg-host').querySelectorAll('.spine-node').forEach(el => {
+        el.addEventListener('click', () => {
+          const bid = el.dataset.bid;
+          if (el.dataset.kind === 'collapsed') {
+            collapsedBranches[bid] = false;
+            renderDendriteSvg();
+            return;
+          }
+          showBranchInspector(bid);
+          renderDendriteSvg();
+        });
+      });
+    }
+
+    function syncViewButtons() {
+      $('view-big-btn').classList.toggle('active', viewMode === 'big');
+      $('view-single-btn').classList.toggle('active', viewMode === 'single');
+    }
+
+    $('view-big-btn').addEventListener('click', () => { viewMode = 'big'; syncViewButtons(); renderDendriteSvg(); });
+    $('view-single-btn').addEventListener('click', () => { viewMode = 'single'; syncViewButtons(); renderDendriteSvg(); });
+    $('expand-all-btn').addEventListener('click', () => { collapsedBranches = {}; renderDendriteSvg(); });
+    $('collapse-all-btn').addEventListener('click', () => {
+      for (const t of DATA.trunks) for (const b of t.branches) collapsedBranches[b.id] = true;
+      renderDendriteSvg();
+    });
+    $('id-search').addEventListener('input', e => {
+      searchQuery = e.target.value.trim();
+      renderDendriteSvg();
+    });
+
+    function setZoom(pct) {
+      zoomPct = Math.min(160, Math.max(55, pct));
+      $('zoom-label').textContent = `${zoomPct}%`;
+      renderDendriteSvg();
+    }
+    $('zoom-in-btn').addEventListener('click', () => setZoom(zoomPct + 15));
+    $('zoom-out-btn').addEventListener('click', () => setZoom(zoomPct - 15));
+    $('zoom-reset-btn').addEventListener('click', () => {
+      const vw = $('id-viewport').clientWidth - 28;
+      setZoom(Math.min(115, Math.max(60, Math.round((vw / 1854) * 100))));
+    });
+
+    const vp = $('id-viewport');
+    let panning = false, px = 0, py = 0, sl = 0, st = 0;
+    vp.addEventListener('mousedown', e => {
+      if (e.target.closest('.d-node')) return;
+      panning = true; px = e.clientX; py = e.clientY; sl = vp.scrollLeft; st = vp.scrollTop;
+    });
+    window.addEventListener('mousemove', e => {
+      if (!panning) return;
+      vp.scrollLeft = sl - (e.clientX - px);
+      vp.scrollTop = st - (e.clientY - py);
+    });
+    window.addEventListener('mouseup', () => { panning = false; });
+
+    function syncModalSplitBounds() {
+      const modal = $('library-modal');
+      const tutorOpen = !$('tutor-pane').classList.contains('hidden');
+      const toggleBtn = $('toggle-library-split-btn');
+      if (tutorOpen && librarySplitMode) {
+        const tw = $('tutor-pane').offsetWidth || 420;
+        const rw = $('id-resizer').offsetWidth || 6;
+        modal.classList.add('split-with-tutor');
+        modal.style.right = `${tw + rw}px`;
+        toggleBtn.style.display = '';
+        toggleBtn.textContent = '⛶ Full Width';
+      } else {
+        modal.classList.remove('split-with-tutor');
+        modal.style.right = '0';
+        toggleBtn.style.display = tutorOpen ? '' : 'none';
+        toggleBtn.textContent = '◫ Split with Tutor';
+      }
+    }
+
+    async function openLessonStudyModal(slug, lessonNum) {
+      const modal = $('library-modal');
+      const reader = $('library-reader');
+      modal.classList.add('open');
+      syncModalSplitBounds();
+      reader.innerHTML = '<p>Loading lesson study guide...</p>';
+      const resp = await fetch(`/api/materials/chapter/${encodeURIComponent(slug)}`);
+      const data = await resp.json();
+      const cleanMd = String(data.markdown || '').split('<!-- END_OF_CHAPTER_QUIZZES_START -->')[0];
+      const sections = cleanMd.split(/\n(?=##\s+)/);
+      const lessonSec = sections.slice(1).find(s => new RegExp(`^##\\s+${Number(lessonNum)}\\.\\s+`).test(s.trim()));
+      const bodyMd = lessonSec || cleanMd;
+      const chMatch = String(slug).match(/^(\d+)-/);
+      const chLabel = chMatch ? `Ch ${chMatch[1]}` : slug;
+      const headingMatch = bodyMd.trim().match(/^##\s+\d+\.\s+([^\n]+)/);
+      const lTitle = headingMatch ? headingMatch[1].trim() : `Lesson ${lessonNum}`;
+
+      $('id-modal-title').textContent = `📘 ${chLabel} · Lesson ${lessonNum} — ${lTitle}`;
+      window.StudyContext?.setOpenLesson({
+        label: `${chLabel} · L${String(lessonNum).padStart(2, '0')}: ${lTitle}`,
+        chapterSlug: slug,
+        lessonNum,
+        markdown: bodyMd.slice(0, 9000),
+      });
+      reader.innerHTML = `
+        <div class="lesson-focus-banner gemini-reader-ignore" style="margin-bottom:14px;">
+          <strong>📖 ${esc(chLabel)} · Lesson ${lessonNum}</strong>
+          <div style="display:flex;gap:8px;">
+            <button type="button" id="id-modal-read-btn" class="btn tts-play-btn" style="padding:4px 10px;font-size:12px;">🔊 Read Guide</button>
+            <a class="btn" style="padding:4px 10px;font-size:12px;text-decoration:none;" href="/course.html?chapter=${encodeURIComponent(slug)}&lesson=${Math.max(0, lessonNum - 1)}" target="_blank" rel="noopener">🎬 Open Video ↗</a>
+          </div>
+        </div>
+        <div id="id-modal-md">${renderMd(bodyMd)}</div>
+      `;
+      await upgradeMermaidBlocks(reader);
+      $('id-modal-read-btn')?.addEventListener('click', e => {
+        window.GeminiReader?.readElement($('id-modal-md'), {
+          targetKey: `id-les::${slug}::${lessonNum}`,
+          anchorBtn: e.currentTarget,
+          defaultBtnText: '🔊 Read Guide',
+          rawFallbackText: bodyMd,
+        });
+      });
+    }
+
+    async function upgradeMermaidBlocks(container) {
+      if (!window.mermaid || !container) return;
+      for (const codeEl of Array.from(container.querySelectorAll('pre > code.language-mermaid'))) {
+        const raw = (codeEl.textContent || '').trim();
+        if (!raw) continue;
+        const pre = codeEl.parentElement;
+        const card = document.createElement('div');
+        card.className = 'diagram-card';
+        card.innerHTML = `<div class="diagram-toolbar"><span>📐 Architecture Diagram</span></div><div class="diagram-canvas"></div>`;
+        pre.replaceWith(card);
+        const norm = raw.replace(/\\n/g, '<br/>').replace(/(\b[A-Za-z0-9_-]+)\[([^\]"\n]*[()\/][^\]"\n]*)\]/g, '$1["$2"]');
+        try {
+          const { svg } = await window.mermaid.render(`id-mmd-${++mmdSeq}-${Date.now()}`, norm);
+          card.querySelector('.diagram-canvas').innerHTML = svg;
+        } catch {}
+      }
+    }
+
+    $('close-library-btn').addEventListener('click', () => $('library-modal').classList.remove('open'));
+    $('library-modal').addEventListener('click', e => { if (e.target === $('library-modal')) $('library-modal').classList.remove('open'); });
+    $('toggle-library-split-btn').addEventListener('click', () => {
+      librarySplitMode = !librarySplitMode;
+      syncModalSplitBounds();
+    });
+
+    function setTutorCollapsed(collapsed) {
+      const c = Boolean(collapsed);
+      $('tutor-pane').classList.toggle('hidden', c);
+      $('id-resizer').style.display = c ? 'none' : 'block';
+      $('tutor-toggle-btn')?.classList.toggle('active', !c);
+      $('tutor-toggle-btn')?.textContent = c ? '⟨ ✨ Expand AI Tutor' : '✨ Hide AI Tutor ⟩';
+      $('tutor-expand-tab')?.classList.toggle('visible', c);
+      if ($('library-modal').classList.contains('open')) syncModalSplitBounds();
+    }
+    $('tutor-toggle-btn')?.addEventListener('click', () => setTutorCollapsed(!$('tutor-pane').classList.contains('hidden')));
+    $('tutor-collapse-btn')?.addEventListener('click', () => setTutorCollapsed(true));
+    $('tutor-expand-tab')?.addEventListener('click', () => setTutorCollapsed(false));
+
+    let isResizing = false;
+    $('id-resizer').addEventListener('mousedown', e => { isResizing = true; document.body.style.userSelect = 'none'; e.preventDefault(); });
+    window.addEventListener('mousemove', e => {
+      if (!isResizing) return;
+      const w = Math.min(Math.max(320, window.innerWidth - e.clientX), Math.floor(window.innerWidth * 0.58));
+      $('tutor-pane').style.width = `${w}px`;
+      if ($('library-modal').classList.contains('open')) syncModalSplitBounds();
+    });
+    window.addEventListener('mouseup', () => { if (isResizing) { isResizing = false; document.body.style.userSelect = ''; } });
+    window.addEventListener('studycontext:ask-tutor', () => { if ($('tutor-pane').classList.contains('hidden')) setTutorCollapsed(false); });
+
+    async function askTutor(questionText, actionType = '') {
+      if (streaming || !questionText.trim()) return;
+      if ($('tutor-pane').classList.contains('hidden')) setTutorCollapsed(false);
+      const empty = $('chat-messages').querySelector('.chat-empty');
+      if (empty) empty.remove();
+
+      const consumed = window.StudyContext ? window.StudyContext.consumeForSend() : { openLesson: null, highlighted: null };
+      const uDiv = document.createElement('div');
+      uDiv.className = 'msg user';
+      uDiv.textContent = questionText;
+      $('chat-messages').appendChild(uDiv);
+
+      const aDiv = document.createElement('div');
+      aDiv.className = 'msg assistant';
+      const mdEl = document.createElement('div');
+      mdEl.className = 'msg-md';
+      mdEl.innerHTML = `<span class="typing-dot"></span><span style="color:#64748b;font-size:13px;">Mapping infrastructure residency &amp; boundaries...</span>`;
+      aDiv.appendChild(mdEl);
+      $('chat-messages').appendChild(aDiv);
+      $('chat-messages').scrollTop = $('chat-messages').scrollHeight;
+
+      streaming = true;
+      $('chat-send-btn').disabled = true;
+
+      const studyContextPayload = {
+        openLesson: consumed.openLesson || {
+          label: 'GCP Infrastructure Residency Dendrite (Z1–Z6)',
+          markdown: '6 Residency Zones: Z1 Customer VPC Subnets (GCE VMs, Sole-Tenant Nodes, GKE Nodes/Pods, Dataproc/Dataflow workers, App Engine Flex, ILB, PSC Endpoints, Direct VPC Egress NICs); Z2 Google-Managed Tenant/Producer VPCs via PSA Peering or PSC (Memorystore, Filestore, NetApp, Cloud SQL Private IP, AlloyDB, GKE Control Plane, Apigee X, Composer, Vertex Custom Training); Z3 Google Multi-Tenant Cloud Infrastructure outside any VPC (GCS, BigQuery, Spanner, Bigtable, Firestore, Pub/Sub, KMS, Vertex Gemini APIs, Cloud Run, Cloud Run functions, App Engine Standard); Z4 Google Global Edge PoPs (Global External ALB, Cloud CDN, Cloud Armor, Cloud IAP, Cloud DNS); Z5 Dedicated Hardware Pods in Google DC (GCVE VMware Engine, Bare Metal Solution for Oracle/SAP); Z6 On-Premises Customer Data Center (vSphere + HCX, Legacy DBs/NAS/AD, GKE Distributed Cloud, AlloyDB Omni, Transfer Appliance, Backup & DR Appliance, STS Docker Agents).',
+        },
+        highlighted: consumed.highlighted || null,
+      };
+
+      let full = '';
+      try {
+        const resp = await fetch('/api/agent/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: questionText,
+            actionType,
+            spoilerFree: false,
+            model: $('model-select').value,
+            history: chatHistory,
+            questionContext: { standalone: true, threadId: 'infra-dendrite-tutor', studyContext: studyContextPayload },
+            studyContext: studyContextPayload,
+          }),
+        });
+        const reader = resp.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const parts = buf.split('\n\n');
+          buf = parts.pop() || '';
+          for (const p of parts) {
+            const ln = p.trim();
+            if (!ln.startsWith('data:')) continue;
+            try {
+              const evt = JSON.parse(ln.slice(5).trim());
+              if (evt.type === 'delta') {
+                full += evt.text;
+                const liveClean = window.TutorEnhancer ? window.TutorEnhancer.parseStreamedReply(full).cleanMd : full;
+                mdEl.innerHTML = renderMd(liveClean);
+                $('chat-messages').scrollTop = $('chat-messages').scrollHeight;
+              }
+            } catch {}
+          }
+        }
+        const finalClean = window.TutorEnhancer ? window.TutorEnhancer.parseStreamedReply(full).cleanMd : full;
+        mdEl.innerHTML = renderMd(finalClean || '_No response_');
+        await upgradeMermaidBlocks(mdEl);
+        window.TutorEnhancer?.decorateAssistantBubble(aDiv, mdEl, full, {
+          autoSpeakNow: true,
+          onRequestProposal: () =>
+            askTutor('Summarize the key infrastructure residency / boundary rule from our discussion above and propose a Cheat Sheet update.', 'propose_cheatsheet'),
+        });
+        chatHistory.push({ role: 'user', content: questionText }, { role: 'assistant', content: finalClean });
+      } catch (err) {
+        mdEl.innerHTML = `<p style="color:#b91c1c;">Error: ${esc(err.message)}</p>`;
+      } finally {
+        streaming = false;
+        $('chat-send-btn').disabled = false;
+      }
+    }
+
+    $('chat-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const txt = $('chat-input').value.trim();
+      if (!txt) return;
+      $('chat-input').value = '';
+      askTutor(txt);
+    });
+    $('chat-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('chat-form').requestSubmit(); }
+    });
+    $('clear-chat-btn').addEventListener('click', () => {
+      chatHistory = [];
+      $('chat-messages').innerHTML = `<div class="chat-empty"><strong>🏗️ Infrastructure Residency Tutor</strong>Chat cleared. Click any zone or lens on the left!</div>`;
+    });
+    document.querySelectorAll('.chip-btn[data-q]').forEach(btn => {
+      btn.addEventListener('click', () => askTutor(btn.dataset.q));
+    });
+
+    // Boot
+    renderLensChips();
+    const initVw = $('id-viewport').clientWidth - 28;
+    zoomPct = Math.min(100, Math.max(66, Math.round((initVw / 1854) * 100)));
+    $('zoom-label').textContent = `${zoomPct}%`;
+    renderDendriteSvg();
+
+    
+  </script>
+</body>
+</html>

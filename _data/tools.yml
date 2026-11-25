@@ -14,6 +14,15 @@
   url: /games/sunny-bites/
   action: Play Sunny Bites
 
+- name: Professional Cloud Architect Cheat Sheet
+  category: Productivity
+  description: >-
+    Interactive Google Cloud Professional Cloud Architect visual cheat sheet:
+    18 architecture decision flowcharts, interactive mind map, networking &
+    packet path finder, service containment catalog, and residency dendrites.
+  url: /pca-cheatsheet/
+  action: Open cheat sheet
+
 - name: Markup Studio
   category: Productivity
   description: >-
