@@ -14,6 +14,16 @@
   url: /games/sunny-bites/
   action: Play Sunny Bites
 
+- name: Little Lantern
+  category: Study
+  description: >-
+    I built this app for my daughter to learn Zhongwen (《中文》) Chinese Vol. 2,
+    with interactive lessons, stroke-order writing, workbook homework, speaking
+    practice, and review games.
+  url: https://neverdie88.github.io/zhongwen-kids/
+  external: true
+  action: Open Little Lantern
+
 - name: Professional Cloud Architect Cheat Sheet
   category: Study
   description: >-
@@ -56,3 +66,4 @@
     a simple way to read, edit, and listen to sheet music as she practises.
   url: /sheet-music/
   action: Open tool
+
