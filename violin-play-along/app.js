@@ -256,6 +256,9 @@
   let violinBus = null;
   let accompDryBus = null;
   let accompWetBus = null;
+  let recordMixBus = null;
+  let recordDest = null;
+  let micRecGain = null;
   const rawSampleBytes = new Map();
   const decodedViolinBuffers = new Map();
   const decodedPianoBuffers = new Map();
@@ -384,6 +387,27 @@
       accompWetBus = audioCtx.createGain();
       accompWetBus.gain.value = state.orchVolume;
       accompWetBus.connect(reverbSendBus);
+
+      // Dedicated Recording Mix Bus (combines Orchestra/Piano + user's live mic without speaker feedback)
+      if (audioCtx.createMediaStreamDestination) {
+        recordDest = audioCtx.createMediaStreamDestination();
+        recordMixBus = audioCtx.createDynamicsCompressor();
+        recordMixBus.threshold.value = -14;
+        recordMixBus.knee.value = 18;
+        recordMixBus.ratio.value = 3;
+        recordMixBus.attack.value = 0.006;
+        recordMixBus.release.value = 0.15;
+        recordMixBus.connect(recordDest);
+
+        // Tap accompaniment + hall reverb (and guide violin if user keeps it on) into the recorder
+        dryBus.connect(recordMixBus);
+        convolver.connect(recordMixBus);
+
+        // User's live microphone feeds ONLY the recorder & pitch analyser (never speakers!)
+        micRecGain = audioCtx.createGain();
+        micRecGain.gain.value = 1.25;
+        micRecGain.connect(recordMixBus);
+      }
     }
     if (audioCtx.state === "suspended") {
       await audioCtx.resume();
@@ -943,6 +967,7 @@
       micAnalyser = audioCtx.createAnalyser();
       micAnalyser.fftSize = 2048;
       src.connect(micAnalyser);
+      if (micRecGain) src.connect(micRecGain);
       micTimeBuf = new Float32Array(micAnalyser.fftSize);
       if (dom.micDot) dom.micDot.classList.add("listening");
       if (dom.micPitchReadout) dom.micPitchReadout.textContent = "🎙 Mic Listening — Play Violin!";
@@ -2781,6 +2806,7 @@
         } else {
           state.currentBeat = TOTAL_BEATS;
           pausePlayback();
+          if (typeof stopRecordingIfActive === "function") stopRecordingIfActive();
           dom.wellDoneOverlay.classList.remove("hidden");
         }
       } else {
@@ -3493,6 +3519,189 @@
       if (!panel.contains(e.target) && !trigger.contains(e.target)) {
         panel.classList.add("hidden");
         trigger.classList.remove("open");
+      }
+    });
+  })();
+
+  // =========================================================================
+  // 8B. LIVE RECORDER (User Violin Mic + Orchestra / Piano Accompaniment)
+  // =========================================================================
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let isRecording = false;
+  let recStartMs = 0;
+  let recTimerId = 0;
+  let guideWasOnBeforeRec = null;
+  const recordedTakes = [];
+
+  function pickRecordMimeType() {
+    if (typeof MediaRecorder === "undefined") return "";
+    const prefs = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+    for (const m of prefs) {
+      if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
+    }
+    return "";
+  }
+
+  function currentAccompLabel() {
+    if (state.orchestraAudio) return "🎼 Orchestra";
+    if (state.chordAudio) return "🎹 Piano";
+    if (backing.buffer && state.backingAudio) return "🎵 Backing";
+    return "🎻 Solo";
+  }
+
+  function renderRecordingsList() {
+    const listEl = document.getElementById("recordingsList");
+    const takesBtn = document.getElementById("btnTakes");
+    const countEl = document.getElementById("takesCount");
+    const statusEl = document.getElementById("recordingsStatus");
+    if (countEl) countEl.textContent = String(recordedTakes.length);
+    if (takesBtn) takesBtn.classList.toggle("hidden", recordedTakes.length === 0);
+    if (!listEl) return;
+
+    listEl.innerHTML = "";
+    if (recordedTakes.length === 0) {
+      if (statusEl) statusEl.textContent = "Press Record to capture your violin with Orchestra or Piano.";
+      return;
+    }
+    if (statusEl) {
+      statusEl.textContent = `${recordedTakes.length} ${recordedTakes.length === 1 ? "take" : "takes"} ready to listen or save:`;
+    }
+    for (const take of recordedTakes) {
+      const card = document.createElement("div");
+      card.className = "rec-item";
+      const fileSafe = `${take.songTitle}-${take.accompRaw}-${take.bpm}bpm`.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      card.innerHTML = `
+        <div class="rec-item-top">
+          <span class="rec-item-title">${take.songTitle} · ${take.accompLabel}</span>
+          <span class="rec-item-meta">${take.bpm} BPM · ${formatTime(take.durSec)}</span>
+        </div>
+        <audio controls preload="metadata" src="${take.url}"></audio>
+        <div class="rec-item-actions">
+          <span class="rec-item-meta" style="margin-right:auto">${take.timeStr}${take.hasMic ? "" : " · (no mic)"}</span>
+          <a class="rec-action-btn" href="${take.url}" download="${fileSafe}.${take.ext}">⬇ Save</a>
+          <button class="rec-action-btn del" type="button">🗑 Delete</button>
+        </div>
+      `;
+      card.querySelector(".del").addEventListener("click", () => {
+        const idx = recordedTakes.findIndex((t) => t.id === take.id);
+        if (idx >= 0) {
+          URL.revokeObjectURL(recordedTakes[idx].url);
+          recordedTakes.splice(idx, 1);
+          renderRecordingsList();
+        }
+      });
+      listEl.appendChild(card);
+    }
+  }
+
+  function updateRecordButtonUI() {
+    const btn = document.getElementById("btnRecord");
+    const lbl = document.getElementById("recordLabel");
+    if (!btn || !lbl) return;
+    btn.classList.toggle("recording", isRecording);
+    if (isRecording) {
+      const sec = Math.max(0, (Date.now() - recStartMs) / 1000);
+      lbl.textContent = `Stop (${formatTime(sec)})`;
+    } else {
+      lbl.textContent = "Record";
+    }
+  }
+
+  async function startRecording() {
+    if (isRecording) return;
+    await ensureAudio();
+    if (!recordDest || typeof MediaRecorder === "undefined") {
+      const statusEl = document.getElementById("recordingsStatus");
+      if (statusEl) statusEl.textContent = "Recording is not supported in this browser.";
+      return;
+    }
+    const hasMic = await enableMicMatching();
+    const chkMute = document.getElementById("chkMuteGuideOnRec");
+    if (chkMute && chkMute.checked && state.violinAudio) {
+      guideWasOnBeforeRec = true;
+      state.violinAudio = false;
+      dom.btnViolinAudio.classList.remove("active");
+    } else {
+      guideWasOnBeforeRec = null;
+    }
+
+    const mimeType = pickRecordMimeType();
+    recordedChunks = [];
+    mediaRecorder = mimeType ? new MediaRecorder(recordDest.stream, { mimeType }) : new MediaRecorder(recordDest.stream);
+    const accompLabel = currentAccompLabel();
+    const accompRaw = state.orchestraAudio ? "orchestra" : state.chordAudio ? "piano" : "backing";
+    const songTitle = (CURRENT_SONG && CURRENT_SONG.title) || "Violin";
+    const bpmSnap = state.bpm;
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+    };
+    mediaRecorder.onstop = () => {
+      const durSec = Math.max(1, (Date.now() - recStartMs) / 1000);
+      const type = (mediaRecorder && mediaRecorder.mimeType) || mimeType || "audio/webm";
+      const ext = type.includes("mp4") ? "m4a" : type.includes("ogg") ? "ogg" : "webm";
+      const blob = new Blob(recordedChunks, { type });
+      const url = URL.createObjectURL(blob);
+      const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      recordedTakes.unshift({ id: Date.now(), url, blob, ext, songTitle, accompLabel, accompRaw, bpm: bpmSnap, durSec, timeStr, hasMic });
+      renderRecordingsList();
+      const panel = document.getElementById("recordingsPanel");
+      if (panel) panel.classList.remove("hidden");
+    };
+
+    recStartMs = Date.now();
+    isRecording = true;
+    mediaRecorder.start(250);
+    updateRecordButtonUI();
+    clearInterval(recTimerId);
+    recTimerId = setInterval(updateRecordButtonUI, 250);
+
+    // Start play-along automatically so the student can immediately play with Orchestra or Piano
+    if (!state.isPlaying) {
+      await startPlayback();
+    }
+  }
+
+  function stopRecordingIfActive() {
+    if (!isRecording) return;
+    isRecording = false;
+    clearInterval(recTimerId);
+    updateRecordButtonUI();
+    if (guideWasOnBeforeRec) {
+      state.violinAudio = true;
+      dom.btnViolinAudio.classList.add("active");
+      guideWasOnBeforeRec = null;
+    }
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      try { mediaRecorder.stop(); } catch (_) {}
+    }
+    if (state.isPlaying) pausePlayback();
+  }
+
+  (() => {
+    const btnRec = document.getElementById("btnRecord");
+    const btnTakes = document.getElementById("btnTakes");
+    const panel = document.getElementById("recordingsPanel");
+    const btnClose = document.getElementById("btnCloseTakes");
+    if (btnRec) {
+      btnRec.addEventListener("click", () => {
+        if (isRecording) stopRecordingIfActive();
+        else startRecording().catch((e) => console.warn("Record error:", e));
+      });
+    }
+    if (btnTakes && panel) {
+      btnTakes.addEventListener("click", (e) => {
+        e.stopPropagation();
+        panel.classList.toggle("hidden");
+      });
+    }
+    if (btnClose && panel) {
+      btnClose.addEventListener("click", () => panel.classList.add("hidden"));
+    }
+    document.addEventListener("click", (e) => {
+      if (panel && !panel.classList.contains("hidden") && !panel.contains(e.target) && e.target !== btnTakes && !btnTakes?.contains(e.target) && e.target !== btnRec && !btnRec?.contains(e.target)) {
+        panel.classList.add("hidden");
       }
     });
   })();

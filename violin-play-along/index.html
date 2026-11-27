@@ -51,6 +51,25 @@
             <span id="playIcon">▶</span>
             <span id="playLabel">Play</span>
           </button>
+          <div class="record-wrap">
+            <button id="btnRecord" class="chip-btn record-btn" type="button" title="Record your violin playing along with the Orchestra or Piano">
+              <span class="rec-dot"></span>
+              <span id="recordLabel">Record</span>
+            </button>
+            <button id="btnTakes" class="chip-btn takes-btn hidden" type="button" title="Listen to your recorded takes">🎧 <span id="takesCount">0</span></button>
+            <div id="recordingsPanel" class="recordings-panel hidden" role="dialog" aria-label="Recorded Takes">
+              <div class="rec-panel-header">
+                <span>🎙 Your Recordings</span>
+                <button id="btnCloseTakes" class="pos-close-btn" type="button" title="Close">✕</button>
+              </div>
+              <label class="rec-opt-row">
+                <input id="chkMuteGuideOnRec" type="checkbox" />
+                <span>Mute guide violin while recording (record only my violin + orchestra/piano)</span>
+              </label>
+              <div id="recordingsStatus" class="rec-status">Press Record to capture your violin with Orchestra or Piano.</div>
+              <div id="recordingsList" class="rec-list"></div>
+            </div>
+          </div>
           <button id="btnLoop" class="chip-btn" title="Loop Song">🔁 Loop</button>
           <button id="btnCountIn" class="chip-btn active" title="4-Beat Count-In before Bar 1">1-2-3-4 Cue</button>
         </div>
