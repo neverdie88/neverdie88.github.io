@@ -16,62 +16,80 @@
 </head>
 <body>
   <div class="app-shell">
-    <!-- Top Studio Control Bar -->
+    <!-- Top Studio Control Bar (2 Clean Logical Rows: Playback + View/Sound/Mix) -->
     <header class="topbar">
-      <div class="brand">
-        <span class="brand-icon">🎻</span>
-        <div class="brand-song-wrap">
-          <div class="brand-title-row">
-            <button id="btnSongPicker" class="song-picker-btn" type="button" title="Choose a song from your library">
-              <span class="sp-lib-icon">📚</span>
-              <span id="songTitleText">Long Long Ago</span>
-              <span id="songBadgeText" class="badge">Key of A · 4/4</span>
-              <span class="sp-caret">▾</span>
-            </button>
-            <button id="btnInstallPwa" class="chip-btn install-pwa-btn hidden" type="button" title="Install Violin Play-Along as an offline app">⬇ Install</button>
-          </div>
-          <p id="songSubtitleText" class="subtitle">T. H. Bayly · Solo Violin · Live Chamber Orchestra &amp; 3D Concert Hall</p>
-          <div id="songPickerPanel" class="song-picker-panel hidden" role="dialog" aria-label="Song Library">
-            <div class="sp-header">
-              <span>📚 Song Library</span>
-              <span id="songCountBadge" class="sp-count">2 songs</span>
+      <!-- Row 1: Song Library · Transport · Tempo -->
+      <div class="topbar-row topbar-main">
+        <div class="brand">
+          <span class="brand-icon">🎻</span>
+          <div class="brand-song-wrap">
+            <div class="brand-title-row">
+              <button id="btnSongPicker" class="song-picker-btn" type="button" title="Choose a song from your library">
+                <span class="sp-lib-icon">📚</span>
+                <span id="songTitleText">Long Long Ago</span>
+                <span id="songBadgeText" class="badge">Key of A · 4/4</span>
+                <span class="sp-caret">▾</span>
+              </button>
+              <button id="btnInstallPwa" class="chip-btn install-pwa-btn hidden" type="button" title="Install Violin Play-Along as an offline app">⬇ Install</button>
             </div>
-            <div id="songList" class="sp-list"></div>
-            <div class="sp-footer">Add future songs in <code>songs/catalog.json</code></div>
+            <div id="songPickerPanel" class="song-picker-panel hidden" role="dialog" aria-label="Song Library">
+              <div class="sp-header">
+                <span>📚 Song Library</span>
+                <span id="songCountBadge" class="sp-count">2 songs</span>
+              </div>
+              <div id="songList" class="sp-list"></div>
+              <div class="sp-footer">Add future songs in <code>songs/catalog.json</code></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="transport-group">
+          <button id="btnRestart" class="icon-btn" title="Restart (R)">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+          </button>
+          <button id="btnPlay" class="play-btn" title="Play / Pause (Space)">
+            <span id="playIcon">▶</span>
+            <span id="playLabel">Play</span>
+          </button>
+          <button id="btnLoop" class="chip-btn" title="Loop Song">🔁 Loop</button>
+          <button id="btnCountIn" class="chip-btn active" title="4-Beat Count-In before Bar 1">1-2-3-4 Cue</button>
+        </div>
+
+        <div class="tempo-group">
+          <div class="tempo-header">
+            <span>Tempo</span>
+            <strong id="tempoValue">72 BPM (Normal)</strong>
+          </div>
+          <div class="tempo-controls">
+            <input id="tempoSlider" type="range" min="42" max="108" value="72" step="1" />
+            <div class="tempo-presets">
+              <button class="preset-btn" data-bpm="56">Slower</button>
+              <button class="preset-btn" data-bpm="64">Slow</button>
+              <button class="preset-btn active" data-bpm="80">Normal</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="transport-group">
-        <button id="btnRestart" class="icon-btn" title="Restart (R)">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
-        </button>
-        <button id="btnPlay" class="play-btn" title="Play / Pause (Space)">
-          <span id="playIcon">▶</span>
-          <span id="playLabel">Play</span>
-        </button>
-        <button id="btnLoop" class="chip-btn" title="Loop Song">🔁 Loop</button>
-        <button id="btnCountIn" class="chip-btn active" title="4-Beat Count-In before Bar 1">1-2-3-4 Cue</button>
-      </div>
-
-      <div class="tempo-group">
-        <div class="tempo-header">
-          <span>Tempo</span>
-          <strong id="tempoValue">72 BPM (Normal)</strong>
+      <!-- Row 2: View · Sound · Mix -->
+      <div class="topbar-row topbar-tools">
+        <div class="tool-cluster">
+          <span class="cluster-label">View</span>
+          <button id="btnConcertView" class="chip-btn concert-toggle" type="button" title="First-person 3D view from the concertmaster chair">🎭 Concert 3D</button>
+          <button id="btnTogglePosition" class="chip-btn active" type="button" title="Show / Hide Left-Hand Position Panel">🖐 Position</button>
+          <button id="btnSheetFingers" class="chip-btn active" type="button" title="Show Violin Fingerings on Music Sheet">Sheet Fingers</button>
+          <select id="tabModeSelect" title="Fingering Display Style">
+            <option value="classic">0 1 2 3 (Happy Scales)</option>
+            <option id="optTabDetailed" value="detailed" selected>0 1 2 3 (Exact Violin)</option>
+            <option id="optTabNotes" value="notes">Note Names (A4, C♯5…)</option>
+          </select>
         </div>
-        <div class="tempo-controls">
-          <input id="tempoSlider" type="range" min="42" max="108" value="72" step="1" />
-          <div class="tempo-presets">
-            <button class="preset-btn" data-bpm="56">Slower</button>
-            <button class="preset-btn" data-bpm="64">Slow</button>
-            <button class="preset-btn active" data-bpm="80">Normal</button>
-          </div>
-        </div>
-      </div>
 
-      <div class="options-group">
-        <div class="mixer-pills">
-          <button id="btnMicMatch" class="chip-btn active" title="Live Violin Pitch &amp; Note Matching (⭐ Perfect / ✨ Almost / ✕ Miss)">🎙 Note Match</button>
+        <div class="tool-cluster">
+          <span class="cluster-label">Sound</span>
+          <button id="btnViolinAudio" class="chip-btn active" title="Toggle Real Acoustic Solo Violin">🎻 Violin</button>
+          <button id="btnOrchestraAudio" class="chip-btn active" title="Toggle Real-Time Chamber Orchestra Accompaniment (Strings, Cello, Harp, Flute, Clarinet &amp; Horn)">🎼 Orchestra</button>
+          <button id="btnChordAudio" class="chip-btn" title="Toggle Acoustic Grand Piano Backing">🎹 Piano</button>
           <div class="backing-wrap">
             <button id="btnBacking" class="chip-btn" type="button" title="Load your own backing track (MP3 / M4A / WAV)">🎵 Backing</button>
             <div id="backingPanel" class="backing-panel hidden">
@@ -85,33 +103,23 @@
               <button id="backingClear" class="chip-btn" type="button">Remove track</button>
             </div>
           </div>
-          <button id="btnViolinAudio" class="chip-btn active" title="Toggle Real Acoustic Solo Violin">🎻 Violin</button>
-          <button id="btnOrchestraAudio" class="chip-btn active" title="Toggle Real-Time Chamber Orchestra Accompaniment (Strings, Cello, Harp, Flute, Clarinet &amp; Horn in A Major)">🎼 Orchestra</button>
-          <button id="btnChordAudio" class="chip-btn" title="Toggle Acoustic Grand Piano Backing">🎹 Piano</button>
           <button id="btnClickAudio" class="chip-btn" title="Toggle Metronome Click">⏱ Click</button>
+          <button id="btnMicMatch" class="chip-btn active" title="Live Violin Pitch &amp; Note Matching (⭐ Perfect / ✨ Almost / ✕ Miss)">🎙 Note Match</button>
         </div>
-        <div class="mode-row">
-          <label class="select-label" for="tabModeSelect">TAB:</label>
-          <select id="tabModeSelect" title="Fingering Display Style">
-            <option value="classic">0 1 2 3 (Happy Scales)</option>
-            <option id="optTabDetailed" value="detailed" selected>0 1 2 3 (Exact Violin)</option>
-            <option id="optTabNotes" value="notes">Note Names (A4, C♯5…)</option>
-          </select>
-          <button id="btnSheetFingers" class="chip-btn active" title="Show Violin Fingerings on Music Sheet">Sheet Fingers</button>
-          <button id="btnTogglePosition" class="chip-btn active" title="Show / Hide Left-Hand Position Panel">🖐 Position</button>
-          <div class="mix-balance-group" title="Adjust Violin vs Orchestra/Accompaniment volume live (double-click slider to reset)">
-            <label class="mix-slider-item" for="violinVolSlider">
-              <span>🎻</span>
-              <input id="violinVolSlider" type="range" min="0" max="150" step="5" value="100" />
-              <span id="violinVolVal" class="mix-val">100%</span>
-            </label>
-            <span class="mix-sep"></span>
-            <label class="mix-slider-item" for="orchVolSlider">
-              <span>🎼</span>
-              <input id="orchVolSlider" type="range" min="0" max="150" step="5" value="100" />
-              <span id="orchVolVal" class="mix-val">100%</span>
-            </label>
-          </div>
+
+        <div class="tool-cluster mix-cluster" title="Adjust Violin vs Orchestra/Accompaniment volume live (double-click slider to reset)">
+          <span class="cluster-label">Mix</span>
+          <label class="mix-slider-item" for="violinVolSlider">
+            <span>🎻</span>
+            <input id="violinVolSlider" type="range" min="0" max="150" step="5" value="100" />
+            <span id="violinVolVal" class="mix-val">100%</span>
+          </label>
+          <span class="mix-sep"></span>
+          <label class="mix-slider-item" for="orchVolSlider">
+            <span>🎼</span>
+            <input id="orchVolSlider" type="range" min="0" max="150" step="5" value="100" />
+            <span id="orchVolVal" class="mix-val">100%</span>
+          </label>
         </div>
       </div>
     </header>
@@ -188,15 +196,8 @@
         <span class="resizer-grip">⋮</span>
       </div>
 
-      <!-- RIGHT: Animated Violin Play-Along TAB + Large Fingerboard Position Tab -->
+      <!-- RIGHT: Animated Violin Play-Along TAB / 3D Concert Hall + Left-Hand Position Fingerboard -->
       <section class="panel tab-panel" id="tabPanel">
-        <div class="panel-header tab-panel-header-compact">
-          <div class="tab-header-right">
-            <button id="btnConcertView" class="chip-btn concert-toggle" type="button" title="First-person 3D view from the concertmaster chair">🎭 Concert 3D</button>
-            <button id="btnReopenPosition" class="reopen-pos-btn hidden" type="button" title="Open Left-Hand Position Panel">🖐 Show Position</button>
-          </div>
-        </div>
-
         <div class="tab-split-body" id="tabSplitBody">
           <!-- Falling Highway Canvas -->
           <div class="tab-stage">

@@ -1,5 +1,5 @@
 // Service Worker for Violin Play-Along PWA (offline support + fresh song library updates)
-const CACHE_NAME = "violin-play-along-v2";
+const CACHE_NAME = "violin-play-along-v3";
 const CORE_ASSETS = [
   "./",
   "./index.html",

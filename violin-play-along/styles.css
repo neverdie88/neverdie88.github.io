@@ -1690,3 +1690,70 @@ button {
   color: #cbd5e1;
   font-size: 10.5px;
 }
+
+/* ===================================================================== */
+/* Redesigned 2-Row User-Friendly Top Studio Toolbar                      */
+/* ===================================================================== */
+.topbar {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px 16px;
+}
+.topbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.topbar-tools {
+  justify-content: flex-start;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.tool-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.topbar-tools .chip-btn {
+  padding: 5px 8px;
+  font-size: 11.5px;
+}
+.topbar-tools .mix-slider-item input[type="range"] {
+  width: 56px;
+}
+.cluster-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+.mix-cluster {
+  margin-left: auto;
+  gap: 8px;
+}
+.concert-toggle {
+  border-color: rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.1);
+  color: #fde68a;
+  font-weight: 700;
+}
+.concert-toggle:hover {
+  background: rgba(251, 191, 36, 0.2);
+}
+.concert-toggle.active {
+  background: rgba(251, 191, 36, 0.24);
+  border-color: var(--accent-amber);
+  color: #fef3c7;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.25);
+}
