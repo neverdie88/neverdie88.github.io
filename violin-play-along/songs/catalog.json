@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "defaultSongId": "long-long-ago",
+  "songs": [
+    {
+      "id": "long-long-ago",
+      "title": "Long Long Ago",
+      "composer": "T. H. Bayly",
+      "badge": "Key of A · 4/4",
+      "level": "Suzuki Book 1 · Beginner",
+      "defaultBpm": 72,
+      "noteCount": 72,
+      "dataUrl": "songs/long-long-ago/song.json"
+    },
+    {
+      "id": "my-tribute-chorus",
+      "title": "My Tribute",
+      "composer": "Andraé Crouch",
+      "badge": "Chorus · Key of B♭",
+      "level": "Gospel Classic · Low 1 & Low 2",
+      "defaultBpm": 64,
+      "noteCount": 50,
+      "dataUrl": "songs/my-tribute-chorus/song.json"
+    }
+  ]
+}

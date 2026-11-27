@@ -1,0 +1,32 @@
+{
+  "name": "Violin Play-Along Studio",
+  "short_name": "Violin Play",
+  "description": "Interactive violin play-along with synchronized music sheet, animated TAB, left-hand fingerboard guidance, live chamber orchestra, and first-person 3D concert hall.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f141c",
+  "theme_color": "#131923",
+  "categories": ["music", "education"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

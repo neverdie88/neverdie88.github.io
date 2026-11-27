@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#172234"/>
+      <stop offset="100%" stop-color="#0b1019"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e08844"/>
+      <stop offset="55%" stop-color="#b4531b"/>
+      <stop offset="100%" stop-color="#7c2d0d"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#00e8ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="205" fill="none" stroke="url(#cyan)" stroke-width="5" opacity="0.24"/>
+  <!-- Violin silhouette rotated gracefully -->
+  <g transform="translate(256,266) rotate(-32)">
+    <!-- Neck & Scroll -->
+    <rect x="-12" y="-198" width="24" height="122" rx="8" fill="#d4a373"/>
+    <circle cx="0" cy="-206" r="18" fill="#c2834d"/>
+    <rect x="-9" y="-175" width="18" height="135" rx="4" fill="#111827"/>
+    <!-- Pegs -->
+    <rect x="-32" y="-194" width="20" height="7" rx="3" fill="#1e293b"/>
+    <rect x="12" y="-182" width="20" height="7" rx="3" fill="#1e293b"/>
+    <rect x="-32" y="-172" width="20" height="7" rx="3" fill="#1e293b"/>
+    <!-- Violin Body -->
+    <path d="M 0,-84 C 48,-84 74,-52 68,-14 C 65,6 44,12 44,28 C 44,44 76,56 80,96 C 84,142 48,176 0,176 C -48,176 -84,142 -80,96 C -76,56 -44,44 -44,28 C -44,12 -65,6 -68,-14 C -74,-52 -48,-84 0,-84 Z" fill="url(#wood)" stroke="#431407" stroke-width="6"/>
+    <!-- F-holes -->
+    <path d="M -32,30 C -40,48 -36,74 -26,90" fill="none" stroke="#1e130c" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 32,30 C 40,48 36,74 26,90" fill="none" stroke="#1e130c" stroke-width="6" stroke-linecap="round"/>
+    <!-- Bridge & Tailpiece -->
+    <rect x="-24" y="54" width="48" height="9" rx="3" fill="#f5d0a9"/>
+    <path d="M -14,96 L 14,96 L 9,164 L -9,164 Z" fill="#0f172a"/>
+    <!-- Glowing Strings -->
+    <line x1="-6" y1="-172" x2="-10" y2="96" stroke="#e2e8f0" stroke-width="2.2" opacity="0.85"/>
+    <line x1="-2" y1="-172" x2="-3" y2="96" stroke="#e2e8f0" stroke-width="2.2" opacity="0.85"/>
+    <line x1="2" y1="-172" x2="3" y2="96" stroke="#00e8ff" stroke-width="3.2"/>
+    <line x1="6" y1="-172" x2="10" y2="96" stroke="#e2e8f0" stroke-width="2" opacity="0.85"/>
+    <!-- Active Cyan Finger Marker -->
+    <circle cx="3" cy="-98" r="14" fill="#00e8ff" stroke="#ffffff" stroke-width="4"/>
+  </g>
+  <!-- Bow across strings -->
+  <line x1="88" y1="322" x2="424" y2="210" stroke="#fde68a" stroke-width="7" stroke-linecap="round"/>
+  <line x1="90" y1="330" x2="424" y2="218" stroke="#f8fafc" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+  <!-- Sparkle stars -->
+  <circle cx="390" cy="116" r="8" fill="#fbbf24"/>
+  <circle cx="420" cy="152" r="5" fill="#00e8ff"/>
+</svg>

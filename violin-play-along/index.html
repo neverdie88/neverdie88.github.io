@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Violin Play-Along — Sheet Cursor, Animated TAB &amp; 3D Orchestra</title>
+  <meta name="description" content="Interactive Violin Play-Along PWA with synchronized music sheet, animated TAB, left-hand fingerboard guidance, live chamber orchestra, and first-person 3D concert hall." />
+  <meta name="theme-color" content="#131923" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Violin Play-Along" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Studio Control Bar -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">🎻</span>
+        <div class="brand-song-wrap">
+          <div class="brand-title-row">
+            <button id="btnSongPicker" class="song-picker-btn" type="button" title="Choose a song from your library">
+              <span class="sp-lib-icon">📚</span>
+              <span id="songTitleText">Long Long Ago</span>
+              <span id="songBadgeText" class="badge">Key of A · 4/4</span>
+              <span class="sp-caret">▾</span>
+            </button>
+            <button id="btnInstallPwa" class="chip-btn install-pwa-btn hidden" type="button" title="Install Violin Play-Along as an offline app">⬇ Install</button>
+          </div>
+          <p id="songSubtitleText" class="subtitle">T. H. Bayly · Solo Violin · Live Chamber Orchestra &amp; 3D Concert Hall</p>
+          <div id="songPickerPanel" class="song-picker-panel hidden" role="dialog" aria-label="Song Library">
+            <div class="sp-header">
+              <span>📚 Song Library</span>
+              <span id="songCountBadge" class="sp-count">2 songs</span>
+            </div>
+            <div id="songList" class="sp-list"></div>
+            <div class="sp-footer">Add future songs in <code>songs/catalog.json</code></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="transport-group">
+        <button id="btnRestart" class="icon-btn" title="Restart (R)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+        </button>
+        <button id="btnPlay" class="play-btn" title="Play / Pause (Space)">
+          <span id="playIcon">▶</span>
+          <span id="playLabel">Play</span>
+        </button>
+        <button id="btnLoop" class="chip-btn" title="Loop Song">🔁 Loop</button>
+        <button id="btnCountIn" class="chip-btn active" title="4-Beat Count-In before Bar 1">1-2-3-4 Cue</button>
+      </div>
+
+      <div class="tempo-group">
+        <div class="tempo-header">
+          <span>Tempo</span>
+          <strong id="tempoValue">72 BPM (Normal)</strong>
+        </div>
+        <div class="tempo-controls">
+          <input id="tempoSlider" type="range" min="42" max="108" value="72" step="1" />
+          <div class="tempo-presets">
+            <button class="preset-btn" data-bpm="56">Slower</button>
+            <button class="preset-btn" data-bpm="64">Slow</button>
+            <button class="preset-btn active" data-bpm="80">Normal</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="options-group">
+        <div class="mixer-pills">
+          <button id="btnMicMatch" class="chip-btn active" title="Live Violin Pitch &amp; Note Matching (⭐ Perfect / ✨ Almost / ✕ Miss)">🎙 Note Match</button>
+          <div class="backing-wrap">
+            <button id="btnBacking" class="chip-btn" type="button" title="Load your own backing track (MP3 / M4A / WAV)">🎵 Backing</button>
+            <div id="backingPanel" class="backing-panel hidden">
+              <div class="bk-title">Backing Track</div>
+              <input id="backingFile" type="file" accept="audio/*" />
+              <div id="backingStatus" class="bk-status">No track loaded — using built-in piano</div>
+              <label class="bk-row">Track tempo (BPM)<input id="backingBpm" type="number" min="30" max="240" step="0.5" value="72" /></label>
+              <label class="bk-row">Bar 1 starts at (sec)<input id="backingBar1" type="number" min="0" step="0.05" value="0" /></label>
+              <label class="bk-row bk-check"><input id="backingEnabled" type="checkbox" checked /> Play backing track</label>
+              <p class="bk-hint">The track is sped up or slowed down to match the practice tempo, which also shifts its pitch. Keep the tempo at the track tempo to stay in tune. Turn off 🎹 Piano if it clashes.</p>
+              <button id="backingClear" class="chip-btn" type="button">Remove track</button>
+            </div>
+          </div>
+          <button id="btnViolinAudio" class="chip-btn active" title="Toggle Real Acoustic Solo Violin">🎻 Violin</button>
+          <button id="btnOrchestraAudio" class="chip-btn active" title="Toggle Real-Time Chamber Orchestra Accompaniment (Strings, Cello, Harp, Flute, Clarinet &amp; Horn in A Major)">🎼 Orchestra</button>
+          <button id="btnChordAudio" class="chip-btn" title="Toggle Acoustic Grand Piano Backing">🎹 Piano</button>
+          <button id="btnClickAudio" class="chip-btn" title="Toggle Metronome Click">⏱ Click</button>
+        </div>
+        <div class="mode-row">
+          <label class="select-label" for="tabModeSelect">TAB:</label>
+          <select id="tabModeSelect" title="Fingering Display Style">
+            <option value="classic">0 1 2 3 (Happy Scales)</option>
+            <option id="optTabDetailed" value="detailed" selected>0 1 2 3 (Exact Violin)</option>
+            <option id="optTabNotes" value="notes">Note Names (A4, C♯5…)</option>
+          </select>
+          <button id="btnSheetFingers" class="chip-btn active" title="Show Violin Fingerings on Music Sheet">Sheet Fingers</button>
+          <button id="btnTogglePosition" class="chip-btn active" title="Show / Hide Left-Hand Position Panel">🖐 Position</button>
+          <div class="mix-balance-group" title="Adjust Violin vs Orchestra/Accompaniment volume live (double-click slider to reset)">
+            <label class="mix-slider-item" for="violinVolSlider">
+              <span>🎻</span>
+              <input id="violinVolSlider" type="range" min="0" max="150" step="5" value="100" />
+              <span id="violinVolVal" class="mix-val">100%</span>
+            </label>
+            <span class="mix-sep"></span>
+            <label class="mix-slider-item" for="orchVolSlider">
+              <span>🎼</span>
+              <input id="orchVolSlider" type="range" min="0" max="150" step="5" value="100" />
+              <span id="orchVolVal" class="mix-val">100%</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Split Workspace: Left Sheet + Draggable Splitter + Right Animated Violin TAB & Position Fingerboard -->
+    <main class="workspace" id="workspace">
+      <!-- LEFT: Synchronized Music Sheet (MuseScore.com Style) -->
+      <section class="panel sheet-panel" id="sheetPanel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="dot sheet-dot"></span>
+            <span id="sheetPanelTitle">7. Long Long Ago · Music Sheet</span>
+          </div>
+
+          <div class="sheet-header-controls">
+            <div class="sheet-zoom-group" title="Adjust Music Sheet Size">
+              <button id="btnSheetZoomOut" class="zoom-btn" type="button" title="Decrease Music Sheet Size">−</button>
+              <input id="sheetZoomSlider" type="range" min="60" max="220" step="5" value="100" />
+              <span id="sheetZoomValue" class="zoom-val">100%</span>
+              <button id="btnSheetZoomIn" class="zoom-btn" type="button" title="Increase Music Sheet Size">+</button>
+              <button id="btnSheetZoomFit" class="zoom-fit-btn active" type="button" title="Reset Sheet to Fit Panel">Fit</button>
+            </div>
+            <div id="barIndicator" class="status-pill">Count-In · Bar 1 / 16</div>
+          </div>
+        </div>
+
+        <div class="sheet-stage" id="sheetStage">
+          <div class="sheet-canvas-wrap" id="sheetCanvasWrap">
+            <img id="sheetImage" src="songs/long-long-ago/sheet.svg" alt="Violin music sheet" draggable="false" />
+            <!-- 1:1 Vector Overlay matching generated sheet coordinates (440 x 324) -->
+            <svg id="sheetOverlay" viewBox="0 0 440 324" preserveAspectRatio="xMidYMid meet">
+              <!-- Hover & Active Measure Boxes (MuseScore.com style) -->
+              <g id="measureBoxesLayer"></g>
+              <rect id="activeMeasureBox" x="-100" y="0" width="0" height="0" rx="2" class="ms-measure-active" />
+
+              <!-- Optional Fingerings Layer -->
+              <g id="sheetFingeringsLayer"></g>
+
+              <!-- Per-Note Matching Judgment Marks (★ Perfect / ≈ Almost / ✕ Miss) -->
+              <g id="noteRatingsLayer"></g>
+
+              <!-- Active Notehead Recolor (screen blend turns black notehead ink to MuseScore Blue) -->
+              <ellipse id="activeNoteBlueInk" cx="-50" cy="-50" rx="3.6" ry="2.7" class="ms-notehead-blue" />
+
+              <!-- MuseScore.com Vertical Blue Playback Cursor -->
+              <g id="playheadGroup" transform="translate(111, 0)">
+                <rect id="playheadGlow" x="-3.5" y="71" width="7" height="35" rx="1.5" class="ms-cursor-glow" />
+                <line id="playheadLine" x1="0" y1="71" x2="0" y2="106" class="ms-cursor-line" />
+              </g>
+
+              <!-- Interactive Click Targets for every note -->
+              <g id="noteHitTargets"></g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="companion-stage-bar">
+          <div class="dancer-box" id="dancerBox" title="Click to switch cute animal buddy!">
+            <canvas id="dancerCanvas"></canvas>
+            <button id="btnSwitchPet" class="pet-switch-pill" type="button">🐱 Mochi</button>
+          </div>
+          <div class="lyric-speech-area">
+            <div class="lyric-top-row">
+              <span class="lyric-label">Sing &amp; Dance Along</span>
+              <span id="dancerMoodTag" class="mood-tag">Ready to groove ♪</span>
+            </div>
+            <div id="lyricDisplay" class="lyric-phrase">Press <strong>Play</strong> (or Space) to dance &amp; play along!</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Draggable Splitter between Music Sheet Panel and Right TAB Panel -->
+      <div id="mainSplitResizer" class="panel-resizer main-resizer" title="Drag to resize Left Sheet &amp; Right TAB panels (Double-click to reset)">
+        <span class="resizer-grip">⋮</span>
+      </div>
+
+      <!-- RIGHT: Animated Violin Play-Along TAB + Large Fingerboard Position Tab -->
+      <section class="panel tab-panel" id="tabPanel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="dot tab-dot"></span>
+            <span>Animated Violin TAB &amp; Fingerboard</span>
+            <span id="sampleStatus" class="sound-badge">Loading Studio Voices…</span>
+          </div>
+          <div class="tab-header-right">
+            <div id="nowPlayingBadge" class="now-playing-pill">Ready · Open A String (A4)</div>
+            <button id="btnConcertView" class="chip-btn concert-toggle" type="button" title="First-person 3D view from the concertmaster chair">🎭 Concert 3D</button>
+            <button id="btnReopenPosition" class="reopen-pos-btn hidden" type="button" title="Open Left-Hand Position Panel">🖐 Show Position</button>
+          </div>
+        </div>
+
+        <div class="tab-split-body" id="tabSplitBody">
+          <!-- Falling Highway Canvas -->
+          <div class="tab-stage">
+            <!-- Live Note-Matching Score & Microphone Pitch HUD -->
+            <div class="match-hud-bar" id="matchHudBar">
+              <button id="btnMicStatus" class="mic-status-pill" type="button" title="Click to connect microphone for live violin pitch matching">
+                <span class="mic-dot" id="micDot"></span>
+                <span id="micPitchReadout">🎙 Mic Match Ready (Click or Play)</span>
+              </button>
+              <div class="score-counters">
+                <span class="score-chip total-chip" title="Total Precision Score (0–100 pts per note based on exact pitch/timing closeness)">🏆 Score: <strong id="totalScoreVal">0</strong> <small id="totalAccVal">(100%)</small></span>
+                <span class="score-chip perf-chip" title="Perfect Notes (82–100% Closeness)">★ <strong id="cntPerfect">0</strong></span>
+                <span class="score-chip good-chip" title="Nearly Correct Notes (25–81% Closeness)">≈ <strong id="cntAlmost">0</strong></span>
+                <span class="score-chip miss-chip" title="Missed Notes (0–24% Closeness)">✕ <strong id="cntMiss">0</strong></span>
+              </div>
+            </div>
+
+            <canvas id="tabCanvas"></canvas>
+
+            <!-- First-person 3D concert hall view (concert3d.js) -->
+            <canvas id="concertCanvas" class="hidden"></canvas>
+            <div id="concertBar" class="concert-bar hidden">
+              <button id="btnOrchestraSound" class="chip-btn" type="button" title="Toggle live chamber orchestra accompaniment (A major, works at any tempo)">🎼 Orchestra</button>
+              <button id="btnConcertTab" class="chip-btn" type="button" title="Show or hide the animated violin TAB beside the 3D stage">🎼 TAB</button>
+              <button id="btnConcertFull" class="chip-btn" type="button" title="Hide the sheet panel and use the whole window for the stage">⤢ Full stage</button>
+              <span class="concert-hint">Drag to look around · double-click to reset</span>
+            </div>
+            <div id="concertTabResizer" class="concert-tab-resizer" title="Drag to resize the animated TAB (double-click to reset)"><span class="resizer-grip">⋮</span></div>
+            <button id="btnConcertTabClose" class="concert-tab-close" type="button" title="Hide the animated TAB">✕</button>
+            <div id="concertJudge" class="concert-judge"></div>
+            <div id="concertLoading" class="concert-loading hidden">Building the concert hall…</div>
+
+            <!-- End-of-Song Celebration Overlay (Happy Scales style "Well done!") -->
+            <div id="wellDoneOverlay" class="well-done-overlay hidden">
+              <div class="well-done-card">
+                <div class="well-done-title">Well done! 🎻</div>
+                <p>You finished <strong id="wellDoneSongTitle">Long Long Ago</strong>!</p>
+                <div id="finalTotalHeadline" class="final-total-headline">
+                  Total Score: <strong>0 / 7,200</strong> · <span>0% Closeness</span>
+                </div>
+                <div id="finalScoreSummary" class="final-score-summary">
+                  <span class="fs-item fs-perf">★ 0 Perfect</span>
+                  <span class="fs-item fs-almost">≈ 0 Almost</span>
+                  <span class="fs-item fs-miss">✕ 0 Miss</span>
+                </div>
+                <button id="btnReplayOverlay" class="play-btn">↻ Play Again</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Draggable Splitter for Left-Hand Position Sidebar Width -->
+          <div id="posSplitResizer" class="panel-resizer pos-resizer" title="Drag to resize Left-Hand Position panel (Double-click to reset)">
+            <span class="resizer-grip">⋮</span>
+          </div>
+
+          <!-- LARGE Enlarged Left-Hand Violin Fingerboard Position Tab with White Tapes on Pos 1 & 3 -->
+          <aside class="position-sidebar" id="positionSidebar">
+            <div class="pos-sidebar-header">
+              <div class="pos-title-row">
+                <div class="pos-title">Left-Hand Guidance</div>
+                <button id="btnClosePosition" class="pos-close-btn" type="button" title="Close Left-Hand Position Panel">✕</button>
+              </div>
+              <div class="pos-legend">
+                <span class="legend-item now-leg"><i class="leg-dot now-dot"></i>Now</span>
+                <span class="legend-item next-leg"><i class="leg-dot next-dot"></i>Upcoming Guide</span>
+              </div>
+            </div>
+
+            <div class="pos-board-wrap">
+              <svg id="fingerMiniMap" viewBox="0 0 230 430" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                  <!-- Realistic Ebony Fingerboard Cylindrical Gradient -->
+                  <linearGradient id="ebonyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#141518" />
+                    <stop offset="28%" stop-color="#262930" />
+                    <stop offset="55%" stop-color="#1b1d22" />
+                    <stop offset="100%" stop-color="#101114" />
+                  </linearGradient>
+                  <!-- Warm Maple Neck Edge -->
+                  <linearGradient id="mapleNeckGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#7c4f2b" />
+                    <stop offset="50%" stop-color="#b07b4f" />
+                    <stop offset="100%" stop-color="#704523" />
+                  </linearGradient>
+                  <!-- Physical White Vinyl Fingerboard Tape Gradient -->
+                  <linearGradient id="whiteTapeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#cfd6df" />
+                    <stop offset="12%" stop-color="#f8fafc" />
+                    <stop offset="52%" stop-color="#ffffff" />
+                    <stop offset="88%" stop-color="#f1f5f9" />
+                    <stop offset="100%" stop-color="#cbd5e1" />
+                  </linearGradient>
+                  <filter id="fingerGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="4" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                  <filter id="nextGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3.2" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                  <marker id="nextArrowHead" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+                    <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#fbbf24" />
+                  </marker>
+                </defs>
+
+                <!-- String Tuning Headers at Top -->
+                <text id="fbHdr0" x="68"  y="22" class="fb-str-title">G</text>
+                <text id="fbHdr1" x="104" y="22" class="fb-str-title">D</text>
+                <text id="fbHdr2" x="140" y="22" class="fb-str-title">A</text>
+                <text id="fbHdr3" x="176" y="22" class="fb-str-title">E</text>
+
+                <!-- Maple Neck Backing (slightly tapered like a real violin neck) -->
+                <polygon points="50,42 194,42 202,406 42,406" fill="url(#mapleNeckGrad)" />
+
+                <!-- Satin Ebony Fingerboard -->
+                <polygon points="53,42 191,42 198,406 46,406" fill="url(#ebonyGrad)" stroke="#090a0c" stroke-width="1.2" />
+
+                <!-- Raised Ebony Nut at Top (y = 42..52) -->
+                <rect x="51" y="38" width="142" height="11" rx="3" fill="#090a0d" stroke="#3b3f48" stroke-width="1" />
+                <text x="41" y="47" class="fb-pos-lbl open-lbl">0</text>
+
+                <!-- Low 1 (♭1) Guide (y = 96, halfway between Nut & Tape 1) -->
+                <line id="fbGuideB1Line" x1="54" y1="96" x2="190" y2="96" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="4,4" opacity="0.15" />
+                <text id="fbGuideB1Txt" x="41" y="100" class="fb-pos-lbl dim-lbl">♭1</text>
+
+                <!-- ========================================================= -->
+                <!-- PHYSICAL WHITE VIOLIN TAPE #1 — POSITION 1 (y = 148)      -->
+                <!-- Stuck horizontally across fingerboard UNDER the strings!  -->
+                <!-- ========================================================= -->
+                <g class="violin-white-tape">
+                  <rect x="51" y="142" width="142" height="12" rx="1.8" fill="url(#whiteTapeGrad)" stroke="rgba(15,23,42,0.35)" stroke-width="0.8" />
+                  <line x1="52" y1="143.2" x2="192" y2="143.2" stroke="#ffffff" stroke-width="0.9" opacity="0.9" />
+                </g>
+                <text x="41" y="152" class="fb-pos-lbl tape-lbl">1</text>
+                <text x="202" y="151" class="fb-tape-tag">TAPE 1</text>
+
+                <!-- Low 2 (L2) Guide just past Tape 1 (y = 200) -->
+                <line id="fbGuideL2Line" x1="52" y1="200" x2="192" y2="200" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="4,4" opacity="0.15" />
+                <text id="fbGuideL2Txt" x="41" y="204" class="fb-pos-lbl dim-lbl">L2</text>
+
+                <!-- High 2 Guide (y = 252) -->
+                <line id="fbGuideH2Line" x1="51" y1="252" x2="193" y2="252" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="4,4" opacity="0.45" />
+                <text id="fbGuideH2Txt" x="41" y="256" class="fb-pos-lbl low-lbl">H2</text>
+
+                <!-- ========================================================= -->
+                <!-- PHYSICAL WHITE VIOLIN TAPE #3 — POSITION 3 (y = 304)      -->
+                <!-- Stuck horizontally across fingerboard UNDER the strings!  -->
+                <!-- ========================================================= -->
+                <g class="violin-white-tape">
+                  <rect x="48" y="298" width="148" height="12" rx="1.8" fill="url(#whiteTapeGrad)" stroke="rgba(15,23,42,0.35)" stroke-width="0.8" />
+                  <line x1="49" y1="299.2" x2="195" y2="299.2" stroke="#ffffff" stroke-width="0.9" opacity="0.9" />
+                </g>
+                <text x="39" y="308" class="fb-pos-lbl tape-lbl">3</text>
+                <text x="202" y="307" class="fb-tape-tag">TAPE 3</text>
+
+                <!-- 4th Finger Reference (y = 368, faint) -->
+                <line x1="48" y1="368" x2="196" y2="368" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2,5" opacity="0.22" />
+                <text x="39" y="372" class="fb-pos-lbl dim-lbl">4</text>
+
+                <!-- 4 Metallic Strings Running OVER the White Tapes (with realistic shadow) -->
+                <!-- G String -->
+                <line x1="69.5" y1="38" x2="65.5" y2="406" stroke="rgba(0,0,0,0.55)" stroke-width="4.2" />
+                <line id="fbStr0" x1="68" y1="38" x2="64" y2="406" stroke="#c4cad4" stroke-width="3.2" />
+                <!-- D String -->
+                <line x1="105.5" y1="38" x2="103.5" y2="406" stroke="rgba(0,0,0,0.55)" stroke-width="3.5" />
+                <line id="fbStr1" x1="104" y1="38" x2="102" y2="406" stroke="#d4dae3" stroke-width="2.5" />
+                <!-- A String -->
+                <line x1="141.2" y1="38" x2="141.2" y2="406" stroke="rgba(0,0,0,0.5)" stroke-width="2.8" />
+                <line id="fbStr2" x1="140" y1="38" x2="140" y2="406" stroke="#e2e8f0" stroke-width="1.9" />
+                <!-- E String -->
+                <line x1="177" y1="38" x2="179" y2="406" stroke="rgba(0,0,0,0.45)" stroke-width="2.1" />
+                <line id="fbStr3" x1="176" y1="38" x2="178" y2="406" stroke="#f8fafc" stroke-width="1.3" />
+
+                <!-- Subtle Reference Markers for Long Long Ago notes on D, A & E Strings -->
+                <g id="fbGhostNotesLayer" class="fb-ghost-notes">
+                  <!-- D string: E4 (1 on Tape 1, y=148) -->
+                  <circle cx="103.6" cy="148" r="9.5" class="fb-ref-spot on-tape" />
+                  <text x="103.6" y="151" class="fb-ref-txt on-tape">E4</text>
+
+                  <!-- A string: A4 (Open), B4 (1 on Tape 1), C#5 (High 2), D5 (3 on Tape 3) -->
+                  <circle cx="140" cy="44" r="8.5" class="fb-ref-spot" />
+                  <text x="140" y="47" class="fb-ref-txt">A4</text>
+                  <circle cx="140" cy="148" r="9.5" class="fb-ref-spot on-tape" />
+                  <text x="140" y="151" class="fb-ref-txt on-tape">B4</text>
+                  <circle cx="140" cy="252" r="9.5" class="fb-ref-spot" />
+                  <text x="140" y="255" class="fb-ref-txt">C♯5</text>
+                  <circle cx="140" cy="304" r="9.5" class="fb-ref-spot on-tape" />
+                  <text x="140" y="307" class="fb-ref-txt on-tape">D5</text>
+
+                  <!-- E string: E5 (Open), F#5 (1 on Tape 1) -->
+                  <circle cx="176.1" cy="44" r="8.5" class="fb-ref-spot" />
+                  <text x="176.1" y="47" class="fb-ref-txt">E5</text>
+                  <circle cx="176.6" cy="148" r="9.5" class="fb-ref-spot on-tape" />
+                  <text x="176.6" y="151" class="fb-ref-txt on-tape">F♯5</text>
+                </g>
+
+                <!-- Upcoming String Crossing Guide Highlight -->
+                <line id="fbNextStrLine" x1="-20" y1="38" x2="-20" y2="406" stroke="#fbbf24" stroke-width="3.6" stroke-dasharray="6,5" opacity="0" />
+
+                <!-- Curved Motion Trajectory Arrow from Current Finger -> Upcoming Finger -->
+                <path id="miniShiftArrow" d="" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-dasharray="4,3" marker-end="url(#nextArrowHead)" opacity="0" />
+
+                <!-- Upcoming Next-Note Left-Hand Guidance Marker -->
+                <g id="miniNextGroup" opacity="0">
+                  <circle id="miniNextHalo" cx="103" cy="200" r="19" fill="rgba(251, 191, 36, 0.18)" />
+                  <circle id="miniNextCore" cx="103" cy="200" r="13" fill="rgba(245, 158, 11, 0.28)" stroke="#fbbf24" stroke-width="2.2" stroke-dasharray="4 2.5" filter="url(#nextGlow)" />
+                  <!-- Live Countdown Arc Ring around Upcoming Finger -->
+                  <circle id="miniNextProgress" cx="103" cy="200" r="16.5" fill="none" stroke="#fde68a" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="103.67" stroke-dashoffset="103.67" />
+                  <text id="miniNextText" x="103" y="204" class="fb-next-txt">L2</text>
+                </g>
+
+                <!-- Active Pressing Finger Indicator (NOW) -->
+                <g id="miniMapDot" opacity="0">
+                  <circle id="miniMapHalo" cx="103" cy="200" r="19" fill="rgba(0, 242, 254, 0.28)" />
+                  <circle id="miniMapCore" cx="103" cy="200" r="13.5" fill="#00e8ff" stroke="#ffffff" stroke-width="2.2" filter="url(#fingerGlow)" />
+                  <text id="miniMapText" x="103" y="204" class="fb-active-txt">L2</text>
+                </g>
+
+                <!-- Floating "NEXT" / "STAY" Guidance Callout Tag (drawn on top so always legible) -->
+                <g id="miniNextTagGroup" opacity="0">
+                  <rect id="miniNextTagBg" x="60" y="191" width="34" height="15" rx="4" fill="#fbbf24" stroke="#0f172a" stroke-width="1" />
+                  <text id="miniNextTagTxt" x="77" y="201" class="fb-next-badge-txt">NEXT</text>
+                </g>
+              </svg>
+            </div>
+
+            <!-- Two-Row Left-Hand Guidance Card: Current Note + Upcoming Hand Preparation -->
+            <div class="pos-guidance-card">
+              <div id="posNowRow" class="pos-guide-row now-row">
+                <span class="guide-pill now-pill">NOW</span>
+                <span id="posNowText" class="guide-main-text">Ready to start</span>
+              </div>
+              <div id="posNextRow" class="pos-guide-row next-row">
+                <div class="next-row-top">
+                  <span class="guide-pill next-pill">NEXT</span>
+                  <span id="posNextMain" class="guide-next-main">A · 0 (A4) "Tell"</span>
+                </div>
+                <div id="posNextHint" class="guide-next-hint">Prepare Open A String (lift fingers)</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Synchronized Timeline Scrubber -->
+    <footer class="scrubber-bar">
+      <span id="timeCurrent" class="time-readout">0:00</span>
+      <div class="scrubber-wrap">
+        <input id="beatScrubber" type="range" min="-3" max="65" step="0.02" value="-3" />
+      </div>
+      <span id="timeTotal" class="time-readout">1:00</span>
+    </footer>
+  </div>
+
+  <script src="orchestra.js"></script>
+  <script src="app.js"></script>
+  <script type="module" src="concert3d.js"></script>
+</body>
+</html>

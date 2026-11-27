@@ -67,3 +67,12 @@
   url: /sheet-music/
   action: Open tool
 
+- name: Violin Play-Along Studio
+  category: Music
+  description: >-
+    Interactive violin play-along PWA with synchronized sheet music cursor,
+    animated falling TAB, left-hand fingerboard guidance, live chamber orchestra
+    accompaniment, pitch scoring, and a first-person 3D concert hall.
+  url: /violin-play-along/
+  action: Open play-along
+
