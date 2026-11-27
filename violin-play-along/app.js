@@ -1525,7 +1525,9 @@
       const nextCueShort = nextNote
         ? `  →  Next: ${nextNote.stringName}·${fingerLabelFor(nextNote)}`
         : "";
-      dom.nowPlayingBadge.textContent = `${activeNote.stringName} · ${fingerLabelFor(activeNote)} (${activeNote.noteLabel})${nextCueShort}`;
+      if (dom.nowPlayingBadge) {
+        dom.nowPlayingBadge.textContent = `${activeNote.stringName} · ${fingerLabelFor(activeNote)} (${activeNote.noteLabel})${nextCueShort}`;
+      }
       dom.posNowText.textContent = `${activeNote.stringName} · ${fingerLabelFor(activeNote)} (${activeNote.noteLabel}) "${activeNote.lyric}"`;
     } else {
       dom.activeNoteBlueInk.setAttribute("cx", "-50");
@@ -1535,18 +1537,22 @@
       const cBeats = (CURRENT_SONG && CURRENT_SONG.countInBeats) || 4;
       if (NOTES[0] && beat < NOTES[0].startBeat) {
         const countNum = Math.min(cBeats, Math.max(1, Math.floor(beat + 4)));
-        dom.nowPlayingBadge.textContent = `Count-In: ${countNum} / ${cBeats} → Prepare ${NOTES[0].stringName} · ${fingerLabelFor(NOTES[0])}`;
+        if (dom.nowPlayingBadge) {
+          dom.nowPlayingBadge.textContent = `Count-In: ${countNum} / ${cBeats} → Prepare ${NOTES[0].stringName} · ${fingerLabelFor(NOTES[0])}`;
+        }
         dom.posNowText.textContent = state.isPlaying
           ? `Count-In ${countNum} / ${cBeats} — Prepare hand`
           : "Paused — Prepare hand";
       } else if (beat < TOTAL_BEATS) {
-        dom.nowPlayingBadge.textContent = nextNote
-          ? `Rest → Prepare ${nextNote.stringName} · ${fingerLabelFor(nextNote)} (${nextNote.noteLabel})`
-          : "Rest · Bow Reset";
+        if (dom.nowPlayingBadge) {
+          dom.nowPlayingBadge.textContent = nextNote
+            ? `Rest → Prepare ${nextNote.stringName} · ${fingerLabelFor(nextNote)} (${nextNote.noteLabel})`
+            : "Rest · Bow Reset";
+        }
         const activeRest = RESTS.find((r) => beat >= r.startBeat && beat < r.endBeat);
         dom.posNowText.textContent = (activeRest && activeRest.label) || "Rest — Prepare next finger";
       } else {
-        dom.nowPlayingBadge.textContent = "Finished · Well done!";
+        if (dom.nowPlayingBadge) dom.nowPlayingBadge.textContent = "Finished · Well done!";
         dom.posNowText.textContent = "Song Complete! 🎉";
       }
     }
